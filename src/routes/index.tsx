@@ -25,7 +25,7 @@ function Index() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         <Button
           className="relative duration-500 ease-out font-mono tracking-wide leading-3"
-          onClick={() => navigate({ to: "/trade-cards", viewTransition: true })}
+          onClick={() => navigate({ to: "/dashboard", viewTransition: true })}
         >
           Proceed
         </Button>

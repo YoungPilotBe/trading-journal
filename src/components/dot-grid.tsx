@@ -32,6 +32,7 @@ export interface DotGridProps {
   gap?: number;
   baseColor?: string;
   activeColor?: string;
+  opacity?: number;
   proximity?: number;
   speedTrigger?: number;
   shockRadius?: number;
@@ -58,6 +59,7 @@ const DotGrid: React.FC<DotGridProps> = ({
   gap = 32,
   baseColor = "#5227FF",
   activeColor = "#5227FF",
+  opacity = 1,
   proximity = 150,
   speedTrigger = 100,
   shockRadius = 250,
@@ -291,13 +293,14 @@ const DotGrid: React.FC<DotGridProps> = ({
 
   return (
     <section
-      className={`p-4 flex items-center justify-center h-full w-full relative ${className}`}
+      className={`flex items-center justify-center h-full w-full relative ${className}`}
       style={style}
     >
       <div ref={wrapperRef} className="w-full h-full relative">
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ opacity }}
         />
       </div>
     </section>
