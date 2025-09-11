@@ -50,7 +50,7 @@ function RouteComponent() {
           returnDuration={1.5}
           baseColor="#1c1917"
           activeColor="#ffffff"
-          opacity={0.5}
+          opacity={0.3}
         /> */}
       </div>
 
