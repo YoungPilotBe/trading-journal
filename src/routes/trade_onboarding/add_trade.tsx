@@ -4,12 +4,16 @@ import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/create-trade-setup";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { zodResolver } from "@hookform/resolvers/zod";
+import validator from "@rjsf/validator-ajv8";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+import { customWidgets, schema, uiSchema } from "@/rjsf/strategy.form.schema";
+import Form from "@rjsf/shadcn";
 
 const searchSchema = z.object({
   imageId: z.string(),
@@ -328,6 +332,12 @@ function RouteComponent() {
               </span>
             </div>
           )}
+          <Form
+            validator={validator}
+            schema={schema}
+            uiSchema={uiSchema}
+            widgets={customWidgets}
+          />
         </form>
         <Button
           className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"
