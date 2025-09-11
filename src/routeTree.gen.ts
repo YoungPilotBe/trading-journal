@@ -13,7 +13,8 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as Trade_onboardingRouteRouteImport } from './routes/trade_onboarding/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as Trade_onboardingReveal_screenshotRouteImport } from './routes/trade_onboarding/reveal_screenshot'
+import { Route as Trade_onboardingAttach_tradeRouteImport } from './routes/trade_onboarding/attach_trade'
+import { Route as Trade_onboardingAdd_tradeRouteImport } from './routes/trade_onboarding/add_trade'
 import { Route as LayoutTradeCardsRouteImport } from './routes/_layout.trade-cards'
 import { Route as LayoutDashboardRouteImport } from './routes/_layout.dashboard'
 
@@ -36,10 +37,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Trade_onboardingReveal_screenshotRoute =
-  Trade_onboardingReveal_screenshotRouteImport.update({
-    id: '/reveal_screenshot',
-    path: '/reveal_screenshot',
+const Trade_onboardingAttach_tradeRoute =
+  Trade_onboardingAttach_tradeRouteImport.update({
+    id: '/attach_trade',
+    path: '/attach_trade',
+    getParentRoute: () => Trade_onboardingRouteRoute,
+  } as any)
+const Trade_onboardingAdd_tradeRoute =
+  Trade_onboardingAdd_tradeRouteImport.update({
+    id: '/add_trade',
+    path: '/add_trade',
     getParentRoute: () => Trade_onboardingRouteRoute,
   } as any)
 const LayoutTradeCardsRoute = LayoutTradeCardsRouteImport.update({
@@ -59,7 +66,8 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/dashboard': typeof LayoutDashboardRoute
   '/trade-cards': typeof LayoutTradeCardsRoute
-  '/trade_onboarding/reveal_screenshot': typeof Trade_onboardingReveal_screenshotRoute
+  '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
+  '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,7 +75,8 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/dashboard': typeof LayoutDashboardRoute
   '/trade-cards': typeof LayoutTradeCardsRoute
-  '/trade_onboarding/reveal_screenshot': typeof Trade_onboardingReveal_screenshotRoute
+  '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
+  '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,7 +86,8 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/_layout/dashboard': typeof LayoutDashboardRoute
   '/_layout/trade-cards': typeof LayoutTradeCardsRoute
-  '/trade_onboarding/reveal_screenshot': typeof Trade_onboardingReveal_screenshotRoute
+  '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
+  '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,7 +97,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/dashboard'
     | '/trade-cards'
-    | '/trade_onboarding/reveal_screenshot'
+    | '/trade_onboarding/add_trade'
+    | '/trade_onboarding/attach_trade'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -95,7 +106,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/dashboard'
     | '/trade-cards'
-    | '/trade_onboarding/reveal_screenshot'
+    | '/trade_onboarding/add_trade'
+    | '/trade_onboarding/attach_trade'
   id:
     | '__root__'
     | '/'
@@ -104,7 +116,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/_layout/dashboard'
     | '/_layout/trade-cards'
-    | '/trade_onboarding/reveal_screenshot'
+    | '/trade_onboarding/add_trade'
+    | '/trade_onboarding/attach_trade'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -144,11 +157,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/trade_onboarding/reveal_screenshot': {
-      id: '/trade_onboarding/reveal_screenshot'
-      path: '/reveal_screenshot'
-      fullPath: '/trade_onboarding/reveal_screenshot'
-      preLoaderRoute: typeof Trade_onboardingReveal_screenshotRouteImport
+    '/trade_onboarding/attach_trade': {
+      id: '/trade_onboarding/attach_trade'
+      path: '/attach_trade'
+      fullPath: '/trade_onboarding/attach_trade'
+      preLoaderRoute: typeof Trade_onboardingAttach_tradeRouteImport
+      parentRoute: typeof Trade_onboardingRouteRoute
+    }
+    '/trade_onboarding/add_trade': {
+      id: '/trade_onboarding/add_trade'
+      path: '/add_trade'
+      fullPath: '/trade_onboarding/add_trade'
+      preLoaderRoute: typeof Trade_onboardingAdd_tradeRouteImport
       parentRoute: typeof Trade_onboardingRouteRoute
     }
     '/_layout/trade-cards': {
@@ -169,12 +189,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface Trade_onboardingRouteRouteChildren {
-  Trade_onboardingReveal_screenshotRoute: typeof Trade_onboardingReveal_screenshotRoute
+  Trade_onboardingAdd_tradeRoute: typeof Trade_onboardingAdd_tradeRoute
+  Trade_onboardingAttach_tradeRoute: typeof Trade_onboardingAttach_tradeRoute
 }
 
 const Trade_onboardingRouteRouteChildren: Trade_onboardingRouteRouteChildren = {
-  Trade_onboardingReveal_screenshotRoute:
-    Trade_onboardingReveal_screenshotRoute,
+  Trade_onboardingAdd_tradeRoute: Trade_onboardingAdd_tradeRoute,
+  Trade_onboardingAttach_tradeRoute: Trade_onboardingAttach_tradeRoute,
 }
 
 const Trade_onboardingRouteRouteWithChildren =

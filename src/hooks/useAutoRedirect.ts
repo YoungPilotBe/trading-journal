@@ -34,7 +34,7 @@ export const useAutoRedirect = () => {
   useEffect(() => {
     if (redirectData.shouldRedirect && redirectData.imageId) {
       navigate({
-        to: "/trade_onboarding/reveal_screenshot",
+        to: "/trade_onboarding",
         search: {
           imageId: redirectData.imageId,
         },

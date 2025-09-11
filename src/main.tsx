@@ -25,7 +25,7 @@ if (!rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <TanStackRouterDevtools router={router} />
-      <RouterProvider router={router} defaultViewTransition />
+      <RouterProvider router={router} />
     </StrictMode>
   );
 }

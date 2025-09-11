@@ -43,7 +43,7 @@ export const saveFileMetadata = mutation({
     fileName: v.string(),
     fileSize: v.number(),
     contentType: v.string(),
-    source: v.optional(v.string()), // e.g., "tradingview", "discord"
+    source: v.optional(v.string()),
     uploadedAt: v.number(),
   },
   handler: async (ctx, args) => {
@@ -83,5 +83,28 @@ export const getToBeOnboardedImages = query({
     const files = await query.order("desc").collect();
 
     return files;
+  },
+});
+
+// Delete an image by its _id
+export const deleteImage = mutation({
+  args: {
+    id: v.id("tradingview_images"),
+  },
+  handler: async (ctx, args) => {
+    // Get the image metadata first
+    const image = await ctx.db.get(args.id);
+
+    if (!image) {
+      throw new Error("Image not found");
+    }
+
+    // Delete the file from storage
+    await ctx.storage.delete(image.storageId);
+
+    // Delete the database record
+    await ctx.db.delete(args.id);
+
+    return { success: true, deletedId: args.id };
   },
 });
