@@ -2,7 +2,7 @@ import { UiSchema } from "@rjsf/utils";
 
 export const uiSchema: UiSchema = {
   "ui:field": "LayoutGridField",
-  "ui:classNames": "grid-cols-4 grid gap-0 outline-gray-400",
+  "ui:classNames": "grid-cols-4 grid gap-0",
   "ui:layoutGrid": {
     "ui:row": [
       {

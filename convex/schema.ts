@@ -42,6 +42,9 @@ export default defineSchema({
     // Strategy tags - JSON object containing strategy form data
     tags: v.optional(v.any()),
 
+    // Foreign key to link trade setup to the triggering image
+    imageId: v.optional(v.id("tradingview_images")),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -50,5 +53,6 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_asset", ["asset"])
     .index("by_direction", ["direction"])
-    .index("by_updated_at", ["updatedAt"]),
+    .index("by_updated_at", ["updatedAt"])
+    .index("by_image_id", ["imageId"]),
 });

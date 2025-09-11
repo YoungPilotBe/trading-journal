@@ -17,7 +17,7 @@ export const createTradeSetup = mutation({
     riskReward: v.optional(v.string()),
     timeframes: v.array(v.string()),
     tags: v.optional(v.any()), // Strategy form data as JSON
-    imageId: v.optional(v.id("tradingview_images")), // Link to the image that triggered this trade setup
+    imageId: v.id("tradingview_images"), // Link to the image that triggered this trade setup
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -33,6 +33,7 @@ export const createTradeSetup = mutation({
       tags: args.tags,
       createdAt: now,
       updatedAt: now,
+      imageId: args.imageId,
     });
 
     // If an image was provided, link it to this trade setup
@@ -82,6 +83,19 @@ export const getTradeSetup = query({
   args: { id: v.id("trade_setups") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
+  },
+});
+
+// Get trade setup by image ID
+export const getTradeSetupByImageId = query({
+  args: { imageId: v.id("tradingview_images") },
+  handler: async (ctx, args) => {
+    const tradeSetup = await ctx.db
+      .query("trade_setups")
+      .withIndex("by_image_id", (q) => q.eq("imageId", args.imageId))
+      .first();
+
+    return tradeSetup;
   },
 });
 

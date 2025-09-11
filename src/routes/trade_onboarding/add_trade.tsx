@@ -2,12 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
+import { useGetTradeSetupByImageId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
+import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -100,9 +102,21 @@ export const Route = createFileRoute("/trade_onboarding/add_trade")({
 
 function RouteComponent() {
   const { imageId } = Route.useSearch();
-  const { data } = useGetImage({ id: imageId });
+  const { data, isLoading: isLoadingImage } = useGetImage({ id: imageId });
+  const { data: existingTradeSetup, isLoading: isLoadingTradeSetup } =
+    useGetTradeSetupByImageId({
+      imageId: imageId as Id<"tradingview_images">,
+    });
+  const { mutateAsync: createTradeSetup, isPending: isPendingSubmit } =
+    useCreateTradeSetup();
+  const { mutateAsync: updateTradeSetup, isPending: isPendingUpdate } =
+    useUpdateTradeSetup();
+
+  const isLoading =
+    isLoadingImage || isLoadingTradeSetup || isPendingSubmit || isPendingUpdate;
+
   const navigate = useNavigate();
-  const { mutateAsync: createTradeSetup, isPending } = useCreateTradeSetup();
+
   // Initialize form with react-hook-form
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -115,6 +129,19 @@ function RouteComponent() {
     },
   });
 
+  // Update form values when existing trade setup is loaded
+  useEffect(() => {
+    if (existingTradeSetup) {
+      form.reset({
+        title: existingTradeSetup.title,
+        status: existingTradeSetup.status,
+        direction: existingTradeSetup.direction,
+        riskReward: existingTradeSetup.riskReward,
+        timeframes: existingTradeSetup.timeframes,
+      });
+    }
+  }, [existingTradeSetup, form]);
+
   // State for managing the add timeframe input
   const [isAddingTimeframe, setIsAddingTimeframe] = useState(false);
   const [newTimeframe, setNewTimeframe] = useState("");
@@ -125,16 +152,30 @@ function RouteComponent() {
     : true;
 
   const onSubmit = async (reactFormData: FormData) => {
-    // Create the trade setup with the form data
-    const tradeSetupId = await createTradeSetup({
-      title: reactFormData.title,
-      asset: data?.asset || "Unknown",
-      direction: reactFormData.direction,
-      status: reactFormData.status,
-      riskReward: reactFormData.riskReward || undefined,
-      timeframes: reactFormData.timeframes,
-      imageId: imageId as Id<"tradingview_images">, // Link to the current image
-    });
+    let tradeSetupId: string;
+
+    if (existingTradeSetup) {
+      await updateTradeSetup({
+        id: existingTradeSetup._id,
+        title: reactFormData.title,
+        direction: reactFormData.direction,
+        status: reactFormData.status,
+        riskReward: reactFormData.riskReward,
+        timeframes: reactFormData.timeframes,
+      });
+      tradeSetupId = existingTradeSetup._id;
+    } else {
+      // Create a new trade setup with the form data
+      tradeSetupId = await createTradeSetup({
+        title: reactFormData.title,
+        asset: data?.asset || "Unknown",
+        direction: reactFormData.direction,
+        status: reactFormData.status,
+        riskReward: reactFormData.riskReward,
+        timeframes: reactFormData.timeframes,
+        imageId: imageId as Id<"tradingview_images">, // Link to the current image
+      });
+    }
 
     // Navigate to the tags page with the trade setup ID
     navigate({
@@ -337,9 +378,13 @@ function RouteComponent() {
         <Button
           className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"
           onClick={form.handleSubmit(onSubmit)}
-          disabled={isPending}
+          disabled={isLoading}
         >
-          {isPending ? "Creating..." : "Proceed"}
+          {isLoading
+            ? existingTradeSetup
+              ? "Updating..."
+              : "Creating..."
+            : "Proceed"}
         </Button>
       </div>
     </div>

@@ -6,7 +6,7 @@ import Form from "@rjsf/shadcn";
 import validator from "@rjsf/validator-ajv8";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -27,6 +27,11 @@ function RouteComponent() {
   const navigate = useNavigate();
   const { mutateAsync: addTags, isPending } = useAddTags();
   const [formData, setFormData] = useState();
+
+  useEffect(() => {
+    if (!tradeSetup?.tags) return;
+    setFormData(tradeSetup.tags);
+  }, [tradeSetup?.tags]);
 
   const onSubmit = async () => {
     // Add tags to the existing trade setup
