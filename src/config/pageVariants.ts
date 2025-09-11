@@ -37,6 +37,17 @@ export const pageVariants: PageVariants = {
       rotateZ: 0,
     },
   },
+  // Page 4 - Left side, scaled down significantly
+  "/trade_onboarding/add_timeframes": {
+    target: {
+      x: 400,
+      y: -100,
+      scale: 0.8,
+      rotateX: 0,
+      rotateY: -5,
+      rotateZ: 0,
+    },
+  },
 
   // Add more pages as needed...
 };

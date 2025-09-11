@@ -21,7 +21,7 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
 });
 
 function RouteComponent() {
-  const { tradeSetupId } = Route.useSearch();
+  const { tradeSetupId, imageId } = Route.useSearch();
   const { data: tradeSetup } = useGetTradeSetup({
     id: tradeSetupId as Id<"trade_setups">,
   });
@@ -42,7 +42,10 @@ function RouteComponent() {
     });
 
     // Navigate to a success page or back to the main app
-    navigate({ to: "/" });
+    navigate({
+      to: "/trade_onboarding/add_timeframes",
+      search: { imageId, tradeSetupId },
+    });
   };
 
   if (!tradeSetup) {
@@ -78,7 +81,7 @@ function RouteComponent() {
           onClick={onSubmit}
           disabled={isPending}
         >
-          {isPending ? "Saving..." : "Complete"}
+          {isPending ? "Saving..." : "Proceed"}
         </Button>
       </div>
     </div>

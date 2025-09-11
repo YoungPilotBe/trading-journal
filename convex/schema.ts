@@ -39,6 +39,9 @@ export default defineSchema({
     // Timeframes being watched
     timeframes: v.array(v.string()),
 
+    // Timeframe couples
+    timeframeTagCouples: v.optional(v.any()),
+
     // Strategy tags - JSON object containing strategy form data
     tags: v.optional(v.any()),
 

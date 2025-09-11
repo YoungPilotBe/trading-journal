@@ -4,6 +4,44 @@ import { RJSFSchema } from "@rjsf/utils";
 export { uiSchema } from "./strategy.ui.schema";
 export { customWidgets } from "./widgets";
 
+// Helper function to get display name for a tag
+export function getTagDisplayName(tagKey: string): string {
+  const displayNames: Record<string, string> = {
+    market_structure: "Market Structure",
+    swing: "Swing",
+    fractal: "Fractal",
+    swing_direction: "Swing Direction",
+    swing_strength: "Swing Strength",
+    fractal_direction: "Fractal Direction",
+    fractal_strength: "Fractal Strength",
+    zone: "Zone",
+    supply: "Supply",
+    demand: "Demand",
+    obim: "OBIM",
+    range: "Range",
+    VAH: "VAH",
+    POC: "POC",
+    VAL: "VAL",
+    supply_range: "Supply Range",
+    supply_pivot: "Supply Pivot",
+    demand_range: "Demand Range",
+    demand_pivot: "Demand Pivot",
+    supply_pivot_extremum_point: "Supply Pivot Point",
+    demand_pivot_extremum_point: "Demand Pivot Point",
+    obim_direction: "OBIM Direction",
+    obim_extension: "OBIM Extension",
+    obim_extension_type: "OBIM Extension Type",
+    obim_caused_wick_bos: "OBIM Caused Wick BOS",
+    obim_pivot: "OBIM Pivot",
+    obim_pivot_extremum_point: "OBIM Pivot Point",
+    obim_grabbed_liquidity: "OBIM Grabbed Liquidity",
+    obim_tooth_liquidity: "OBIM Tooth Liquidity",
+    obim_staircased: "OBIM Staircased",
+  };
+
+  return displayNames[tagKey] || tagKey;
+}
+
 export const schema: RJSFSchema = {
   type: "object",
   properties: {
