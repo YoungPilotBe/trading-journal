@@ -107,7 +107,7 @@ function RouteComponent() {
   const { data } = useGetImage({ id: imageId });
   const navigate = useNavigate();
   const { mutateAsync: createTradeSetup, isPending } = useCreateTradeSetup();
-
+  const [formData, setFormData] = useState();
   // Initialize form with react-hook-form
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -333,11 +333,18 @@ function RouteComponent() {
             </div>
           )}
           <Form
-            validator={validator}
             schema={schema}
             uiSchema={uiSchema}
+            // formData={formData}
+            onChange={(e) => setFormData(e.formData)}
+            validator={validator}
             widgets={customWidgets}
+            // formContext={formContext}
           />
+
+          <span className="">{JSON.stringify(formData)}</span>
+
+          {/* <StrategyFormExample /> */}
         </form>
         <Button
           className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"

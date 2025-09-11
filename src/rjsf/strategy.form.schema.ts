@@ -11,6 +11,10 @@ export const schema: RJSFSchema = {
       type: "boolean",
       default: false,
     },
+    zone: {
+      type: "boolean",
+      default: false,
+    },
   },
   allOf: [
     {
@@ -49,21 +53,15 @@ export const schema: RJSFSchema = {
       },
       then: {
         properties: {
-          swing_bullish: {
-            type: "boolean",
-            default: false,
+          swing_direction: {
+            type: "string",
+            enum: ["bullish", "bearish"],
+            enumNames: ["Bullish", "Bearish"],
           },
-          swing_bearish: {
-            type: "boolean",
-            default: false,
-          },
-          swing_weakening: {
-            type: "boolean",
-            default: false,
-          },
-          swing_strong: {
-            type: "boolean",
-            default: false,
+          swing_strength: {
+            type: "string",
+            enum: ["weakening", "strong"],
+            enumNames: ["Weakening", "Strong"],
           },
         },
       },
@@ -85,21 +83,263 @@ export const schema: RJSFSchema = {
       },
       then: {
         properties: {
-          fractal_bullish: {
+          fractal_direction: {
+            type: "string",
+            enum: ["bullish", "bearish"],
+            enumNames: ["Bullish", "Bearish"],
+          },
+          fractal_strength: {
+            type: "string",
+            enum: ["weakening", "strong"],
+            enumNames: ["Weakening", "Strong"],
+          },
+        },
+      },
+    },
+    {
+      if: {
+        properties: {
+          zone: { const: true },
+        },
+      },
+      then: {
+        properties: {
+          supply: {
             type: "boolean",
             default: false,
           },
-          fractal_bearish: {
+          demand: {
             type: "boolean",
             default: false,
           },
-          fractal_weakening: {
+          obim: {
             type: "boolean",
             default: false,
           },
-          fractal_strong: {
+        },
+      },
+    },
+    {
+      if: {
+        allOf: [
+          {
+            properties: {
+              zone: { const: true },
+            },
+          },
+          {
+            properties: {
+              supply: { const: true },
+            },
+          },
+        ],
+      },
+      then: {
+        properties: {
+          supply_range: {
             type: "boolean",
             default: false,
+          },
+          supply_pivot: {
+            type: "boolean",
+            default: false,
+          },
+        },
+      },
+    },
+    {
+      if: {
+        allOf: [
+          {
+            properties: {
+              zone: { const: true },
+            },
+          },
+          {
+            properties: {
+              supply: { const: true },
+            },
+          },
+          {
+            properties: {
+              supply_pivot: { const: true },
+            },
+          },
+        ],
+      },
+      then: {
+        properties: {
+          supply_pivot_extremum_point: {
+            type: "string",
+            enum: ["extremum_point", "decision_point"],
+            enumNames: ["Extremum Point", "Decision Point"],
+          },
+        },
+      },
+    },
+    {
+      if: {
+        allOf: [
+          {
+            properties: {
+              zone: { const: true },
+            },
+          },
+          {
+            properties: {
+              demand: { const: true },
+            },
+          },
+        ],
+      },
+      then: {
+        properties: {
+          demand_range: {
+            type: "boolean",
+            default: false,
+          },
+          demand_pivot: {
+            type: "boolean",
+            default: false,
+          },
+        },
+      },
+    },
+    {
+      if: {
+        allOf: [
+          {
+            properties: {
+              zone: { const: true },
+            },
+          },
+          {
+            properties: {
+              demand: { const: true },
+            },
+          },
+          {
+            properties: {
+              demand_pivot: { const: true },
+            },
+          },
+        ],
+      },
+      then: {
+        properties: {
+          demand_pivot_extremum_point: {
+            type: "string",
+            enum: ["extremum_point", "decision_point"],
+            enumNames: ["Extremum Point", "Decision Point"],
+          },
+        },
+      },
+    },
+    {
+      if: {
+        allOf: [
+          {
+            properties: {
+              zone: { const: true },
+            },
+          },
+          {
+            properties: {
+              obim: { const: true },
+            },
+          },
+        ],
+      },
+      then: {
+        properties: {
+          obim_direction: {
+            type: "string",
+            enum: ["bearish", "bullish"],
+            enumNames: ["Bearish", "Bullish"],
+          },
+          obim_extension: {
+            type: "boolean",
+            default: false,
+          },
+          obim_caused_wick_bos: {
+            type: "boolean",
+            default: false,
+          },
+          obim_pivot: {
+            type: "boolean",
+            default: false,
+          },
+          obim_grabbed_liquidity: {
+            type: "boolean",
+            default: false,
+          },
+          obim_tooth_liquidity: {
+            type: "boolean",
+            default: false,
+          },
+          obim_staircased: {
+            type: "boolean",
+            default: false,
+          },
+        },
+      },
+    },
+    {
+      if: {
+        allOf: [
+          {
+            properties: {
+              zone: { const: true },
+            },
+          },
+          {
+            properties: {
+              obim: { const: true },
+            },
+          },
+          {
+            properties: {
+              obim_extension: { const: true },
+            },
+          },
+        ],
+      },
+      then: {
+        properties: {
+          obim_extension_type: {
+            type: "string",
+            enum: ["fvg", "25%"],
+            enumNames: ["FVG", "25%"],
+          },
+        },
+      },
+    },
+    {
+      if: {
+        allOf: [
+          {
+            properties: {
+              zone: { const: true },
+            },
+          },
+          {
+            properties: {
+              obim: { const: true },
+            },
+          },
+          {
+            properties: {
+              obim_pivot: { const: true },
+            },
+          },
+        ],
+      },
+      then: {
+        properties: {
+          obim_pivot_extremum_point: {
+            type: "string",
+            enum: ["extremum_point", "decision_point"],
+            enumNames: ["Extremum Point", "Decision Point"],
           },
         },
       },

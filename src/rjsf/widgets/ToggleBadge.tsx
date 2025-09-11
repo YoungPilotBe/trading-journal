@@ -5,12 +5,16 @@ import { useEffect, useState } from "react";
 interface ToggleBadgeOptions {
   badgeStyle?: string;
   indent?: number;
+  conflictingField?: string; // The field that should be set to false when this one is set to true
 }
 
 export const ToggleBadge = (props: WidgetProps) => {
-  const { value, onChange, label, options, disabled, readonly } = props;
-  const { badgeStyle = "border-muted text-muted-foreground" } =
-    (options as ToggleBadgeOptions) || {};
+  const { value, onChange, label, options, disabled, readonly, formContext } =
+    props;
+  const {
+    badgeStyle = "border-muted text-muted-foreground",
+    conflictingField,
+  } = (options as ToggleBadgeOptions) || {};
 
   const [isToggled, setIsToggled] = useState<boolean>(Boolean(value));
 
@@ -23,6 +27,19 @@ export const ToggleBadge = (props: WidgetProps) => {
 
     const newValue = !isToggled;
     setIsToggled(newValue);
+
+    // If we're turning this field ON and there's a conflicting field, turn the conflicting field OFF
+    if (newValue && conflictingField && formContext) {
+      // Access the root form's onChange through formContext
+      if (formContext.formData && formContext.onChange) {
+        const updatedFormData = { ...formContext.formData };
+        updatedFormData[conflictingField] = false;
+
+        // Update the entire form data to trigger re-render of the conflicting field
+        formContext.onChange(updatedFormData);
+      }
+    }
+
     onChange(newValue);
   };
 
@@ -36,7 +53,7 @@ export const ToggleBadge = (props: WidgetProps) => {
         disabled={disabled || readonly}
         className={clsx(
           // Base styles (always applied)
-          "px-2 py-0.5 border font-mono text-xs rounded-sm transition-all",
+          "w-full px-2 py-0.5 border font-mono text-xs rounded-sm transition-all",
           // State-based styles
           {
             // Base toggled style (slightly lighter than muted) - always applied when toggled

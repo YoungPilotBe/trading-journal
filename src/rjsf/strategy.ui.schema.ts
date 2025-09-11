@@ -2,7 +2,7 @@ import { UiSchema } from "@rjsf/utils";
 
 export const uiSchema: UiSchema = {
   "ui:field": "LayoutGridField",
-  "ui:classNames": "grid-cols-3 w-fit gap-0",
+  "ui:classNames": "grid-cols-6 w-fit gap-0",
   "ui:layoutGrid": {
     "ui:row": [
       {
@@ -14,54 +14,112 @@ export const uiSchema: UiSchema = {
       {
         "ui:columns": {
           className: "col-span-1 col-start-2",
-          "ui:condition": {
-            field: "market_structure",
-            value: true,
-            operator: "all",
-          },
           children: ["swing"],
         },
       },
       {
         "ui:columns": {
           className: "col-span-1 col-start-3",
-          "ui:condition": {
-            field: "swing",
-            value: true,
-            operator: "all",
-          },
-          children: [
-            "swing_bullish",
-            "swing_bearish",
-            "swing_weakening",
-            "swing_strong",
-          ],
+          children: ["swing_direction", "swing_strength"],
         },
       },
       {
         "ui:columns": {
           className: "col-span-1 col-start-2",
-          "ui:condition": {
-            field: "market_structure",
-            value: true,
-            operator: "all",
-          },
           children: ["fractal"],
         },
       },
       {
         "ui:columns": {
           className: "col-span-1 col-start-3",
-          "ui:condition": {
-            field: "fractal",
-            value: true,
-            operator: "all",
-          },
+          children: ["fractal_direction", "fractal_strength"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-1",
+          children: ["zone"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-2",
+          children: ["supply"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-3",
+          children: ["supply_range", "supply_pivot"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-4",
+          children: ["supply_pivot_extremum_point"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-2",
+          children: ["demand"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-3",
+          children: ["demand_range", "demand_pivot"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-4",
+          children: ["demand_pivot_extremum_point"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-2",
+          children: ["obim"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-3",
+          children: ["obim_direction"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-3",
+          children: ["obim_extension"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-4",
+          children: ["obim_extension_type"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-3",
+          children: ["obim_caused_wick_bos", "obim_pivot"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-4",
+          children: ["obim_pivot_extremum_point"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-3",
           children: [
-            "fractal_bullish",
-            "fractal_bearish",
-            "fractal_weakening",
-            "fractal_strong",
+            "obim_grabbed_liquidity",
+            "obim_tooth_liquidity",
+            "obim_staircased",
           ],
         },
       },
@@ -94,67 +152,187 @@ export const uiSchema: UiSchema = {
       label: false,
     },
   },
-  swing_bullish: {
-    "ui:widget": "CheckboxWidget",
-    "ui:title": "Bullish",
+  swing_direction: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Direction",
     "ui:options": {
       indent: 2,
       label: false,
     },
   },
-  swing_bearish: {
-    "ui:widget": "CheckboxWidget",
-    "ui:title": "Bearish",
+  swing_strength: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Strength",
     "ui:options": {
       indent: 2,
       label: false,
     },
   },
-  swing_weakening: {
-    "ui:widget": "CheckboxWidget",
-    "ui:title": "Weakening",
+  fractal_direction: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Direction",
     "ui:options": {
       indent: 2,
       label: false,
     },
   },
-  swing_strong: {
-    "ui:widget": "CheckboxWidget",
-    "ui:title": "Strong",
+  fractal_strength: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Strength",
     "ui:options": {
       indent: 2,
       label: false,
     },
   },
-  fractal_bullish: {
+  zone: {
     "ui:widget": "CheckboxWidget",
-    "ui:title": "Bullish",
+    "ui:title": "Zone",
+    "ui:options": {
+      indent: 0,
+      label: false,
+    },
+  },
+  supply: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Supply",
+    "ui:options": {
+      indent: 1,
+      label: false,
+    },
+  },
+  demand: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Demand",
+    "ui:options": {
+      indent: 1,
+      label: false,
+    },
+  },
+  obim: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "OBIM",
+    "ui:options": {
+      indent: 1,
+      label: false,
+    },
+  },
+  supply_range: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Range",
     "ui:options": {
       indent: 2,
       label: false,
     },
   },
-  fractal_bearish: {
+  supply_pivot: {
     "ui:widget": "CheckboxWidget",
-    "ui:title": "Bearish",
+    "ui:title": "Pivot",
     "ui:options": {
       indent: 2,
       label: false,
     },
   },
-  fractal_weakening: {
+  demand_range: {
     "ui:widget": "CheckboxWidget",
-    "ui:title": "Weakening",
+    "ui:title": "Range",
     "ui:options": {
       indent: 2,
       label: false,
     },
   },
-  fractal_strong: {
+  demand_pivot: {
     "ui:widget": "CheckboxWidget",
-    "ui:title": "Strong",
+    "ui:title": "Pivot",
     "ui:options": {
       indent: 2,
+      label: false,
+    },
+  },
+  supply_pivot_extremum_point: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Point Type",
+    "ui:options": {
+      indent: 3,
+      label: false,
+    },
+  },
+  demand_pivot_extremum_point: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Point Type",
+    "ui:options": {
+      indent: 3,
+      label: false,
+    },
+  },
+  obim_direction: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Direction",
+    "ui:options": {
+      indent: 2,
+      label: false,
+    },
+  },
+  obim_extension: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Extension",
+    "ui:options": {
+      indent: 3,
+      label: false,
+    },
+  },
+  obim_caused_wick_bos: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Caused Wick BOS",
+    "ui:options": {
+      indent: 3,
+      label: false,
+    },
+  },
+  obim_pivot: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Pivot",
+    "ui:options": {
+      indent: 3,
+      label: false,
+    },
+  },
+  obim_grabbed_liquidity: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Grabbed Liquidity",
+    "ui:options": {
+      indent: 3,
+      label: false,
+    },
+  },
+  obim_tooth_liquidity: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Tooth Liquidity",
+    "ui:options": {
+      indent: 3,
+      label: false,
+    },
+  },
+  obim_staircased: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Staircased",
+    "ui:options": {
+      indent: 3,
+      label: false,
+    },
+  },
+  obim_extension_type: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Extension Type",
+    "ui:options": {
+      indent: 4,
+      label: false,
+    },
+  },
+  obim_pivot_extremum_point: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Point Type",
+    "ui:options": {
+      indent: 4,
       label: false,
     },
   },
