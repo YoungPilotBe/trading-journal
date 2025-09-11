@@ -83,6 +83,7 @@ export const uiSchema: UiSchema = {
           children: ["obim"],
         },
       },
+
       {
         "ui:columns": {
           className: "col-span-1 col-start-3",
@@ -121,6 +122,18 @@ export const uiSchema: UiSchema = {
             "obim_tooth_liquidity",
             "obim_staircased",
           ],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-2",
+          children: ["range"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 col-start-3",
+          children: ["VAH", "POC", "VAL"],
         },
       },
     ],
@@ -333,6 +346,38 @@ export const uiSchema: UiSchema = {
     "ui:title": "Point Type",
     "ui:options": {
       indent: 4,
+      label: false,
+    },
+  },
+  range: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Range",
+    "ui:options": {
+      indent: 1,
+      label: false,
+    },
+  },
+  VAH: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "VAH",
+    "ui:options": {
+      indent: 2,
+      label: false,
+    },
+  },
+  POC: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "POC",
+    "ui:options": {
+      indent: 2,
+      label: false,
+    },
+  },
+  VAL: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "VAL",
+    "ui:options": {
+      indent: 2,
       label: false,
     },
   },

@@ -1,6 +1,7 @@
 import { WidgetProps } from "@rjsf/utils";
 import { clsx } from "clsx";
 import { useEffect, useState } from "react";
+import { useFieldEffect } from "../EffectsContext";
 
 interface ToggleBadgeOptions {
   badgeStyle?: string;
@@ -9,14 +10,25 @@ interface ToggleBadgeOptions {
 }
 
 export const ToggleBadge = (props: WidgetProps) => {
-  const { value, onChange, label, options, disabled, readonly, formContext } =
-    props;
+  const {
+    value,
+    onChange,
+    label,
+    options,
+    disabled,
+    readonly,
+    formContext,
+    name,
+  } = props;
   const {
     badgeStyle = "border-muted text-muted-foreground",
     conflictingField,
   } = (options as ToggleBadgeOptions) || {};
 
   const [isToggled, setIsToggled] = useState<boolean>(Boolean(value));
+
+  // Get effect based on the current toggle state
+  const effect = useFieldEffect(name, label);
 
   useEffect(() => {
     setIsToggled(Boolean(value));
@@ -53,12 +65,11 @@ export const ToggleBadge = (props: WidgetProps) => {
         disabled={disabled || readonly}
         className={clsx(
           // Base styles (always applied)
-          "w-full px-2 py-0.5 border font-mono text-xs rounded-sm transition-all",
+          "w-full px-2 py-0.5 border font-mono text-xs rounded-sm transition-all flex items-center justify-center gap-2",
           // State-based styles
           {
             // Base toggled style (slightly lighter than muted) - always applied when toggled
             "border-muted-foreground text-white bg-background": isToggled,
-            // Untoggled style
             "border-muted text-muted-foreground hover:border-muted-foreground/50":
               !isToggled,
             // Disabled/readonly state
@@ -66,11 +77,17 @@ export const ToggleBadge = (props: WidgetProps) => {
             // Interactive cursor
             "cursor-pointer": !disabled && !readonly,
           },
-          // Custom badgeStyle overrides (applied last to override base toggled style)
-          isToggled && badgeStyle
+          // Custom badgeStyle overrides (applied last to override effect styles if provided)
+          isToggled && badgeStyle && !effect
         )}
       >
         {label}
+        <div
+          className={clsx("rounded-full size-1 hidden", {
+            "bg-sky-500 !block": effect === "positive",
+            "bg-rose-500 !block": effect === "negative",
+          })}
+        />
       </button>
     </div>
   );

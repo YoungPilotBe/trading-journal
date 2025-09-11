@@ -116,6 +116,10 @@ export const schema: RJSFSchema = {
             type: "boolean",
             default: false,
           },
+          range: {
+            type: "boolean",
+            default: false,
+          },
         },
       },
     },
@@ -340,6 +344,38 @@ export const schema: RJSFSchema = {
             type: "string",
             enum: ["extremum_point", "decision_point"],
             enumNames: ["Extremum Point", "Decision Point"],
+          },
+        },
+      },
+    },
+    {
+      if: {
+        allOf: [
+          {
+            properties: {
+              zone: { const: true },
+            },
+          },
+          {
+            properties: {
+              range: { const: true },
+            },
+          },
+        ],
+      },
+      then: {
+        properties: {
+          VAH: {
+            type: "boolean",
+            default: false,
+          },
+          POC: {
+            type: "boolean",
+            default: false,
+          },
+          VAL: {
+            type: "boolean",
+            default: false,
           },
         },
       },

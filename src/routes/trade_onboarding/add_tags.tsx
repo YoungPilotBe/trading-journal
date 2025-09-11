@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAddTags } from "@/hooks/trade-setup/use-add-tags";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
+import { EffectsProvider } from "@/rjsf/EffectsContext";
 import { customWidgets, schema, uiSchema } from "@/rjsf/strategy.form.schema";
 import Form from "@rjsf/shadcn";
 import validator from "@rjsf/validator-ajv8";
@@ -52,9 +53,9 @@ function RouteComponent() {
     <div className="absolute inset-0 pointer-events-none">
       {/* Right-side form panel - similar to add_trade layout */}
       <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] pointer-events-auto">
-        <form className="w-full flex flex-col -space-y-1 py-2 font-mono text-xs">
-          <div className="flex flex-col items-start space-y-2 mt-2">
-            <span className="text-white font-light">Tags</span>
+        <div className="flex flex-col items-start space-y-2 mt-2">
+          <span className="text-white font-light font-mono">Tags</span>
+          <EffectsProvider tradeSetup={tradeSetup}>
             <Form
               schema={schema}
               uiSchema={uiSchema}
@@ -69,8 +70,8 @@ function RouteComponent() {
               widgets={customWidgets}
               children={true} // This removes the default submit button
             />
-          </div>
-        </form>
+          </EffectsProvider>
+        </div>
 
         <Button
           className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"
