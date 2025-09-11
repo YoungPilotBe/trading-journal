@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
-import { useCreateTradeSetup } from "@/hooks/trade-setup/create-trade-setup";
+import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { zodResolver } from "@hookform/resolvers/zod";
-import validator from "@rjsf/validator-ajv8";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
@@ -12,16 +11,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { customWidgets, schema, uiSchema } from "@/rjsf/strategy.form.schema";
-import Form from "@rjsf/shadcn";
-
 const searchSchema = z.object({
   imageId: z.string(),
 });
 
 // Form schema for the trade
 const formSchema = z.object({
-  tags: z.record(z.unknown()).optional(),
   title: z
     .string()
     .min(1, "Title is required")
@@ -108,7 +103,6 @@ function RouteComponent() {
   const { data } = useGetImage({ id: imageId });
   const navigate = useNavigate();
   const { mutateAsync: createTradeSetup, isPending } = useCreateTradeSetup();
-  const [formData, setFormData] = useState();
   // Initialize form with react-hook-form
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -132,21 +126,24 @@ function RouteComponent() {
 
   const onSubmit = async (reactFormData: FormData) => {
     // Create the trade setup with the form data
-    await createTradeSetup({
+    const tradeSetupId = await createTradeSetup({
       title: reactFormData.title,
       asset: data?.asset || "Unknown",
       direction: reactFormData.direction,
       status: reactFormData.status,
       riskReward: reactFormData.riskReward || undefined,
       timeframes: reactFormData.timeframes,
-      tags: reactFormData.tags, // Store the RJSF form data as tags
       imageId: imageId as Id<"tradingview_images">, // Link to the current image
-    } as Parameters<typeof createTradeSetup>[0] & {
-      tags?: Record<string, unknown>;
-    }); // Extended type with tags
+    });
 
-    // Navigate to a success page or back to the main app
-    navigate({ to: "/" });
+    // Navigate to the tags page with the trade setup ID
+    navigate({
+      to: "/trade_onboarding/add_tags",
+      search: {
+        tradeSetupId: tradeSetupId as string,
+        imageId: imageId,
+      },
+    });
   };
 
   // Timeframe handlers
@@ -336,31 +333,13 @@ function RouteComponent() {
               </span>
             </div>
           )}
-          <div className="flex flex-col items-start space-y-2 mt-2">
-            <span className="text-muted font-light">Tags</span>
-            <Form
-              schema={schema}
-              uiSchema={uiSchema}
-              formData={formData}
-              onChange={(e) => {
-                setFormData(e.formData);
-                form.setValue("tags", e.formData);
-              }}
-              onSubmit={() => {
-                form.handleSubmit(onSubmit)();
-              }}
-              validator={validator}
-              widgets={customWidgets}
-              children={true} // This removes the default submit button
-            />
-          </div>
         </form>
         <Button
           className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"
           onClick={form.handleSubmit(onSubmit)}
           disabled={isPending}
         >
-          {isPending ? "Creating..." : "Submit"}
+          {isPending ? "Creating..." : "Proceed"}
         </Button>
       </div>
     </div>

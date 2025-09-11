@@ -15,6 +15,7 @@ import { Route as Trade_onboardingRouteRouteImport } from './routes/trade_onboar
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as Trade_onboardingAttach_tradeRouteImport } from './routes/trade_onboarding/attach_trade'
 import { Route as Trade_onboardingAdd_tradeRouteImport } from './routes/trade_onboarding/add_trade'
+import { Route as Trade_onboardingAdd_tagsRouteImport } from './routes/trade_onboarding/add_tags'
 import { Route as LayoutTradeCardsRouteImport } from './routes/_layout.trade-cards'
 import { Route as LayoutDashboardRouteImport } from './routes/_layout.dashboard'
 
@@ -49,6 +50,12 @@ const Trade_onboardingAdd_tradeRoute =
     path: '/add_trade',
     getParentRoute: () => Trade_onboardingRouteRoute,
   } as any)
+const Trade_onboardingAdd_tagsRoute =
+  Trade_onboardingAdd_tagsRouteImport.update({
+    id: '/add_tags',
+    path: '/add_tags',
+    getParentRoute: () => Trade_onboardingRouteRoute,
+  } as any)
 const LayoutTradeCardsRoute = LayoutTradeCardsRouteImport.update({
   id: '/trade-cards',
   path: '/trade-cards',
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/dashboard': typeof LayoutDashboardRoute
   '/trade-cards': typeof LayoutTradeCardsRoute
+  '/trade_onboarding/add_tags': typeof Trade_onboardingAdd_tagsRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/dashboard': typeof LayoutDashboardRoute
   '/trade-cards': typeof LayoutTradeCardsRoute
+  '/trade_onboarding/add_tags': typeof Trade_onboardingAdd_tagsRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
 }
@@ -86,6 +95,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/_layout/dashboard': typeof LayoutDashboardRoute
   '/_layout/trade-cards': typeof LayoutTradeCardsRoute
+  '/trade_onboarding/add_tags': typeof Trade_onboardingAdd_tagsRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
 }
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/dashboard'
     | '/trade-cards'
+    | '/trade_onboarding/add_tags'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
   fileRoutesByTo: FileRoutesByTo
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/dashboard'
     | '/trade-cards'
+    | '/trade_onboarding/add_tags'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
   id:
@@ -116,6 +128,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/_layout/dashboard'
     | '/_layout/trade-cards'
+    | '/trade_onboarding/add_tags'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
   fileRoutesById: FileRoutesById
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Trade_onboardingAdd_tradeRouteImport
       parentRoute: typeof Trade_onboardingRouteRoute
     }
+    '/trade_onboarding/add_tags': {
+      id: '/trade_onboarding/add_tags'
+      path: '/add_tags'
+      fullPath: '/trade_onboarding/add_tags'
+      preLoaderRoute: typeof Trade_onboardingAdd_tagsRouteImport
+      parentRoute: typeof Trade_onboardingRouteRoute
+    }
     '/_layout/trade-cards': {
       id: '/_layout/trade-cards'
       path: '/trade-cards'
@@ -189,11 +209,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface Trade_onboardingRouteRouteChildren {
+  Trade_onboardingAdd_tagsRoute: typeof Trade_onboardingAdd_tagsRoute
   Trade_onboardingAdd_tradeRoute: typeof Trade_onboardingAdd_tradeRoute
   Trade_onboardingAttach_tradeRoute: typeof Trade_onboardingAttach_tradeRoute
 }
 
 const Trade_onboardingRouteRouteChildren: Trade_onboardingRouteRouteChildren = {
+  Trade_onboardingAdd_tagsRoute: Trade_onboardingAdd_tagsRoute,
   Trade_onboardingAdd_tradeRoute: Trade_onboardingAdd_tradeRoute,
   Trade_onboardingAttach_tradeRoute: Trade_onboardingAttach_tradeRoute,
 }

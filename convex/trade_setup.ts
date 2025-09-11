@@ -158,6 +158,22 @@ export const linkImageToTradeSetup = mutation({
   },
 });
 
+// Add tags to an existing trade setup
+export const addTags = mutation({
+  args: {
+    id: v.id("trade_setups"),
+    tags: v.any(), // Strategy form data as JSON
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      tags: args.tags,
+      updatedAt: Date.now(),
+    });
+
+    return args.id;
+  },
+});
+
 // Delete a trade setup (and unlink associated images)
 export const deleteTradeSetup = mutation({
   args: { id: v.id("trade_setups") },
