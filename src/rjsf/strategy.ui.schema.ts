@@ -2,24 +2,24 @@ import { UiSchema } from "@rjsf/utils";
 
 export const uiSchema: UiSchema = {
   "ui:field": "LayoutGridField",
-  "ui:classNames": "grid-cols-6 w-fit gap-0",
+  "ui:classNames": "grid-cols-4 grid gap-0 outline-gray-400",
   "ui:layoutGrid": {
     "ui:row": [
       {
         "ui:columns": {
-          className: "col-span-1",
+          className: "col-span-1 min-w-[150px]",
           children: ["market_structure"],
         },
       },
       {
         "ui:columns": {
-          className: "col-span-1 col-start-2",
+          className: "col-span-1 col-start-2 min-w-[150px]",
           children: ["swing"],
         },
       },
       {
         "ui:columns": {
-          className: "col-span-1 col-start-3",
+          className: "col-span-1 col-start-3 min-w-[150px]",
           children: ["swing_direction", "swing_strength"],
         },
       },
@@ -97,7 +97,7 @@ export const uiSchema: UiSchema = {
       },
       {
         "ui:columns": {
-          className: "col-span-1 col-start-4",
+          className: "col-span-1 col-start-4 min-w-[150px]",
           children: ["obim_extension_type"],
         },
       },

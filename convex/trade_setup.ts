@@ -16,6 +16,7 @@ export const createTradeSetup = mutation({
     ),
     riskReward: v.optional(v.string()),
     timeframes: v.array(v.string()),
+    tags: v.optional(v.any()), // Strategy form data as JSON
     imageId: v.optional(v.id("tradingview_images")), // Link to the image that triggered this trade setup
   },
   handler: async (ctx, args) => {
@@ -29,6 +30,7 @@ export const createTradeSetup = mutation({
       status: args.status,
       riskReward: args.riskReward,
       timeframes: args.timeframes,
+      tags: args.tags,
       createdAt: now,
       updatedAt: now,
     });

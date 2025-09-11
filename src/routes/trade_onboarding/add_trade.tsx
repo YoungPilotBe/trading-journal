@@ -21,6 +21,7 @@ const searchSchema = z.object({
 
 // Form schema for the trade
 const formSchema = z.object({
+  tags: z.record(z.unknown()).optional(),
   title: z
     .string()
     .min(1, "Title is required")
@@ -129,17 +130,20 @@ function RouteComponent() {
     ? timeframeOrder.includes(newTimeframe.trim() as Timeframe)
     : true;
 
-  const onSubmit = async (formData: FormData) => {
+  const onSubmit = async (reactFormData: FormData) => {
     // Create the trade setup with the form data
     await createTradeSetup({
-      title: formData.title,
+      title: reactFormData.title,
       asset: data?.asset || "Unknown",
-      direction: formData.direction,
-      status: formData.status,
-      riskReward: formData.riskReward || undefined,
-      timeframes: formData.timeframes,
+      direction: reactFormData.direction,
+      status: reactFormData.status,
+      riskReward: reactFormData.riskReward || undefined,
+      timeframes: reactFormData.timeframes,
+      tags: reactFormData.tags, // Store the RJSF form data as tags
       imageId: imageId as Id<"tradingview_images">, // Link to the current image
-    });
+    } as Parameters<typeof createTradeSetup>[0] & {
+      tags?: Record<string, unknown>;
+    }); // Extended type with tags
 
     // Navigate to a success page or back to the main app
     navigate({ to: "/" });
@@ -332,19 +336,24 @@ function RouteComponent() {
               </span>
             </div>
           )}
-          <Form
-            schema={schema}
-            uiSchema={uiSchema}
-            // formData={formData}
-            onChange={(e) => setFormData(e.formData)}
-            validator={validator}
-            widgets={customWidgets}
-            // formContext={formContext}
-          />
-
-          <span className="">{JSON.stringify(formData)}</span>
-
-          {/* <StrategyFormExample /> */}
+          <div className="flex flex-col items-start space-y-2 mt-2">
+            <span className="text-muted font-light">Tags</span>
+            <Form
+              schema={schema}
+              uiSchema={uiSchema}
+              formData={formData}
+              onChange={(e) => {
+                setFormData(e.formData);
+                form.setValue("tags", e.formData);
+              }}
+              onSubmit={() => {
+                form.handleSubmit(onSubmit)();
+              }}
+              validator={validator}
+              widgets={customWidgets}
+              children={true} // This removes the default submit button
+            />
+          </div>
         </form>
         <Button
           className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"
