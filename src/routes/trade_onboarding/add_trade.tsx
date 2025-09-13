@@ -112,7 +112,7 @@ function RouteComponent() {
     useCreateTradeSetup({
       onSuccess: (id) => {
         navigate({
-          to: "/trade_onboarding/add_tags",
+          to: "/trade_onboarding/add_template",
           search: {
             tradeSetupId: id as string,
             imageId: imageId,
@@ -124,7 +124,7 @@ function RouteComponent() {
     useUpdateTradeSetup({
       onSuccess: (id) => {
         navigate({
-          to: "/trade_onboarding/add_tags",
+          to: "/trade_onboarding/add_template",
           search: {
             tradeSetupId: id as string,
             imageId: imageId,

@@ -63,6 +63,7 @@ export const updateTradeSetup = mutation({
         v.literal("reviewed")
       )
     ),
+    trade_template: v.optional(v.id("trade_templates")),
     riskReward: v.optional(v.string()),
     timeframes: v.optional(v.array(v.string())),
   },

@@ -39,6 +39,9 @@ export default defineSchema({
     // One-to-many relationship with tradingview_images
     imageIds: v.array(v.id("tradingview_images")),
 
+    // One-to-many relationship with trade_setups
+    tradeSetupIds: v.optional(v.array(v.id("trade_setups"))),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
