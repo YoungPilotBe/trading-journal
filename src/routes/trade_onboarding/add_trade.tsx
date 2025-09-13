@@ -1,16 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
 import { useGetTradeSetupByImageId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -26,10 +24,9 @@ const formSchema = z.object({
   status: z.enum(["idea", "watching", "executed", "closed", "reviewed"]),
   direction: z.enum(["long", "short"]),
   riskReward: z
-    .string()
-    .optional()
+    .union([z.string(), z.literal("")]) // accept empty string
     .refine((value) => {
-      if (!value || value.trim() === "") return true; // Optional field
+      if (!value || value.trim() === "") return true;
       const regex = /^\d{1,2}(\.\d)?:\d{1,2}(\.\d)?$/;
       return regex.test(value.trim());
     }, "Risk/reward must be in format like '5:3' or '3.1:2' (max 1 decimal place)"),
@@ -42,8 +39,6 @@ const formSchema = z.object({
       )
   ),
 });
-
-type FormData = z.infer<typeof formSchema>;
 
 const statusOptions = [
   {
@@ -98,6 +93,12 @@ const sortTimeframes = (timeframes: string[]) => {
 export const Route = createFileRoute("/trade_onboarding/add_trade")({
   component: RouteComponent,
   validateSearch: searchSchema,
+  // Use pendingComponent to show loading state while data loads
+  pendingComponent: () => (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="text-muted-foreground font-mono text-sm">Loading...</div>
+    </div>
+  ),
 });
 
 function RouteComponent() {
@@ -108,122 +109,71 @@ function RouteComponent() {
       imageId: imageId as Id<"tradingview_images">,
     });
   const { mutateAsync: createTradeSetup, isPending: isPendingSubmit } =
-    useCreateTradeSetup();
+    useCreateTradeSetup({
+      onSuccess: (id) => {
+        navigate({
+          to: "/trade_onboarding/add_tags",
+          search: {
+            tradeSetupId: id as string,
+            imageId: imageId,
+          },
+        });
+      },
+    });
   const { mutateAsync: updateTradeSetup, isPending: isPendingUpdate } =
-    useUpdateTradeSetup();
+    useUpdateTradeSetup({
+      onSuccess: (id) => {
+        navigate({
+          to: "/trade_onboarding/add_tags",
+          search: {
+            tradeSetupId: id as string,
+            imageId: imageId,
+          },
+        });
+      },
+    });
 
-  const isLoading =
-    isLoadingImage || isLoadingTradeSetup || isPendingSubmit || isPendingUpdate;
-
+  const isPending = isPendingSubmit || isPendingUpdate;
+  const isLoading = isLoadingImage || isLoadingTradeSetup;
   const navigate = useNavigate();
-
-  // Initialize form with react-hook-form
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "Phoenix",
-      status: "idea",
-      direction: "long",
-      riskReward: "",
-      timeframes: ["4h"],
-    },
-  });
-
-  // Update form values when existing trade setup is loaded
-  useEffect(() => {
-    if (existingTradeSetup) {
-      form.reset({
-        title: existingTradeSetup.title,
-        status: existingTradeSetup.status,
-        direction: existingTradeSetup.direction,
-        riskReward: existingTradeSetup.riskReward,
-        timeframes: existingTradeSetup.timeframes,
-      });
-    }
-  }, [existingTradeSetup, form]);
 
   // State for managing the add timeframe input
   const [isAddingTimeframe, setIsAddingTimeframe] = useState(false);
   const [newTimeframe, setNewTimeframe] = useState("");
 
+  // Initialize form with react-hook-form - now with proper default values
+  const form = useForm({
+    validators: {
+      onSubmit: formSchema,
+    },
+    defaultValues: {
+      title: existingTradeSetup?.title || "",
+      status: existingTradeSetup?.status || "idea",
+      direction: existingTradeSetup?.direction || "long",
+      riskReward: existingTradeSetup?.riskReward ?? undefined,
+      timeframes: existingTradeSetup?.timeframes || ["4h"],
+    },
+    onSubmit: async ({ value: formData }) => {
+      // Do something with the values passed via handleSubmit
+      if (existingTradeSetup) {
+        await updateTradeSetup({ ...formData, id: existingTradeSetup._id });
+      } else {
+        // Create a new trade setup with the form data
+        await createTradeSetup({
+          ...formData,
+          asset: data?.asset || "Unknown",
+          imageId: imageId as Id<"tradingview_images">, // Link to the current image
+        });
+      }
+    },
+  });
+
   // Check if current input is a valid timeframe
-  const isValidTimeframe = newTimeframe.trim()
-    ? timeframeOrder.includes(newTimeframe.trim() as Timeframe)
-    : true;
-
-  const onSubmit = async (reactFormData: FormData) => {
-    let tradeSetupId: string;
-
-    if (existingTradeSetup) {
-      await updateTradeSetup({
-        id: existingTradeSetup._id,
-        title: reactFormData.title,
-        direction: reactFormData.direction,
-        status: reactFormData.status,
-        riskReward: reactFormData.riskReward,
-        timeframes: reactFormData.timeframes,
-      });
-      tradeSetupId = existingTradeSetup._id;
-    } else {
-      // Create a new trade setup with the form data
-      tradeSetupId = await createTradeSetup({
-        title: reactFormData.title,
-        asset: data?.asset || "Unknown",
-        direction: reactFormData.direction,
-        status: reactFormData.status,
-        riskReward: reactFormData.riskReward,
-        timeframes: reactFormData.timeframes,
-        imageId: imageId as Id<"tradingview_images">, // Link to the current image
-      });
-    }
-
-    // Navigate to the tags page with the trade setup ID
-    navigate({
-      to: "/trade_onboarding/add_tags",
-      search: {
-        tradeSetupId: tradeSetupId as string,
-        imageId: imageId,
-      },
-    });
-  };
-
-  // Timeframe handlers
-  const handleAddTimeframe = () => {
-    const trimmedTimeframe = newTimeframe.trim();
-    if (
-      trimmedTimeframe &&
-      timeframeOrder.includes(trimmedTimeframe as Timeframe) &&
-      !form.getValues("timeframes").includes(trimmedTimeframe)
-    ) {
-      const currentTimeframes = form.getValues("timeframes");
-      const newTimeframes = sortTimeframes([
-        ...currentTimeframes,
-        trimmedTimeframe,
-      ]);
-      form.setValue("timeframes", newTimeframes);
-    }
-    // Always clear and close regardless of whether we added or not
-    setNewTimeframe("");
-    setIsAddingTimeframe(false);
-  };
-
-  const handleRemoveTimeframe = (timeframeToRemove: string) => {
-    const currentTimeframes = form.getValues("timeframes");
-    form.setValue(
-      "timeframes",
-      currentTimeframes.filter((tf) => tf !== timeframeToRemove)
-    );
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTimeframe();
-    } else if (e.key === "Escape") {
-      setNewTimeframe("");
-      setIsAddingTimeframe(false);
-    }
-  };
+  function isValidTimeframe(newTimeframe: string): boolean {
+    return newTimeframe.trim()
+      ? timeframeOrder.includes(newTimeframe.trim() as Timeframe)
+      : true;
+  }
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -253,139 +203,218 @@ function RouteComponent() {
             </span>
           </div>
         </div>
-        <form className="w-full flex flex-col -space-y-1 py-2 font-mono text-xs">
-          <div className="flex justify-between items-center h-9">
-            <span className="text-muted font-light">Title</span>
-            <Input
-              {...form.register("title")}
-              className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
-              placeholder="Phoenix"
-            />
-          </div>
-          {form.formState.errors.title && (
-            <span className="text-red-400 text-[10px]">
-              {form.formState.errors.title.message}
-            </span>
-          )}
-
-          {/* Direction Buttons */}
-          <div className="flex justify-between items-center h-9">
-            <span className="text-muted font-light">Direction</span>
-            <div className="flex flex-row gap-1">
-              {directionOptions.map((option) => {
-                const isSelected = form.watch("direction") === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => form.setValue("direction", option.value)}
-                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
-                      isSelected
-                        ? option.color
-                        : "border-muted text-muted-foreground hover:border-muted-foreground/50"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Status Badges */}
-          <div className="flex justify-between items-center h-9">
-            <span className="text-muted font-light">Status</span>
-            <div className="flex flex-row gap-1.5">
-              {statusOptions.map((option) => {
-                const isSelected = form.watch("status") === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => form.setValue("status", option.value)}
-                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
-                      isSelected
-                        ? option.color
-                        : "border-muted text-muted-foreground hover:border-muted-foreground/50"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          {/* Timeframes */}
-          <div className="flex justify-between items-center h-9">
-            <span className="text-muted font-light">Timeframes</span>
-            <div className="flex flex-row gap-1">
-              {sortTimeframes(form.watch("timeframes")).map((timeframe) => (
-                <button
-                  key={timeframe}
-                  type="button"
-                  onClick={() => handleRemoveTimeframe(timeframe)}
-                  className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70"
-                  title="Click to remove"
-                >
-                  {timeframe}
-                </button>
-              ))}
-
-              {/* Add timeframe button/input */}
-              {isAddingTimeframe ? (
-                <Input
-                  value={newTimeframe}
-                  onChange={(e) => setNewTimeframe(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  onBlur={handleAddTimeframe}
-                  autoFocus
-                  className={`w-10 h-6 px-1 py-0.5 border font-mono text-xs rounded-sm bg-transparent !outline-none ${
-                    isValidTimeframe
-                      ? "border-muted text-muted-foreground"
-                      : "border-red-400/70 text-red-400"
-                  }`}
-                  placeholder="4h"
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsAddingTimeframe(true)}
-                  className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-muted-foreground/50 hover:text-muted-foreground/80"
-                  title="Add timeframe"
-                >
-                  +
-                </button>
-              )}
-            </div>
-          </div>
-          {/* Risk/Reward Input */}
-          <div className="flex justify-between items-center h-9">
-            <span className="text-muted font-light">Risk / Reward</span>
-            <Input
-              {...form.register("riskReward")}
-              className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
-              placeholder="3:2"
-            />
-          </div>
-          {form.formState.errors.riskReward && (
-            <div className="flex justify-end">
-              <span className="text-red-400 text-xs">
-                {form.formState.errors.riskReward.message}
-              </span>
-            </div>
-          )}
-        </form>
-        <Button
-          className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"
-          onClick={form.handleSubmit(onSubmit)}
-          disabled={isLoading}
+        <form
+          aria-disabled={isLoading}
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
         >
-          {isLoading
-            ? existingTradeSetup
-              ? "Updating..."
-              : "Creating..."
-            : "Proceed"}
-        </Button>
+          <fieldset
+            disabled={isLoading || isPending}
+            className="disabled:opacity-50 disabled:!cursor-default disabled:!pointer-events-none"
+          >
+            <form.Field
+              name="title"
+              children={(field) => (
+                <div className="flex justify-between items-center h-9">
+                  <label className="text-muted font-light" htmlFor={field.name}>
+                    Title
+                  </label>
+                  <input
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
+                    placeholder="Phoenix"
+                  />
+                </div>
+              )}
+            />
+
+            {/* Direction Buttons */}
+            <div className="flex justify-between items-center h-9">
+              <span className="text-muted font-light">Direction</span>
+
+              <form.Field
+                name="direction"
+                children={(field) => (
+                  <div className="flex flex-row gap-1">
+                    {directionOptions.map((option) => {
+                      const isSelected = field.state.value === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => field.handleChange(option.value)}
+                          className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                            isSelected
+                              ? option.color
+                              : "border-muted text-muted-foreground hover:border-muted-foreground/50"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              />
+            </div>
+
+            {/* Status Badges */}
+            <div className="flex justify-between items-center h-9">
+              <span className="text-muted font-light">Status</span>
+
+              <form.Field
+                name="status"
+                children={(field) => (
+                  <div className="flex flex-row gap-1.5">
+                    {statusOptions.map((option) => {
+                      const isSelected = field.state.value === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => field.handleChange(option.value)}
+                          className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                            isSelected
+                              ? option.color
+                              : "border-muted text-muted-foreground hover:border-muted-foreground/50"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              />
+            </div>
+
+            {/* Timeframes */}
+            <div className="flex justify-between items-center h-9">
+              <span className="text-muted font-light">Timeframes</span>
+
+              <form.Field
+                name="timeframes"
+                children={(field) => (
+                  <div className="flex flex-row gap-1">
+                    {sortTimeframes(field.state.value).map((timeframe) => (
+                      <button
+                        key={timeframe}
+                        type="button"
+                        onClick={() =>
+                          field.handleChange(
+                            field.state.value.filter((tf) => tf !== timeframe)
+                          )
+                        }
+                        className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70"
+                        title="Click to remove"
+                      >
+                        {timeframe}
+                      </button>
+                    ))}
+
+                    {/* Add timeframe button/input */}
+                    {isAddingTimeframe ? (
+                      <input
+                        value={newTimeframe}
+                        onChange={(e) => setNewTimeframe(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (
+                              newTimeframe.trim() !== "" &&
+                              !field.state.value.includes(newTimeframe)
+                            ) {
+                              field.handleChange([
+                                ...field.state.value,
+                                newTimeframe,
+                              ]);
+                            }
+                            setNewTimeframe("");
+                            setIsAddingTimeframe(false);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (
+                            newTimeframe.trim() !== "" &&
+                            !field.state.value.includes(newTimeframe)
+                          ) {
+                            field.handleChange([
+                              ...field.state.value,
+                              newTimeframe,
+                            ]);
+                          }
+                          setNewTimeframe("");
+                          setIsAddingTimeframe(false);
+                        }}
+                        autoFocus
+                        className={`w-10 h-6 px-1 py-0.5 border font-mono text-xs rounded-sm bg-transparent !outline-none ${
+                          isValidTimeframe(newTimeframe)
+                            ? "border-muted text-muted-foreground"
+                            : "border-red-400/70 text-red-400"
+                        }`}
+                        placeholder="4h"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingTimeframe(true)}
+                        className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-muted-foreground/50 hover:text-muted-foreground/80"
+                        title="Add timeframe"
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
+                )}
+              />
+            </div>
+
+            {/* Risk/Reward Input */}
+            <div className="flex justify-between items-center h-9">
+              <span className="text-muted font-light">Risk / Reward</span>
+
+              <form.Field
+                name="riskReward"
+                children={(field) => (
+                  <>
+                    <input
+                      value={field.state.value ?? ""}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
+                      placeholder="3:2"
+                    />
+                    {field.state.meta.errors.length > 0 && (
+                      <div className="flex justify-end">
+                        <span className="text-red-400 text-xs">
+                          {field.state.meta.errors.join(", ")}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"
+              disabled={isPending || form.state.isSubmitting}
+            >
+              {isPending || form.state.isSubmitting
+                ? existingTradeSetup
+                  ? "Updating..."
+                  : "Creating..."
+                : "Proceed"}
+            </Button>
+          </fieldset>
+        </form>
       </div>
     </div>
   );

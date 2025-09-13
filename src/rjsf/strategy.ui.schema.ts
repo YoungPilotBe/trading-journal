@@ -136,6 +136,18 @@ export const uiSchema: UiSchema = {
           children: ["VAH", "POC", "VAL"],
         },
       },
+      {
+        "ui:columns": {
+          className: "col-span-1 min-w-[150px] col-start-1",
+          children: ["wyckoff"],
+        },
+      },
+      {
+        "ui:columns": {
+          className: "col-span-1 min-w-[150px] col-start-2",
+          children: ["wyckoff_phase"],
+        },
+      },
     ],
   },
   market_structure: {
@@ -376,6 +388,22 @@ export const uiSchema: UiSchema = {
   VAL: {
     "ui:widget": "CheckboxWidget",
     "ui:title": "VAL",
+    "ui:options": {
+      indent: 2,
+      label: false,
+    },
+  },
+  wyckoff: {
+    "ui:widget": "CheckboxWidget",
+    "ui:title": "Wyckoff",
+    "ui:options": {
+      indent: 0,
+      label: false,
+    },
+  },
+  wyckoff_phase: {
+    "ui:widget": "RadioToggleBadge",
+    "ui:title": "Wyckoff Phase",
     "ui:options": {
       indent: 2,
       label: false,

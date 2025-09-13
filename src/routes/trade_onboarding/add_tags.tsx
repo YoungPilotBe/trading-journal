@@ -55,7 +55,7 @@ function RouteComponent() {
   return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Right-side form panel - similar to add_trade layout */}
-      <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] pointer-events-auto">
+      <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto ">
         <div className="flex flex-col items-start space-y-2 mt-2">
           <span className="text-white font-light font-mono">Tags</span>
           <EffectsProvider tradeSetup={tradeSetup}>
@@ -77,7 +77,7 @@ function RouteComponent() {
         </div>
 
         <Button
-          className="absolute bottom-0 right-0 duration-500 ease-out font-mono tracking-wide leading-3"
+          className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
           onClick={onSubmit}
           disabled={isPending}
         >

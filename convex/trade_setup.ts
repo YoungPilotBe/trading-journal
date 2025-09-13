@@ -90,12 +90,12 @@ export const getTradeSetup = query({
 export const getTradeSetupByImageId = query({
   args: { imageId: v.id("tradingview_images") },
   handler: async (ctx, args) => {
-    const tradeSetup = await ctx.db
+    const query = await ctx.db
       .query("trade_setups")
       .withIndex("by_image_id", (q) => q.eq("imageId", args.imageId))
       .first();
 
-    return tradeSetup;
+    return query;
   },
 });
 

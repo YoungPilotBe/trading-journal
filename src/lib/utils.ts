@@ -16,3 +16,7 @@ export function parseFilename(filename: string): ParsedFilename {
   const [asset, date, time, id] = filename.replace(/\.[^/.]+$/, "").split("_");
   return { asset, date, time, id };
 }
+
+export function wait(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}

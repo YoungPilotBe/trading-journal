@@ -1,3 +1,4 @@
+import DotGrid from "@/components/dot-grid";
 import { AnimatedImageLayout } from "@/components/layouts/AnimatedImageLayout";
 import { Button } from "@/components/ui/button";
 import { pageVariants } from "@/config/pageVariants";
@@ -40,7 +41,7 @@ function RouteComponent() {
     <div className="relative min-h-screen">
       {/* Background dot grid */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* <DotGrid
+        <DotGrid
           dotSize={3}
           gap={20}
           proximity={120}
@@ -51,7 +52,7 @@ function RouteComponent() {
           baseColor="#1c1917"
           activeColor="#ffffff"
           opacity={0.3}
-        /> */}
+        />
       </div>
 
       {/* Content overlay */}

@@ -37,6 +37,11 @@ export function getTagDisplayName(tagKey: string): string {
     obim_grabbed_liquidity: "OBIM Grabbed Liquidity",
     obim_tooth_liquidity: "OBIM Tooth Liquidity",
     obim_staircased: "OBIM Staircased",
+    wyckoff: "Wyckoff",
+    accumulation: "Accumulation",
+    distribution: "Accumulation",
+    re_accumulation: "Re-Accumulation",
+    re_distribution: "Re-Distribution",
   };
 
   return displayNames[tagKey] || tagKey;
@@ -50,6 +55,10 @@ export const schema: RJSFSchema = {
       default: false,
     },
     zone: {
+      type: "boolean",
+      default: false,
+    },
+    wyckoff: {
       type: "boolean",
       default: false,
     },
@@ -414,6 +423,32 @@ export const schema: RJSFSchema = {
           VAL: {
             type: "boolean",
             default: false,
+          },
+        },
+      },
+    },
+    {
+      if: {
+        properties: {
+          wyckoff: { const: true },
+        },
+      },
+      then: {
+        properties: {
+          wyckoff_phase: {
+            type: "string",
+            enum: [
+              "accumulation",
+              "distribution",
+              "re_accumulation",
+              "re_distribution",
+            ],
+            enumNames: [
+              "Accumulation",
+              "Distribution",
+              "Re-Accumulation",
+              "Re-Distribution",
+            ],
           },
         },
       },

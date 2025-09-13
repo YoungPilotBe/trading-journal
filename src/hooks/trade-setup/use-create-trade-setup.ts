@@ -1,9 +1,23 @@
 import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 import { api } from "../../../convex/_generated/api";
 
-export const useCreateTradeSetup = () => {
-  return useMutation({
-    mutationFn: useConvexMutation(api["trade_setup"].createTradeSetup),
+// Type of the mutation function from Convex
+type CreateTradeSetupFn = ReturnType<
+  typeof useConvexMutation<typeof api.trade_setup.createTradeSetup>
+>;
+
+// Infer input and output types
+type MutationFn = Parameters<CreateTradeSetupFn>[0]; // args to the mutation
+type MutationData = Awaited<ReturnType<CreateTradeSetupFn>>;
+
+export const useCreateTradeSetup = (
+  args?: UseMutationOptions<MutationData, unknown, MutationFn>
+) => {
+  const mutationFn = useConvexMutation(api.trade_setup.createTradeSetup);
+
+  return useMutation<MutationData, unknown, MutationFn>({
+    mutationFn,
+    ...args, // onSuccess, onError, etc.
   });
 };
