@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import React from "react";
@@ -62,30 +61,28 @@ const StatusIndicator: React.FC<StatusIndicatorProps> = ({
 
   // Wrap with tooltip when description exists and showDescription is false
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>{content}</TooltipTrigger>
-        <TooltipContent
-          side="right"
-          sideOffset={10}
-          className="bg-gradient-to-t from-background to-sideba text-gray-100"
-        >
-          <div className="flex items-center space-x-2  font-mono">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                isConnected ? "bg-emerald-400" : "bg-red-400"
-              }`}
-            />
-            <span className="text-[11px]">
-              {server} • {isConnected ? "Connected" : "Disconnected"}
-            </span>
-          </div>
-          {description && (
-            <p className="text-[10px] text-gray-400 mt-1">{description}</p>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger>{content}</TooltipTrigger>
+      <TooltipContent
+        side="right"
+        sideOffset={10}
+        className="bg-gradient-to-t from-background to-sideba text-gray-100"
+      >
+        <div className="flex items-center space-x-2  font-mono">
+          <div
+            className={`w-2 h-2 rounded-full ${
+              isConnected ? "bg-emerald-400" : "bg-red-400"
+            }`}
+          />
+          <span className="text-[11px]">
+            {server} • {isConnected ? "Connected" : "Disconnected"}
+          </span>
+        </div>
+        {description && (
+          <p className="text-[10px] text-gray-400 mt-1">{description}</p>
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

@@ -61,3 +61,24 @@ export const getAllTemplates = query({
     return await ctx.db.query("trade_templates").collect();
   },
 });
+
+// Delete a trade template
+export const deleteTemplate = mutation({
+  args: { id: v.id("trade_templates") },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing) {
+      throw new Error("Template not found");
+    }
+
+    // Delete associated drawing if it exists
+    if (existing.drawingId) {
+      await ctx.db.delete(existing.drawingId);
+    }
+
+    // Delete the template
+    await ctx.db.delete(args.id);
+
+    return { success: true };
+  },
+});

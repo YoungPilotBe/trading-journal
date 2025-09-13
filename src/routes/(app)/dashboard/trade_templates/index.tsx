@@ -1,10 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useDocumentTitle } from "@/hooks/document/useDocumentTitle";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
+import { useDeleteTradeTemplate } from "@/hooks/trade_templates/delete_trade_template";
 import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
+import { TradeTemplate } from "@/types/trade-template";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { CalendarIcon, ImageIcon, PlusIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  ImageIcon,
+  MoreVerticalIcon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/(app)/dashboard/trade_templates/")({
   component: RouteComponent,
@@ -76,7 +92,7 @@ function RouteComponent() {
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           {!templates || templates.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 flex flex-col items-center justify-center">
               <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
                 <ImageIcon className="w-12 h-12 text-muted-foreground" />
               </div>
@@ -105,62 +121,62 @@ function RouteComponent() {
   );
 }
 
-function TemplateCard({ template }: { template: any }) {
+function TemplateCard({ template }: { template: TradeTemplate }) {
   const { data: drawingData } = useGetDrawing({
     id: template.drawingId,
   });
+  const { mutateAsync: deleteTemplate, isPending: isDeleting } =
+    useDeleteTradeTemplate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Extract title from document
-  const getDocumentTitle = (document: unknown) => {
-    if (!document || !Array.isArray(document)) return "Untitled";
-
-    // Look for the first heading block
-    const headingBlock = document.find(
-      (block: unknown) =>
-        typeof block === "object" &&
-        block !== null &&
-        "type" in block &&
-        (block as { type: string }).type === "heading"
-    );
-
-    if (
-      headingBlock &&
-      typeof headingBlock === "object" &&
-      headingBlock !== null &&
-      "content" in headingBlock &&
-      Array.isArray((headingBlock as { content: unknown }).content)
-    ) {
-      const content = (headingBlock as { content: unknown[] }).content;
-      const textContent = content
-        .map((item: unknown) =>
-          typeof item === "object" && item !== null && "text" in item
-            ? (item as { text: string }).text || ""
-            : ""
-        )
-        .join("")
-        .trim();
-      return textContent || "Untitled";
-    }
-
-    return "Untitled";
-  };
-
-  const title = getDocumentTitle(template.document);
+  const title = useDocumentTitle(template.document);
   const updatedAt = new Date(template.updatedAt);
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    await deleteTemplate({ id: template._id });
+  };
+
   return (
-    <Link
-      to="/dashboard/trade_templates/trade_template"
-      search={{ templateId: template._id }}
-      className="block"
-    >
-      <Card className="group hover:shadow-md transition-shadow duration-200 h-full">
+    <Card className="group hover:shadow-md transition-shadow duration-200 h-fit py-0 relative">
+      {/* 3-dot menu */}
+      <div className="absolute top-2 right-2 z-10">
+        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+          <DropdownMenuTrigger
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-white/80"
+          >
+            <MoreVerticalIcon className="w-4 h-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <TrashIcon className="w-4 h-4 mr-2" />
+              {isDeleting ? "Deleting..." : "Delete"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <Link
+        to="/dashboard/trade_templates/trade_template"
+        search={{ templateId: template._id }}
+        className="block"
+      >
         <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
           {drawingData?.url ? (
             <img
               src={drawingData.url}
               alt={title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -168,16 +184,16 @@ function TemplateCard({ template }: { template: any }) {
             </div>
           )}
         </div>
-        <CardHeader className="pb-2">
+        <CardHeader className="py-3">
           <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="py-3">
           <div className="flex items-center text-sm text-muted-foreground">
             <CalendarIcon className="w-4 h-4 mr-1" />
             {formatDistanceToNow(updatedAt, { addSuffix: true })}
           </div>
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+    </Card>
   );
 }

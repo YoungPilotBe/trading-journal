@@ -7,10 +7,15 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/shadcn/style.css";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { LoaderCircle, PlusIcon } from "lucide-react";
+import { LoaderCircle, PlusIcon, TrashIcon } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 
 // Or, you can use ariakit, shadcn, etc.
@@ -18,9 +23,11 @@ import { BlockNoteView } from "@blocknote/mantine";
 // Default styles for the mantine editor
 import "@blocknote/mantine/style.css";
 // Include the included Inter font
+import { useDocumentTitle } from "@/hooks/document/useDocumentTitle";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUploadDrawing } from "@/hooks/drawings/useUploadDrawing";
 import { useCreateTradeTemplate } from "@/hooks/trade_templates/create_trade_template";
+import { useDeleteTradeTemplate } from "@/hooks/trade_templates/delete_trade_template";
 import { useGetTradeTemplate } from "@/hooks/trade_templates/get_trade_template";
 import { useUpdateTradeTemplate } from "@/hooks/trade_templates/update_trade_template";
 import NavbarPortal from "@/portals/navbar_portal";
@@ -76,6 +83,16 @@ function RouteComponent() {
   const { mutateAsync: uploadDrawing, isPending: isUploading } =
     useUploadDrawing();
 
+  const { mutateAsync: deleteTemplate, isPending: isDeleting } =
+    useDeleteTradeTemplate({
+      onSuccess: () => {
+        navigate({
+          to: "/dashboard/trade_templates",
+          from: "/dashboard/trade_templates",
+        });
+      },
+    });
+
   // Get drawing data if template has a drawing
   const { data: drawingData } = useGetDrawing({
     id: existingTemplate?.drawingId,
@@ -84,41 +101,6 @@ function RouteComponent() {
   const autoSave = useDebouncedCallback(() => {
     handleSave();
   }, 1000);
-
-  // Extract title from document
-  const getDocumentTitle = (document: unknown) => {
-    if (!document || !Array.isArray(document)) return "Untitled";
-
-    // Look for the first heading block
-    const headingBlock = document.find(
-      (block: unknown) =>
-        typeof block === "object" &&
-        block !== null &&
-        "type" in block &&
-        (block as { type: string }).type === "heading"
-    );
-
-    if (
-      headingBlock &&
-      typeof headingBlock === "object" &&
-      headingBlock !== null &&
-      "content" in headingBlock &&
-      Array.isArray((headingBlock as { content: unknown }).content)
-    ) {
-      const content = (headingBlock as { content: unknown[] }).content;
-      const textContent = content
-        .map((item: unknown) =>
-          typeof item === "object" && item !== null && "text" in item
-            ? (item as { text: string }).text || ""
-            : ""
-        )
-        .join("")
-        .trim();
-      return textContent || "Untitled";
-    }
-
-    return "Untitled";
-  };
 
   const initialContent = useMemo(() => {
     return (
@@ -139,14 +121,15 @@ function RouteComponent() {
     },
   });
 
-  const documentTitle = useMemo(() => {
-    try {
-      return existingTemplate?.document[0]?.content[0]?.text ?? "Untitled";
-    } catch (error) {
-      console.warn("Error extracting document title:", error);
-      return "Untitled";
-    }
-  }, [existingTemplate?.document]);
+  const title = useDocumentTitle(existingTemplate?.document);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    if (!existingTemplate?._id) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    await deleteTemplate({ id: existingTemplate?._id });
+  };
 
   async function handleSave(drawingId?: Id<"drawings">) {
     if (!templateId) {
@@ -225,7 +208,7 @@ function RouteComponent() {
         )}
       >
         {/* Breadcrumbs */}
-        <div className="mb-6">
+        <div className="mb-6 relative">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -242,23 +225,40 @@ function RouteComponent() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>{documentTitle.toString()}</BreadcrumbPage>
+                <BreadcrumbPage>{title.toString()}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+
+          <div className="top-1/2 absolute -translate-y-1/2 right-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  variant={"ghost"}
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete template</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
 
         {/* Header Section */}
         <div className="xl:rounded-t-xl bg-card flex-1 flex flex-col">
           <div className="mb-8 space-y-4 flex-shrink-0">
-            <div className="h-[300px] w-full mx-auto relative overflow-hidden border">
+            <div className="h-[300px] w-full mx-auto relative overflow-hidden">
               {drawingData?.url ? (
                 <>
                   {/* Display the uploaded image */}
                   <img
                     src={drawingData.url}
                     alt="Trade template drawing"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain py-4"
                   />
                   {/* Button overlay - always visible on top */}
                   <div className="absolute top-2 right-2">
@@ -291,7 +291,7 @@ function RouteComponent() {
             </div>
           </div>
           {/* Description Editor */}
-          <div className="mb-8 flex-1 overflow-y-auto @[600px]:max-h-[calc(100cqh-400px)] max-h-[calc(100vh-400px)]">
+          <div className="bg-muted mb-8 flex-1 overflow-y-auto @[600px]:max-h-[calc(100cqh-400px)] max-h-[calc(100vh-400px)] pt-4">
             <BlockNoteView
               editable
               editor={editor}
