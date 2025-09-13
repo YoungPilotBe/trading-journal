@@ -22,7 +22,8 @@ function LayoutComponent() {
                   Trading Journal
                 </h1>
               </div>
-              <div className="flex items-center space-x-8">
+              <div className="flex flex-row items-center space-x-8">
+                <div id="navbar-items" />
                 <StatusIndicator
                   isConnected={isWebSocketConnected}
                   server="Convex"
