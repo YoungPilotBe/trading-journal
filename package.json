@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "generate-routes": "tsr generate",
+    "watch-routes": "tsr watch",
     "dev": "vite",
     "convex:pull-external-types": "npx convex-helpers ts-api-spec --output-file convex/_external_types/tradingview_image_alert_types",
     "build": "tsc && vite build && electron-builder",
@@ -55,6 +57,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@tanstack/router-cli": "^1.131.41",
     "@tanstack/router-plugin": "^1.131.36",
     "@types/culori": "^4.0.1",
     "@types/lodash": "^4.17.20",

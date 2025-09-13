@@ -2,7 +2,7 @@ import StatusIndicator from "@/components/status-indicator";
 import GlobalHooks from "@/hooks/globalHooks";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useConvexConnectionState } from "convex/react";
-export const Route = createFileRoute("/_layout")({
+export const Route = createFileRoute("/(app)/dashboard")({
   component: LayoutComponent,
 });
 
@@ -15,7 +15,7 @@ function LayoutComponent() {
       <div className="min-h-screen">
         {/* Navigation Bar */}
         <nav className="shadow-sm border-b border-muted">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
                 <h1 className="text-xl font-semibold text-primary">
@@ -34,18 +34,9 @@ function LayoutComponent() {
         </nav>
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <main className="mx-5 py-6 px-4 sm:px-6 lg:px-8">
           <Outlet />
         </main>
-
-        {/* Footer */}
-        <footer className="bg-white border-t mt-auto">
-          <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-            <p className="text-center text-sm text-gray-500">
-              © 2024 Trading Journal. Built with TanStack Router.
-            </p>
-          </div>
-        </footer>
       </div>
     </>
   );

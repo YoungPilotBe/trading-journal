@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as drawings from "../drawings.js";
 import type * as trade_setup from "../trade_setup.js";
 import type * as trade_template from "../trade_template.js";
 import type * as tradingview_images from "../tradingview_images.js";
@@ -26,6 +27,7 @@ import type * as tradingview_images from "../tradingview_images.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  drawings: typeof drawings;
   trade_setup: typeof trade_setup;
   trade_template: typeof trade_template;
   tradingview_images: typeof tradingview_images;

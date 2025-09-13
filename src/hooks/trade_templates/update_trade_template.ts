@@ -3,7 +3,7 @@ import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 import { api } from "../../../convex/_generated/api";
 
 // Type of the mutation function from Convex
-type UpdateTradeTemplate = ReturnType<
+export type UpdateTradeTemplate = ReturnType<
   typeof useConvexMutation<typeof api.trade_template.updateTemplate>
 >;
 
