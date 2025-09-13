@@ -31,8 +31,7 @@ export default defineSchema({
     .index("by_trade_template", ["tradeTemplateId"]),
 
   trade_templates: defineTable({
-    title: v.string(),
-    description: v.string(),
+    document: v.any(),
 
     // One-to-one relationship with drawings
     drawingId: v.optional(v.id("drawings")),
