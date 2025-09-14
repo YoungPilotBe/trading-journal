@@ -88,7 +88,7 @@ function RouteComponent() {
                   </div>
                 ) : (
                   filteredTemplates.map((template) => (
-                    <CommandItem key={template._id} asChild>
+                    <CommandItem key={template._id}>
                       <TemplateCard template={template} />
                     </CommandItem>
                   ))
