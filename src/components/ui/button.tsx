@@ -21,6 +21,8 @@ const buttonVariants = cva(
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
         giant: "text-primary font-semibold bg-background border",
+        badge:
+          "cursor-default rounded-none text-xs font-medium bg-gradient-to-t from-background to-sidebar border-muted text-gray-100 shadow-sm hover:from-muted hover:to-accent transition-all duration-200 border-muted border",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -28,6 +30,7 @@ const buttonVariants = cva(
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "size-9",
         giant: "h-40",
+        badge: "h-auto px-2 py-1 gap-2",
       },
     },
     defaultVariants: {

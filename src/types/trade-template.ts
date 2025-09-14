@@ -3,6 +3,7 @@ import { Id } from "convex/_generated/dataModel";
 export interface TradeTemplate {
   _id: Id<"trade_templates">;
   document: any; // BlockNote document structure
+  title: string;
   drawingId?: Id<"drawings">;
   imageIds: Id<"tradingview_images">[];
   createdAt: number;

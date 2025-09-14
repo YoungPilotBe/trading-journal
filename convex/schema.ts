@@ -33,6 +33,8 @@ export default defineSchema({
   trade_templates: defineTable({
     document: v.any(),
 
+    title: v.string(),
+
     // One-to-one relationship with drawings
     drawingId: v.optional(v.id("drawings")),
 

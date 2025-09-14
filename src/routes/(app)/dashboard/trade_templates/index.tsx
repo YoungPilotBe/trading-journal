@@ -6,7 +6,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useDocumentTitle } from "@/hooks/document/useDocumentTitle";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useDeleteTradeTemplate } from "@/hooks/trade_templates/delete_trade_template";
 import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
@@ -129,7 +128,6 @@ function TemplateCard({ template }: { template: TradeTemplate }) {
     useDeleteTradeTemplate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const title = useDocumentTitle(template.document);
   const updatedAt = new Date(template.updatedAt);
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -175,7 +173,7 @@ function TemplateCard({ template }: { template: TradeTemplate }) {
           {drawingData?.url ? (
             <img
               src={drawingData.url}
-              alt={title}
+              alt={template.title}
               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
             />
           ) : (
@@ -185,7 +183,9 @@ function TemplateCard({ template }: { template: TradeTemplate }) {
           )}
         </div>
         <CardHeader className="py-3">
-          <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
+          <CardTitle className="text-lg line-clamp-2">
+            {template.title}
+          </CardTitle>
         </CardHeader>
         <CardContent className="py-3">
           <div className="flex items-center text-sm text-muted-foreground">

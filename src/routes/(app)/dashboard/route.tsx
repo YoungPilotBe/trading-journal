@@ -1,6 +1,6 @@
 import StatusIndicator from "@/components/status-indicator";
 import GlobalHooks from "@/hooks/globalHooks";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useConvexConnectionState } from "convex/react";
 export const Route = createFileRoute("/(app)/dashboard")({
   component: LayoutComponent,
@@ -18,9 +18,11 @@ function LayoutComponent() {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
-                <h1 className="text-xl font-semibold text-primary">
-                  Trading Journal
-                </h1>
+                <Link to="/dashboard">
+                  <h1 className="text-xl font-semibold text-primary">
+                    Trading Journal
+                  </h1>
+                </Link>
               </div>
               <div className="flex flex-row items-center space-x-8">
                 <div id="navbar-items" />
@@ -35,7 +37,7 @@ function LayoutComponent() {
         </nav>
 
         {/* Main Content */}
-        <main className="mx-5 py-6 px-4 sm:px-6 lg:px-8">
+        <main className="mx-5 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <Outlet />
         </main>
       </div>

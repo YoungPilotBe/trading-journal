@@ -123,25 +123,25 @@ export const getTradeSetups = query({
       .order("desc");
 
     // Apply filters
-    if (args.status) {
+    if (args.status)
       query = query.filter((q) => q.eq(q.field("status"), args.status));
-    }
-    if (args.asset) {
+    if (args.asset)
       query = query.filter((q) => q.eq(q.field("asset"), args.asset));
-    }
-    if (args.direction) {
+    if (args.direction)
       query = query.filter((q) => q.eq(q.field("direction"), args.direction));
-    }
 
-    // Collect all results first, then apply limit if needed
     const results = await query.collect();
+    const limitedResults = args.limit ? results.slice(0, args.limit) : results;
 
-    // Apply limit if specified
-    if (args.limit) {
-      return results.slice(0, args.limit);
-    }
-
-    return results;
+    // Enrich with trade template data
+    return await Promise.all(
+      limitedResults.map(async (setup) => ({
+        ...setup,
+        tradeTemplateData: setup.trade_template
+          ? await ctx.db.get(setup.trade_template)
+          : null,
+      }))
+    );
   },
 });
 

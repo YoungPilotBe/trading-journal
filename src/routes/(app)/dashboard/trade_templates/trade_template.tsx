@@ -15,7 +15,7 @@ import {
 import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/shadcn/style.css";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { LoaderCircle, PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 
 // Or, you can use ariakit, shadcn, etc.
@@ -23,7 +23,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 // Default styles for the mantine editor
 import "@blocknote/mantine/style.css";
 // Include the included Inter font
-import { useDocumentTitle } from "@/hooks/document/useDocumentTitle";
+import AutoSavePortal from "@/components/portals/auto-save-portal";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUploadDrawing } from "@/hooks/drawings/useUploadDrawing";
 import { useCreateTradeTemplate } from "@/hooks/trade_templates/create_trade_template";
@@ -121,7 +121,7 @@ function RouteComponent() {
     },
   });
 
-  const title = useDocumentTitle(existingTemplate?.document);
+  // const title = useDocumentTitle(existingTemplate?.document);
 
   const handleDelete = async (e: React.MouseEvent) => {
     if (!existingTemplate?._id) return;
@@ -190,15 +190,7 @@ function RouteComponent() {
       <NavbarPortal
         target="navbar-items"
         children={
-          <div
-            className={clsx(
-              "hidden flex-row gap-3 text-muted-foreground items-center starting:opacity-0 transition-opacity",
-              (isUpdatingTemplate || isCreatingTemplate) && "!flex"
-            )}
-          >
-            <LoaderCircle className="size-3 animate-spin" />
-            <span className="text-xs font-mono ">Auto saving</span>
-          </div>
+          <AutoSavePortal isSaving={isUpdatingTemplate || isCreatingTemplate} />
         }
       />
       <div
@@ -225,7 +217,9 @@ function RouteComponent() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>{title.toString()}</BreadcrumbPage>
+                <BreadcrumbPage>
+                  {existingTemplate?.title.toString()}
+                </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -291,7 +285,7 @@ function RouteComponent() {
             </div>
           </div>
           {/* Description Editor */}
-          <div className="bg-muted mb-8 flex-1 overflow-y-auto @[600px]:max-h-[calc(100cqh-400px)] max-h-[calc(100vh-400px)] pt-4">
+          <div className="bg-muted mb-8 pt-4">
             <BlockNoteView
               editable
               editor={editor}
@@ -316,7 +310,6 @@ function RouteComponent() {
               }}
               style={{
                 backgroundColor: "transparent",
-                minHeight: "300px",
               }}
             />
           </div>

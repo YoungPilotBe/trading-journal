@@ -10,9 +10,11 @@ export const createTemplate = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const title = args.document?.[0]?.content?.[0]?.text ?? "Untitled";
 
     return await ctx.db.insert("trade_templates", {
       document: args.document,
+      title,
       drawingId: args.drawingId,
       imageIds: args.imageIds || [],
       createdAt: now,
@@ -31,6 +33,7 @@ export const updateTemplate = mutation({
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
+    const title = args.document?.[0]?.content?.[0]?.text ?? "Untitled";
 
     // Get the existing template to preserve fields not being updated
     const existing = await ctx.db.get(id);
@@ -40,6 +43,7 @@ export const updateTemplate = mutation({
 
     return await ctx.db.patch(id, {
       ...updates,
+      title,
       updatedAt: Date.now(),
     });
   },

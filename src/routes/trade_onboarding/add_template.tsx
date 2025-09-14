@@ -6,10 +6,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useDocumentTitle } from "@/hooks/document/useDocumentTitle";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
+import { TradeTemplate } from "@/types/trade-template";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
@@ -17,15 +17,6 @@ import { formatDistanceToNow } from "date-fns";
 import { CalendarIcon, ImageIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import z from "zod";
-// Template type from Convex query
-type Template = {
-  _id: string;
-  document: unknown;
-  drawingId?: string;
-  imageIds: string[];
-  createdAt: number;
-  updatedAt: number;
-};
 
 const searchSchema = z.object({
   tradeSetupId: z.string(),
@@ -102,7 +93,7 @@ function RouteComponent() {
   );
 }
 
-function TemplateCard({ template }: { template: Template }) {
+function TemplateCard({ template }: { template: TradeTemplate }) {
   const { data: drawingData } = useGetDrawing({
     id: template.drawingId as Id<"drawings">,
   });
@@ -122,7 +113,6 @@ function TemplateCard({ template }: { template: Template }) {
     });
   }
 
-  const title = useDocumentTitle(template.document);
   const updatedAt = new Date(template.updatedAt);
 
   return (
@@ -138,7 +128,7 @@ function TemplateCard({ template }: { template: Template }) {
         {drawingData?.url ? (
           <img
             src={drawingData.url}
-            alt={title}
+            alt={template.title}
             className="w-full h-full object-contain"
           />
         ) : (
@@ -148,7 +138,9 @@ function TemplateCard({ template }: { template: Template }) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-sm line-clamp-1 mb-1">{title}</h3>
+        <h3 className="font-medium text-sm line-clamp-1 mb-1">
+          {template.title}
+        </h3>
         <div className="flex items-center text-xs text-muted-foreground">
           <CalendarIcon className="w-3 h-3 mr-1" />
           <span>{formatDistanceToNow(updatedAt, { addSuffix: true })}</span>
