@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -12,12 +13,23 @@ import { useGetTradeSetups } from "@/hooks/trade-setup/use-get-trade-setups";
 import { useGetUniqueAssets } from "@/hooks/trade-setup/use-get-unique-assets";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { Link } from "@tanstack/react-router";
-import { Id } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
+import { X } from "lucide-react";
 import { useState } from "react";
 const TradeSetupHeader = () => {
   const [selectedAsset, setSelectedAsset] = useState<string>("all");
+  const [selectedDirection, setSelectedDirection] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"createdAt" | "updatedAt">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  const clearAllFilters = () => {
+    setSelectedAsset("all");
+    setSelectedDirection("all");
+    setSelectedStatus("all");
+    setSortBy("createdAt");
+    setSortOrder("desc");
+  };
 
   const { data: uniqueAssets } = useGetUniqueAssets();
   const { data, isLoading } = useGetTradeSetups({
@@ -25,15 +37,26 @@ const TradeSetupHeader = () => {
     asset: selectedAsset === "all" ? undefined : selectedAsset,
     sortBy,
     sortOrder,
+    direction:
+      selectedDirection === "all"
+        ? undefined
+        : (selectedDirection as Doc<"trade_setups">["direction"]),
+    status:
+      selectedStatus === "all"
+        ? undefined
+        : (selectedStatus as Doc<"trade_setups">["status"]),
   });
 
   if (isLoading) {
     return (
       <div className="w-full space-y-4">
         {/* Controls skeleton */}
-        <div className="flex gap-4">
-          <div className="w-40 h-10 bg-muted/20 rounded animate-pulse" />
-          <div className="w-40 h-10 bg-muted/20 rounded animate-pulse" />
+        <div className="flex gap-4 items-center">
+          <div className="w-40 h-7 bg-muted/20 rounded animate-pulse" />
+          <div className="w-32 h-7 bg-muted/20 rounded animate-pulse" />
+          <div className="w-36 h-7 bg-muted/20 rounded animate-pulse" />
+          <div className="w-40 h-7 bg-muted/20 rounded animate-pulse" />
+          <div className="w-8 h-7 bg-muted/20 rounded animate-pulse" />
         </div>
         {/* Cards skeleton */}
         <div className="w-full grid grid-cols-4 gap-4">
@@ -52,7 +75,7 @@ const TradeSetupHeader = () => {
       {/* Controls */}
       <div className="flex gap-4 items-center">
         <Select value={selectedAsset} onValueChange={setSelectedAsset}>
-          <SelectTrigger className="w-40" variant="badge">
+          <SelectTrigger className="w-40" variant="badge" size="small">
             <SelectValue placeholder="Filter by asset" />
           </SelectTrigger>
           <SelectContent>
@@ -60,6 +83,31 @@ const TradeSetupHeader = () => {
             {uniqueAssets?.map((asset) => (
               <SelectItem key={asset} value={asset}>
                 {asset}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedDirection} onValueChange={setSelectedDirection}>
+          <SelectTrigger className="w-32" variant="badge" size="small">
+            <SelectValue placeholder="Direction" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Long / Short</SelectItem>
+            <SelectItem value="long">Long</SelectItem>
+            <SelectItem value="short">Short</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <SelectTrigger className="w-36" variant="badge" size="small">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            {statusOptions.map((status) => (
+              <SelectItem key={status.value} value={status.value}>
+                {status.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -76,7 +124,7 @@ const TradeSetupHeader = () => {
             setSortOrder(newSortOrder);
           }}
         >
-          <SelectTrigger className="w-40" variant="badge">
+          <SelectTrigger className="w-40" variant="badge" size="small">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
@@ -86,12 +134,27 @@ const TradeSetupHeader = () => {
             <SelectItem value="updatedAt-asc">Least Updated</SelectItem>
           </SelectContent>
         </Select>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={clearAllFilters}
+          className="h-7 w-7 shrink-0"
+          title="Clear all filters"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Cards */}
       <div className="w-full grid grid-cols-4 gap-4">
         {data?.map((setup) => (
-          <Link key={setup._id} to="/" className="group">
+          <Link
+            key={setup._id}
+            to="/dashboard/setup"
+            search={{ tradeSetupId: setup._id }}
+            className="group"
+          >
             <TradeSetupCard setup={setup} />
           </Link>
         ))}

@@ -20,6 +20,7 @@ import { Route as Trade_onboardingAdd_templateRouteImport } from './routes/trade
 import { Route as Trade_onboardingAdd_tagsRouteImport } from './routes/trade_onboarding/add_tags'
 import { Route as appDashboardRouteRouteImport } from './routes/(app)/dashboard/route'
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
+import { Route as appDashboardSetupRouteRouteImport } from './routes/(app)/dashboard/setup/route'
 import { Route as appDashboardTrade_templatesIndexRouteImport } from './routes/(app)/dashboard/trade_templates/index'
 import { Route as appDashboardTrade_templatesTrade_templateRouteImport } from './routes/(app)/dashboard/trade_templates/trade_template'
 
@@ -83,6 +84,11 @@ const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => appDashboardRouteRoute,
 } as any)
+const appDashboardSetupRouteRoute = appDashboardSetupRouteRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => appDashboardRouteRoute,
+} as any)
 const appDashboardTrade_templatesIndexRoute =
   appDashboardTrade_templatesIndexRouteImport.update({
     id: '/trade_templates/',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/trade_onboarding/add_timeframes': typeof Trade_onboardingAdd_timeframesRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
+  '/dashboard/setup': typeof appDashboardSetupRouteRoute
   '/dashboard/': typeof appDashboardIndexRoute
   '/dashboard/trade_templates/trade_template': typeof appDashboardTrade_templatesTrade_templateRoute
   '/dashboard/trade_templates': typeof appDashboardTrade_templatesIndexRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/trade_onboarding/add_timeframes': typeof Trade_onboardingAdd_timeframesRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
+  '/dashboard/setup': typeof appDashboardSetupRouteRoute
   '/dashboard': typeof appDashboardIndexRoute
   '/dashboard/trade_templates/trade_template': typeof appDashboardTrade_templatesTrade_templateRoute
   '/dashboard/trade_templates': typeof appDashboardTrade_templatesIndexRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/trade_onboarding/add_timeframes': typeof Trade_onboardingAdd_timeframesRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
+  '/(app)/dashboard/setup': typeof appDashboardSetupRouteRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
   '/(app)/dashboard/trade_templates/trade_template': typeof appDashboardTrade_templatesTrade_templateRoute
   '/(app)/dashboard/trade_templates/': typeof appDashboardTrade_templatesIndexRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_timeframes'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
+    | '/dashboard/setup'
     | '/dashboard/'
     | '/dashboard/trade_templates/trade_template'
     | '/dashboard/trade_templates'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_timeframes'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
+    | '/dashboard/setup'
     | '/dashboard'
     | '/dashboard/trade_templates/trade_template'
     | '/dashboard/trade_templates'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_timeframes'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
+    | '/(app)/dashboard/setup'
     | '/(app)/dashboard/'
     | '/(app)/dashboard/trade_templates/trade_template'
     | '/(app)/dashboard/trade_templates/'
@@ -275,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardIndexRouteImport
       parentRoute: typeof appDashboardRouteRoute
     }
+    '/(app)/dashboard/setup': {
+      id: '/(app)/dashboard/setup'
+      path: '/setup'
+      fullPath: '/dashboard/setup'
+      preLoaderRoute: typeof appDashboardSetupRouteRouteImport
+      parentRoute: typeof appDashboardRouteRoute
+    }
     '/(app)/dashboard/trade_templates/': {
       id: '/(app)/dashboard/trade_templates/'
       path: '/trade_templates'
@@ -314,12 +333,14 @@ const Trade_onboardingRouteRouteWithChildren =
   )
 
 interface appDashboardRouteRouteChildren {
+  appDashboardSetupRouteRoute: typeof appDashboardSetupRouteRoute
   appDashboardIndexRoute: typeof appDashboardIndexRoute
   appDashboardTrade_templatesTrade_templateRoute: typeof appDashboardTrade_templatesTrade_templateRoute
   appDashboardTrade_templatesIndexRoute: typeof appDashboardTrade_templatesIndexRoute
 }
 
 const appDashboardRouteRouteChildren: appDashboardRouteRouteChildren = {
+  appDashboardSetupRouteRoute: appDashboardSetupRouteRoute,
   appDashboardIndexRoute: appDashboardIndexRoute,
   appDashboardTrade_templatesTrade_templateRoute:
     appDashboardTrade_templatesTrade_templateRoute,

@@ -5,6 +5,7 @@ import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup"
 import { useGetTradeSetupByImageId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
+import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
@@ -14,31 +15,6 @@ import { z } from "zod";
 
 const searchSchema = z.object({
   imageId: z.string(),
-});
-
-// Form schema for the trade
-const formSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(100, "Title must be less than 100 characters"),
-  status: z.enum(["idea", "watching", "executed", "closed", "reviewed"]),
-  direction: z.enum(["long", "short"]),
-  riskReward: z
-    .union([z.string(), z.literal("")]) // accept empty string
-    .refine((value) => {
-      if (!value || value.trim() === "") return true;
-      const regex = /^\d{1,2}(\.\d)?:\d{1,2}(\.\d)?$/;
-      return regex.test(value.trim());
-    }, "Risk/reward must be in format like '5:3' or '3.1:2' (max 1 decimal place)"),
-  timeframes: z.array(
-    z
-      .string()
-      .refine(
-        (tf) => timeframeOrder.includes(tf as Timeframe),
-        "Invalid timeframe. Must be one of: 1m, 2m, 3m, 5m, 6m, 10m, 12m, 15m, 20m, 24m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 18h, D, 2D, 3D, 4D, 5D, 6D, W, 2W, M"
-      )
-  ),
 });
 
 const directionOptions = [
@@ -117,7 +93,7 @@ function RouteComponent() {
   // Initialize form with react-hook-form - now with proper default values
   const form = useForm({
     validators: {
-      onSubmit: formSchema,
+      onSubmit: addTradeSetupSchema,
     },
     defaultValues: {
       title: existingTradeSetup?.title || "",
@@ -157,19 +133,19 @@ function RouteComponent() {
 
           {/* Asset (read-only) */}
           <div className="flex justify-between items-center h-9">
-            <span className="text-muted font-light">Asset</span>
+            <span className="text-xs text-muted">Asset</span>
             <span className="text-muted-foreground">{data?.asset}</span>
           </div>
 
           {/* Timeframe */}
           <div className="flex justify-between items-center h-9">
-            <span className="text-muted font-light">Timeframe</span>
+            <span className="text-xs text-muted">Timeframe</span>
             <span className="text-muted-foreground">4H (placeholder)</span>
           </div>
 
           {/* Current Time */}
           <div className="flex justify-between items-center h-9">
-            <span className="text-muted font-light">Creation Time</span>
+            <span className="text-xs text-muted">Creation Time</span>
             <span className="text-muted-foreground">
               {data?._creationTime &&
                 format(new Date(data._creationTime), "HH:mm")}
@@ -177,6 +153,7 @@ function RouteComponent() {
           </div>
         </div>
         <form
+          className="font-mono"
           aria-disabled={isLoading}
           onSubmit={(e) => {
             e.preventDefault();
@@ -192,7 +169,7 @@ function RouteComponent() {
               name="title"
               children={(field) => (
                 <div className="flex justify-between items-center h-9">
-                  <label className="text-muted font-light" htmlFor={field.name}>
+                  <label className="text-xs text-muted" htmlFor={field.name}>
                     Title
                   </label>
                   <input
@@ -210,7 +187,7 @@ function RouteComponent() {
 
             {/* Direction Buttons */}
             <div className="flex justify-between items-center h-9">
-              <span className="text-muted font-light">Direction</span>
+              <span className="text-xs text-muted">Direction</span>
 
               <form.Field
                 name="direction"
@@ -240,7 +217,7 @@ function RouteComponent() {
 
             {/* Status Badges */}
             <div className="flex justify-between items-center h-9">
-              <span className="text-muted font-light">Status</span>
+              <span className="text-xs text-muted">Status</span>
 
               <form.Field
                 name="status"
@@ -270,7 +247,7 @@ function RouteComponent() {
 
             {/* Timeframes */}
             <div className="flex justify-between items-center h-9">
-              <span className="text-muted font-light">Timeframes</span>
+              <span className="text-xs text-muted">Timeframes</span>
 
               <form.Field
                 name="timeframes"
@@ -351,7 +328,7 @@ function RouteComponent() {
 
             {/* Risk/Reward Input */}
             <div className="flex justify-between items-center h-9">
-              <span className="text-muted font-light">Risk / Reward</span>
+              <span className="text-xs text-muted">Risk / Reward</span>
 
               <form.Field
                 name="riskReward"

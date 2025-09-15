@@ -29,7 +29,7 @@ function SelectTrigger({
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default" | "badge";
+  size?: "small" | "default" | "badge";
   variant?: "default" | "badge";
 }) {
   return (
@@ -38,7 +38,7 @@ function SelectTrigger({
       data-size={size}
       data-variant={variant}
       className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=small]:h-7 data-[size=small]:px-2 data-[size=small]:text-xs *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 font-mono",
         // Badge variant styling - almost identical to button badge variant
         variant === "badge" &&
           "cursor-default rounded-none text-xs font-medium bg-gradient-to-t from-background to-sidebar border-muted text-gray-100 shadow-sm hover:from-muted hover:to-accent transition-all duration-200 border-muted border data-[size=badge]:h-auto data-[size=badge]:px-2 data-[size=badge]:py-1 data-[size=badge]:gap-2",
@@ -49,10 +49,7 @@ function SelectTrigger({
       {children}
       <SelectPrimitive.Icon asChild>
         <ChevronDownIcon
-          className={cn(
-            "opacity-50",
-            variant === "badge" ? "size-4" : "size-4"
-          )}
+          className={cn("opacity-50", size === "small" ? "size-3" : "size-4")}
         />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
