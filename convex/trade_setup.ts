@@ -100,7 +100,17 @@ export const getTradeSetupByImageId = query({
   },
 });
 
-// Get all trade setups with optional filtering
+// Get unique assets for filtering
+export const getUniqueAssets = query({
+  args: {},
+  handler: async (ctx) => {
+    const allSetups = await ctx.db.query("trade_setups").collect();
+    const uniqueAssets = [...new Set(allSetups.map((setup) => setup.asset))];
+    return uniqueAssets.sort();
+  },
+});
+
+// Get all trade setups with optional filtering and sorting
 export const getTradeSetups = query({
   args: {
     status: v.optional(
@@ -115,12 +125,17 @@ export const getTradeSetups = query({
     asset: v.optional(v.string()),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     limit: v.optional(v.number()),
+    sortBy: v.optional(v.union(v.literal("createdAt"), v.literal("updatedAt"))),
+    sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
   },
   handler: async (ctx, args) => {
+    const sortBy = args.sortBy || "createdAt";
+    const sortOrder = args.sortOrder || "desc";
+
     let query = ctx.db
       .query("trade_setups")
-      .withIndex("by_created_at")
-      .order("desc");
+      .withIndex(sortBy === "createdAt" ? "by_created_at" : "by_updated_at")
+      .order(sortOrder);
 
     // Apply filters
     if (args.status)

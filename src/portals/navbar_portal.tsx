@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 interface Props {
@@ -6,12 +7,18 @@ interface Props {
 }
 
 const NavbarPortal = ({ children, target = "navbar-items" }: Props) => {
-  const actionsContainer = document.getElementById(target);
-  if (!actionsContainer) return null;
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const targetElement = document.getElementById(target);
+    setContainer(targetElement);
+  }, [target]);
+
+  if (!container) return null;
 
   return createPortal(
     <div className="flex items-center space-x-2">{children}</div>,
-    actionsContainer
+    container
   );
 };
 
