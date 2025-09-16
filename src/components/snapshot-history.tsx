@@ -5,10 +5,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGetSnapshotByTradeSetupId } from "@/hooks/snapshots/use-get-snapshot-by-trade-setup";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   tradeSetupId: Id<"trade_setups">;
@@ -16,7 +16,6 @@ interface Props {
 }
 
 const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
-  const router = useRouter();
   const navigate = useNavigate();
   const [loadingSnapshotId, setLoadingSnapshotId] =
     useState<Id<"snapshots"> | null>(null);
@@ -28,23 +27,29 @@ const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
       sortOrder: "asc",
     });
 
+  // Note: Preloading is now handled by the route loader
+  // This ensures data is actually preloaded, not just the component
+  useEffect(() => {
+    if (snapshots && snapshots.length > 0) {
+      console.log(`${snapshots.length} snapshots available for navigation`);
+    }
+  }, [snapshots]);
+
   const handleSnapshotClick = async (targetSnapshotId: Id<"snapshots">) => {
     if (targetSnapshotId === snapshotId) return; // Don't navigate to current snapshot
 
     setLoadingSnapshotId(targetSnapshotId);
 
     try {
-      // Preload the route with the new snapshot data
-      await router.preloadRoute({
-        to: "/dashboard/setup",
-        search: { tradeSetupId, snapshotId: targetSnapshotId },
-      });
+      console.log(`Navigating to snapshot ${targetSnapshotId}`);
 
-      // Once preloading is complete, navigate
+      // Navigate immediately - the route should already be preloaded
       await navigate({
         to: "/dashboard/setup",
         search: { tradeSetupId, snapshotId: targetSnapshotId },
       });
+
+      console.log(`Successfully navigated to snapshot ${targetSnapshotId}`);
     } catch (error) {
       console.error("Failed to load snapshot:", error);
     } finally {

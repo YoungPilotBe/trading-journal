@@ -8,11 +8,10 @@ import {
 } from "@/components/ui/command";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
-import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
-import { TradeTemplate } from "@/types/trade-template";
+import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
-import { Id } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { CalendarIcon, ImageIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -29,7 +28,7 @@ export const Route = createFileRoute("/trade_onboarding/add_template")({
 });
 
 function RouteComponent() {
-  const { data: templates, isLoading } = useGetAllTradeTemplates();
+  const { data: templates, isLoading } = useGetTradeTemplates({});
 
   const [searchValue, setSearchValue] = useState("");
 
@@ -95,7 +94,7 @@ function RouteComponent() {
   );
 }
 
-function TemplateCard({ template }: { template: TradeTemplate }) {
+function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
   const { data: drawingData } = useGetDrawing({
     id: template.drawingId as Id<"drawings">,
   });

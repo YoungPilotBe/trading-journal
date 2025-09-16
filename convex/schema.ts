@@ -38,9 +38,6 @@ export default defineSchema({
     // One-to-one relationship with drawings
     drawingId: v.optional(v.id("drawings")),
 
-    // One-to-many relationship with tradingview_images
-    imageIds: v.array(v.id("tradingview_images")),
-
     // One-to-many relationship with trade_setups
     tradeSetupIds: v.optional(v.array(v.id("trade_setups"))),
 

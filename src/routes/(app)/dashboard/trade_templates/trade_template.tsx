@@ -54,7 +54,7 @@ export const Route = createFileRoute(
     }
 
     await queryClient.fetchQuery(
-      convexQuery(api.trade_template.getTemplate, {
+      convexQuery(api.template.queries.getTemplate, {
         id: templateId as Id<"trade_templates">,
       })
     );

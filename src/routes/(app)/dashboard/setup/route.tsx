@@ -14,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { statusOptions } from "@/config/constants";
@@ -23,8 +24,9 @@ import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
-import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
+import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
 import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
+import { convexQuery } from "@convex-dev/react-query";
 import { useForm, useStore } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
@@ -39,6 +41,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { api } from "../../../../../convex/_generated/api";
 
 const searchSchema = z.object({
   tradeSetupId: z.string(),
@@ -72,6 +75,50 @@ export const Route = createFileRoute("/(app)/dashboard/setup")({
   validateSearch: searchSchema,
   component: RouteComponent,
   preload: true,
+  loaderDeps: ({ search: { tradeSetupId, snapshotId } }) => ({
+    tradeSetupId,
+    snapshotId,
+  }),
+  loader: async ({
+    deps: { tradeSetupId, snapshotId },
+    context: { queryClient },
+  }) => {
+    // Preload the data using TanStack Query
+    const promises = [];
+
+    if (tradeSetupId) {
+      promises.push(
+        queryClient.ensureQueryData(
+          convexQuery(api.trade_setup.queries.getTradeSetup, {
+            id: tradeSetupId as Id<"trade_setups">,
+          })
+        )
+      );
+    }
+
+    if (snapshotId) {
+      promises.push(
+        queryClient.ensureQueryData(
+          convexQuery(api.snaphot.queries.getSnapshot, {
+            id: snapshotId as Id<"snapshots">,
+          })
+        )
+      );
+    }
+
+    // Also preload templates
+    promises.push(
+      queryClient.ensureQueryData(
+        convexQuery(api.template.queries.getTemplates, {
+          sortOrder: "desc",
+        })
+      )
+    );
+
+    await Promise.all(promises);
+
+    return { tradeSetupId, snapshotId };
+  },
 });
 
 function RouteComponent() {
@@ -88,7 +135,7 @@ function RouteComponent() {
   });
 
   const { data: templates, isLoading: isLoadingTemplates } =
-    useGetAllTradeTemplates();
+    useGetTradeTemplates({});
 
   const { mutateAsync: deleteTradeSetup, isPending: isDeletingTradeSetup } =
     useDeleteTradeSetup();
@@ -356,6 +403,7 @@ function RouteComponent() {
                         align="end"
                         sideOffset={0}
                         alignOffset={0}
+                        className="w-60"
                       >
                         {templates?.map((template) => (
                           <DropdownMenuItem
@@ -363,9 +411,8 @@ function RouteComponent() {
                             onClick={() => field.handleChange(template._id)}
                             className="justify-between"
                           >
-                            {template.title}
+                            <span>{template.title}</span>
                             {field.state.value === template._id ? (
-                              // TODO
                               <button
                                 className="p-1 rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
                                 onClick={(e) => {
@@ -392,11 +439,20 @@ function RouteComponent() {
                             )}
                           </DropdownMenuItem>
                         ))}
-                        {!templates?.length && (
-                          <DropdownMenuItem disabled>
-                            No templates available
-                          </DropdownMenuItem>
-                        )}
+                        <DropdownMenuSeparator hidden={!templates?.length} />
+                        <DropdownMenuItem
+                          className="justify-between text-emerald-500"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigate({
+                              to: "/dashboard/trade_templates/trade_template",
+                            });
+                          }}
+                        >
+                          <span>Create Template</span>
+                          <PlusIcon className="size-4 text-inherit" />
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

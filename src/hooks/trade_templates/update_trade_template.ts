@@ -4,7 +4,7 @@ import { api } from "../../../convex/_generated/api";
 
 // Type of the mutation function from Convex
 export type UpdateTradeTemplate = ReturnType<
-  typeof useConvexMutation<typeof api.trade_template.updateTemplate>
+  typeof useConvexMutation<typeof api.template.mutation.updateTemplate>
 >;
 
 // Infer input and output types
@@ -14,7 +14,7 @@ type MutationData = Awaited<ReturnType<UpdateTradeTemplate>>;
 export const useUpdateTradeTemplate = (
   args?: UseMutationOptions<MutationData, unknown, MutationFn>
 ) => {
-  const mutationFn = useConvexMutation(api.trade_template.updateTemplate);
+  const mutationFn = useConvexMutation(api.template.mutation.updateTemplate);
 
   return useMutation<MutationData, unknown, MutationFn>({
     mutationFn,

@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useGetSnapshotByTradeSetupId } from "@/hooks/snapshots/use-get-snapshot-by-trade-setup";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
@@ -50,21 +51,6 @@ export function SnapshotImage({
       ? allSnapshots?.[currentIndex + 1]
       : null;
 
-  if (isLoading) {
-    return (
-      <div
-        className={cn(
-          "w-full h-full rounded-lg flex items-center justify-center",
-          className
-        )}
-      >
-        <span className="text-muted-foreground font-mono text-sm">
-          Loading image...
-        </span>
-      </div>
-    );
-  }
-
   if (!image?.url) {
     return (
       <div
@@ -89,41 +75,43 @@ export function SnapshotImage({
           className
         )}
       >
-        <img
-          src={image.url}
-          alt="Trading setup chart"
-          className="w-full h-full object-contain cursor-pointer transition-opacity"
-          onClick={() =>
-            navigate({
-              to: "/dashboard/setup",
-              search: { tradeSetupId, snapshotId, fullscreen: true },
-            })
-          }
-          style={{ maxWidth: "100%", maxHeight: "100%" }}
-        />
+        <LoadingSkeleton isLoading={isLoading} className="h-full aspect-video">
+          <img
+            src={image.url}
+            alt="Trading setup chart"
+            className="w-full h-full object-contain cursor-pointer transition-opacity"
+            onClick={() =>
+              navigate({
+                to: "/dashboard/setup",
+                search: { tradeSetupId, snapshotId, fullscreen: true },
+              })
+            }
+            style={{ maxWidth: "100%", maxHeight: "100%" }}
+          />
 
-        {/* Navigation arrows - only show on hover */}
-        {previousSnapshot && (
-          <Link
-            to="/dashboard/setup"
-            search={{ tradeSetupId, snapshotId: previousSnapshot._id }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-        )}
+          {/* Navigation arrows - only show on hover */}
+          {previousSnapshot && (
+            <Link
+              to="/dashboard/setup"
+              search={{ tradeSetupId, snapshotId: previousSnapshot._id }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+          )}
 
-        {nextSnapshot && (
-          <Link
-            to="/dashboard/setup"
-            search={{ tradeSetupId, snapshotId: nextSnapshot._id }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        )}
+          {nextSnapshot && (
+            <Link
+              to="/dashboard/setup"
+              search={{ tradeSetupId, snapshotId: nextSnapshot._id }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          )}
+        </LoadingSkeleton>
       </div>
 
       {/* Fullscreen overlay */}

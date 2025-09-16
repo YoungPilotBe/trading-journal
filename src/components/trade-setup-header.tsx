@@ -12,7 +12,7 @@ import { statusOptions } from "@/config/constants";
 import { useGetMostRecentSnapshots } from "@/hooks/snapshots/use-get-most-recent-snapshots";
 import { useGetTradeSetups } from "@/hooks/trade-setup/use-get-trade-setups";
 import { useGetUniqueAssets } from "@/hooks/trade-setup/use-get-unique-assets";
-import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
+import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { Link } from "@tanstack/react-router";
 import { Doc, Id } from "convex/_generated/dataModel";
@@ -195,7 +195,7 @@ const TradeSetupCard = ({
   });
 
   const { data: templates, isLoading: isLoadingTemplates } =
-    useGetAllTradeTemplates();
+    useGetTradeTemplates({});
 
   const template = templates?.find((t) => t._id === setup.trade_template);
 

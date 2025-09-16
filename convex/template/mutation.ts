@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internal } from "../_generated/api";
+import { mutation } from "../_generated/server";
 
-// Create a new trade template
 export const createTemplate = mutation({
   args: {
     document: v.any(),
@@ -16,14 +16,12 @@ export const createTemplate = mutation({
       document: args.document,
       title,
       drawingId: args.drawingId,
-      imageIds: args.imageIds || [],
       createdAt: now,
       updatedAt: now,
     });
   },
 });
 
-// Update an existing trade template
 export const updateTemplate = mutation({
   args: {
     id: v.id("trade_templates"),
@@ -49,23 +47,6 @@ export const updateTemplate = mutation({
   },
 });
 
-// Get a trade template by ID
-export const getTemplate = query({
-  args: { id: v.optional(v.id("trade_templates")) },
-  handler: async (ctx, args) => {
-    if (!args.id) return;
-    return await ctx.db.get(args.id);
-  },
-});
-
-// Get all trade templates
-export const getAllTemplates = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("trade_templates").collect();
-  },
-});
-
 // Delete a trade template
 export const deleteTemplate = mutation({
   args: { id: v.id("trade_templates") },
@@ -73,6 +54,18 @@ export const deleteTemplate = mutation({
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Template not found");
+    }
+
+    // Remove template reference from all associated trade setups
+    if (existing.tradeSetupIds && existing.tradeSetupIds.length > 0) {
+      for (const tradeSetupId of existing.tradeSetupIds) {
+        await ctx.runMutation(
+          internal.trade_setup.internal.removeTradeTemplate,
+          {
+            id: tradeSetupId,
+          }
+        );
+      }
     }
 
     // Delete associated drawing if it exists

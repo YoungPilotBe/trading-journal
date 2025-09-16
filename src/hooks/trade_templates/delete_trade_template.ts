@@ -4,7 +4,7 @@ import { api } from "../../../convex/_generated/api";
 
 // Type of the mutation function from Convex
 type DeleteTradeTemplate = ReturnType<
-  typeof useConvexMutation<typeof api.trade_template.deleteTemplate>
+  typeof useConvexMutation<typeof api.template.mutation.deleteTemplate>
 >;
 
 // Infer input and output types
@@ -14,7 +14,7 @@ type MutationData = Awaited<ReturnType<DeleteTradeTemplate>>;
 export const useDeleteTradeTemplate = (
   args?: UseMutationOptions<MutationData, unknown, MutationFn>
 ) => {
-  const mutationFn = useConvexMutation(api.trade_template.deleteTemplate);
+  const mutationFn = useConvexMutation(api.template.mutation.deleteTemplate);
 
   return useMutation<MutationData, unknown, MutationFn>({
     mutationFn,

@@ -3,11 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { FunctionArgs } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 
-export const useGetTradeTemplate = (
-  args: FunctionArgs<typeof api.template.queries.getTemplate>
+export const useGetTradeTemplates = (
+  args: FunctionArgs<typeof api.template.queries.getTemplates>
 ) => {
-  return useQuery({
-    ...convexQuery(api.template.queries.getTemplate, args),
-    enabled: false,
-  });
+  return useQuery(convexQuery(api.template.queries.getTemplates, args));
 };

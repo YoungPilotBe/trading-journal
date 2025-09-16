@@ -14,12 +14,10 @@ import { useCreateTradeTemplate } from "@/hooks/trade_templates/create_trade_tem
 import { useGetTradeTemplate } from "@/hooks/trade_templates/get_trade_template";
 import { useUpdateTradeTemplate } from "@/hooks/trade_templates/update_trade_template";
 import "@blocknote/core/fonts/inter.css";
-import { convexQuery } from "@convex-dev/react-query";
 import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
 import { useMemo } from "react";
 import z from "zod";
-import { api } from "../../../convex/_generated/api";
 const searchSchema = z.object({
   templateId: z.optional(z.string()),
 });
@@ -28,17 +26,17 @@ export const Route = createFileRoute("/trade_template")({
   component: RouteComponent,
   validateSearch: searchSchema,
   loaderDeps: ({ search: { templateId } }) => ({ templateId }),
-  loader: async ({ deps: { templateId }, context: { queryClient } }) => {
-    if (!templateId) {
-      return null;
-    }
+  // loader: async ({ deps: { templateId }, context: { queryClient } }) => {
+  //   if (!templateId) {
+  //     return null;
+  //   }
 
-    await queryClient.fetchQuery(
-      convexQuery(api.trade_template.getTemplate, {
-        id: templateId as Id<"trade_templates">,
-      })
-    );
-  },
+  //   await queryClient.fetchQuery(
+  //     convexQuery(api.trade_template.getTemplate, {
+  //       id: templateId as Id<"trade_templates">,
+  //     })
+  //   );
+  // },
 });
 
 function RouteComponent() {

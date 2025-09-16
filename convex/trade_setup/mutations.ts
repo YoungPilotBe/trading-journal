@@ -23,6 +23,13 @@ export const updateTradeSetup = mutation({
       updatedAt: Date.now(),
     });
 
+    if (args.trade_template) {
+      await ctx.runMutation(
+        internal.template.internal.addTradeSetupToTemplate,
+        { tradeSetupId: id, templateId: args.trade_template }
+      );
+    }
+
     return { snapshotId, tradeSetupId: id };
   },
 });
