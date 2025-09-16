@@ -1,3 +1,4 @@
+import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-dialog";
 import SnapshotHistory from "@/components/snapshot-history";
 import {
   Breadcrumb,
@@ -18,6 +19,7 @@ import { statusOptions } from "@/config/constants";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
+import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
@@ -27,7 +29,15 @@ import { useForm, useStore } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
-import { ChevronRightIcon, PlusIcon, XIcon } from "lucide-react";
+import {
+  Archive,
+  ChevronRightIcon,
+  MoreVertical,
+  PlusIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
+import { useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -82,6 +92,12 @@ function RouteComponent() {
 
   const { data: templates, isLoading: isLoadingTemplates } =
     useGetAllTradeTemplates();
+
+  const { mutateAsync: deleteTradeSetup, isPending: isDeletingTradeSetup } =
+    useDeleteTradeSetup();
+
+  // Dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const {
     mutateAsync: updateTradeSetup,
@@ -142,6 +158,19 @@ function RouteComponent() {
   // Subscribe to form's dirty state to trigger re-renders
   const isDirty = useStore(form.store, (state) => state.isDirty);
 
+  // Delete handler
+  const handleDeleteTradeSetup = async () => {
+    try {
+      await deleteTradeSetup({
+        tradeSetupId: tradeSetupId as Id<"trade_setups">,
+      });
+      setShowDeleteDialog(false);
+      navigate({ to: "/dashboard" });
+    } catch (error) {
+      console.error("Failed to delete trade setup:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -168,7 +197,7 @@ function RouteComponent() {
       <div className="flex-shrink-0 w-fit min-w-110 @container">
         <div className="relative space-y-6">
           {/* Breadcrumbs */}
-          <div className="mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -189,6 +218,33 @@ function RouteComponent() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+
+            {/* Actions Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 translate-x-4"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="justify-between">
+                  <Archive />
+                  Archive
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive justify-between"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2Icon className="text-inherit" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Asset Info */}
@@ -496,6 +552,16 @@ function RouteComponent() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteTradeSetupDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        tradeSetupId={tradeSetupId as Id<"trade_setups">}
+        tradeSetupTitle={tradeSetup?.title || "Trade Setup"}
+        onConfirm={handleDeleteTradeSetup}
+        isDeleting={isDeletingTradeSetup}
+      />
     </div>
   );
 }
