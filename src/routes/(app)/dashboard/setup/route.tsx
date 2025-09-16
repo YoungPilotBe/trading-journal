@@ -1,5 +1,6 @@
 import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-dialog";
 import SnapshotHistory from "@/components/snapshot-history";
+import { SnapshotImage } from "@/components/snapshot-image";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,7 +24,6 @@ import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup"
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
-import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
 import { useForm, useStore } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -43,6 +43,7 @@ import { z } from "zod";
 const searchSchema = z.object({
   tradeSetupId: z.string(),
   snapshotId: z.string(),
+  fullscreen: z.boolean().optional(),
 });
 
 const directionOptions = [
@@ -75,7 +76,7 @@ export const Route = createFileRoute("/(app)/dashboard/setup")({
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const { tradeSetupId, snapshotId } = Route.useSearch();
+  const { tradeSetupId, snapshotId, fullscreen } = Route.useSearch();
   const { data: tradeSetup, isLoading: isLoadingTradeSetup } = useGetTradeSetup(
     {
       id: tradeSetupId as Id<"trade_setups">,
@@ -84,10 +85,6 @@ function RouteComponent() {
 
   const { data: snapshot, isLoading: isLoadingSnapshot } = useGetSnapshot({
     id: snapshotId as Id<"snapshots">,
-  });
-
-  const { data: image, isLoading: isLoadingImage } = useGetImage({
-    id: snapshot?.imageId as Id<"tradingview_images">,
   });
 
   const { data: templates, isLoading: isLoadingTemplates } =
@@ -111,7 +108,7 @@ function RouteComponent() {
       // onSuccess: () => form.reset(),
     });
 
-  const isLoading = isLoadingTradeSetup || isLoadingImage || isLoadingSnapshot;
+  const isLoading = isLoadingTradeSetup || isLoadingSnapshot;
 
   // Initialize form with existing trade setup data
   const form = useForm({
@@ -532,25 +529,15 @@ function RouteComponent() {
 
       {/* Right side - Image (Flexible width) */}
       <div className="flex-1 min-w-0">
-        {image?.url ? (
-          <div className="w-full @[110px]:h-full rounded-lg overflow-hidden">
-            <img
-              src={image.url}
-              alt="Trading setup chart"
-              className="w-full h-full object-contain"
-            />
-            <SnapshotHistory
-              snapshotId={snapshotId as Id<"snapshots">}
-              tradeSetupId={tradeSetupId as Id<"trade_setups">}
-            />
-          </div>
-        ) : (
-          <div className="w-full h-full rounded-lg flex items-center justify-center">
-            <span className="text-muted-foreground font-mono text-sm">
-              No image available
-            </span>
-          </div>
-        )}
+        <SnapshotImage
+          snapshotId={snapshotId}
+          tradeSetupId={tradeSetupId}
+          initialFullscreen={fullscreen ?? false}
+        />
+        <SnapshotHistory
+          snapshotId={snapshotId as Id<"snapshots">}
+          tradeSetupId={tradeSetupId as Id<"trade_setups">}
+        />
       </div>
 
       {/* Delete Confirmation Dialog */}
