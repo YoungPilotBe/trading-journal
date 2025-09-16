@@ -12,3 +12,28 @@ export const updateSnapshot = mutation({
     return await ctx.db.patch(snapshotId, { ...updates });
   },
 });
+
+export const createSnapshot = mutation({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+    status: statusUnion,
+    imageId: v.id("tradingview_images"),
+  },
+  handler: async (ctx, { imageId, tradeSetupId, status }) => {
+    const now = Date.now();
+
+    const snapshotId = await ctx.db.insert("snapshots", {
+      tradeSetupId,
+      status: status,
+      imageId: imageId,
+      createdAt: now,
+    });
+
+    await ctx.db.patch(imageId, {
+      snapshotId,
+      onboarding_complete: true,
+    });
+
+    return { tradeSetupId, snapshotId };
+  },
+});

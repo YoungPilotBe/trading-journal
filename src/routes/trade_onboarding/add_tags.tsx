@@ -15,6 +15,7 @@ const searchSchema = z.object({
   tradeSetupId: z.string(),
   imageId: z.string(),
   snapshotId: z.string(),
+  attach: z.optional(z.boolean()),
 });
 
 export const Route = createFileRoute("/trade_onboarding/add_tags")({
@@ -27,6 +28,7 @@ function RouteComponent() {
   const { data: tradeSetup } = useGetTradeSetup({
     id: tradeSetupId as Id<"trade_setups">,
   });
+
   const { data: snapshot, isLoading } = useGetSnapshot({
     id: snapshotId as Id<"snapshots">,
   });

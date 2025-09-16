@@ -11,14 +11,13 @@ import { api } from "../../../convex/_generated/api";
 interface AnimatedImageLayoutProps {
   imageId: string;
   src: string;
+  asset: string;
   alt: string;
   children?: React.ReactNode;
   pageVariants?: PageVariants;
   className?: string;
   imageClassName?: string;
   layoutId?: string;
-  onAddTrade?: () => void;
-  onAttachTrade?: () => void;
 }
 
 const useImageAnimation = (pageVariants: PageVariants) => {
@@ -56,14 +55,13 @@ export const AnimatedImageLayout = forwardRef<
     {
       imageId,
       src,
+      asset,
       alt,
       children,
       pageVariants = {},
       className = "",
       imageClassName = "",
       layoutId = "trading-image",
-      onAddTrade,
-      onAttachTrade,
     },
     ref
   ) => {
@@ -86,19 +84,17 @@ export const AnimatedImageLayout = forwardRef<
           to: "/trade_onboarding/add_trade",
           search: { imageId: searchParams.imageId },
         });
-        onAddTrade?.();
       }
-    }, [navigate, searchParams, onAddTrade]);
+    }, [navigate, searchParams]);
 
     const handleAttachTradeClick = useCallback(() => {
       if (searchParams?.imageId) {
         navigate({
           to: "/trade_onboarding/attach_trade",
-          search: { imageId: searchParams.imageId },
+          search: { imageId: searchParams.imageId, asset },
         });
-        onAttachTrade?.();
       }
-    }, [navigate, searchParams, onAttachTrade]);
+    }, [asset, navigate, searchParams.imageId]);
 
     const handleCancel = async () => {
       await deleteImage({ id: imageId as Id<"tradingview_images"> });

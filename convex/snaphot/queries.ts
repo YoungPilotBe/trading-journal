@@ -34,6 +34,21 @@ export const getSnapshotByImageId = query({
   },
 });
 
+export const getMostRecentSnapshotByTradeSetupId = query({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+  },
+  handler: async (ctx, { tradeSetupId }) => {
+    return await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", tradeSetupId)
+      )
+      .order("desc")
+      .first();
+  },
+});
+
 export const getMostRecentSnapshots = query({
   args: {
     status: v.optional(statusUnion),

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { statusOptions } from "@/config/constants";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
+import { useCreateSnapshot } from "@/hooks/snapshots/use-create-snapshot";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
 import { useGetTradeSetupBySnapshotId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
@@ -17,6 +18,7 @@ import { z } from "zod";
 const searchSchema = z.object({
   imageId: z.string(),
   snapshotId: z.optional(z.string()),
+  attach: z.optional(z.boolean()),
 });
 
 const directionOptions = [
@@ -50,10 +52,14 @@ export const Route = createFileRoute("/trade_onboarding/add_trade")({
       <div className="text-muted-foreground font-mono text-sm">Loading...</div>
     </div>
   ),
+  beforeLoad(ctx) {
+    console.log(ctx);
+  },
 });
 
 function RouteComponent() {
-  const { imageId, snapshotId } = Route.useSearch();
+  const { imageId, snapshotId, attach } = Route.useSearch();
+  // attach parameter indicates this is an attachment flow from existing trade setup
   const { data, isLoading: isLoadingImage } = useGetImage({ id: imageId });
   const { data: existingTradeSetup, isLoading: isLoadingTradeSetup } =
     useGetTradeSetupBySnapshotId({
@@ -70,7 +76,7 @@ function RouteComponent() {
           to: "/trade_onboarding/add_template",
           search: {
             tradeSetupId: tradeSetupId,
-            imageId: imageId,
+            imageId,
             snapshotId,
           },
         });
@@ -83,14 +89,30 @@ function RouteComponent() {
           to: "/trade_onboarding/add_template",
           search: {
             tradeSetupId,
-            imageId: imageId,
+            imageId,
             snapshotId,
           },
         });
       },
     });
 
-  const isPending = isPendingSubmit || isPendingUpdate;
+  const { mutateAsync: createSnapshot, isPending: isPendingSnapshot } =
+    useCreateSnapshot({
+      onSuccess: ({ snapshotId, tradeSetupId }) => {
+        navigate({
+          to: "/trade_onboarding/add_tags",
+          from: "/trade_onboarding/add_trade",
+          replace: true,
+          search: {
+            tradeSetupId,
+            imageId,
+            snapshotId,
+          },
+        });
+      },
+    });
+
+  const isPending = isPendingSubmit || isPendingUpdate || isPendingSnapshot;
   const isLoading = isLoadingImage || isLoadingTradeSetup || isLoadingSnapshot;
   const navigate = useNavigate();
 
@@ -110,17 +132,26 @@ function RouteComponent() {
       riskReward: existingTradeSetup?.riskReward ?? undefined,
       timeframes: existingTradeSetup?.timeframes || ["4h"],
     },
+
     onSubmit: async ({ value: formData }) => {
       // Do something with the values passed via handleSubmit
+
       if (existingTradeSetup) {
-        await updateTradeSetup({
+        if (attach) {
+          return await createSnapshot({
+            tradeSetupId: existingTradeSetup._id,
+            imageId: imageId as Id<"tradingview_images">,
+            status: formData.status,
+          });
+        }
+        return await updateTradeSetup({
           ...formData,
           id: existingTradeSetup._id,
           snapshotId: snapshotId as Id<"snapshots">,
         });
       } else {
         // Create a new trade setup with the form data
-        await createTradeSetup({
+        return await createTradeSetup({
           ...formData,
           asset: data?.asset || "Unknown",
           imageId: imageId as Id<"tradingview_images">, // Link to the current image
@@ -135,6 +166,15 @@ function RouteComponent() {
       ? timeframeOrder.includes(newTimeframe.trim() as Timeframe)
       : true;
   }
+
+  // Map to control field disabling when in attach mode
+  const fieldDisabledMap = {
+    title: attach,
+    direction: attach,
+    riskReward: attach,
+    timeframes: attach,
+    status: false, // Status is always enabled
+  };
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -190,7 +230,8 @@ function RouteComponent() {
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
+                    disabled={fieldDisabledMap.title}
+                    className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Phoenix"
                   />
                 </div>
@@ -212,7 +253,8 @@ function RouteComponent() {
                           key={option.value}
                           type="button"
                           onClick={() => field.handleChange(option.value)}
-                          className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                          disabled={fieldDisabledMap.direction}
+                          className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                             isSelected
                               ? option.color
                               : "border-muted text-muted-foreground hover:border-muted-foreground/50"
@@ -242,7 +284,8 @@ function RouteComponent() {
                           key={option.value}
                           type="button"
                           onClick={() => field.handleChange(option.value)}
-                          className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                          disabled={fieldDisabledMap.status}
+                          className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                             isSelected
                               ? option.color
                               : "border-muted text-muted-foreground hover:border-muted-foreground/50"
@@ -274,7 +317,8 @@ function RouteComponent() {
                             field.state.value.filter((tf) => tf !== timeframe)
                           )
                         }
-                        className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70"
+                        disabled={fieldDisabledMap.timeframes}
+                        className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-muted disabled:hover:text-muted-foreground"
                         title="Click to remove"
                       >
                         {timeframe}
@@ -282,7 +326,7 @@ function RouteComponent() {
                     ))}
 
                     {/* Add timeframe button/input */}
-                    {isAddingTimeframe ? (
+                    {isAddingTimeframe && !fieldDisabledMap.timeframes ? (
                       <input
                         value={newTimeframe}
                         onChange={(e) => setNewTimeframe(e.target.value)}
@@ -316,23 +360,25 @@ function RouteComponent() {
                           setIsAddingTimeframe(false);
                         }}
                         autoFocus
-                        className={`w-10 h-6 px-1 py-0.5 border font-mono text-xs rounded-sm bg-transparent !outline-none ${
+                        disabled={fieldDisabledMap.timeframes}
+                        className={`w-10 h-6 px-1 py-0.5 border font-mono text-xs rounded-sm bg-transparent !outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                           isValidTimeframe(newTimeframe)
                             ? "border-muted text-muted-foreground"
                             : "border-red-400/70 text-red-400"
                         }`}
                         placeholder="4h"
                       />
-                    ) : (
+                    ) : !fieldDisabledMap.timeframes ? (
                       <button
                         type="button"
                         onClick={() => setIsAddingTimeframe(true)}
-                        className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-muted-foreground/50 hover:text-muted-foreground/80"
+                        disabled={fieldDisabledMap.timeframes}
+                        className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-muted-foreground/50 hover:text-muted-foreground/80 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Add timeframe"
                       >
                         +
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 )}
               />
@@ -349,7 +395,8 @@ function RouteComponent() {
                     <input
                       value={field.state.value ?? ""}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
+                      disabled={fieldDisabledMap.riskReward}
+                      className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="3:2"
                     />
                     {field.state.meta.errors.length > 0 && (

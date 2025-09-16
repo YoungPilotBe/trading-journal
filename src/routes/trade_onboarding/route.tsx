@@ -18,16 +18,6 @@ export const Route = createFileRoute("/trade_onboarding")({
 function RouteComponent() {
   const { imageId } = Route.useSearch();
   const { data, isLoading } = useGetImage({ id: imageId });
-  // Button handlers
-  const handleAddTrade = () => {
-    console.log("Add Trade clicked for image:", imageId);
-    // Add your navigation or logic here
-  };
-
-  const handleAttachTrade = () => {
-    console.log("Attach Trade clicked for image:", imageId);
-    // Add your navigation or logic here
-  };
 
   // Early returns for loading and error states
   if (isLoading) {
@@ -59,11 +49,10 @@ function RouteComponent() {
       <AnimatedImageLayout
         imageId={imageId}
         src={data.url}
+        asset={data.asset}
         alt={data.fileName || "Trading screenshot"}
         pageVariants={pageVariants}
         className="mb-8"
-        onAddTrade={handleAddTrade}
-        onAttachTrade={handleAttachTrade}
       />
 
       <Outlet />
