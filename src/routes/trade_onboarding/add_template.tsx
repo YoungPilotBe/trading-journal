@@ -20,6 +20,7 @@ import z from "zod";
 
 const searchSchema = z.object({
   tradeSetupId: z.string(),
+  snapshotId: z.string(),
 });
 
 export const Route = createFileRoute("/trade_onboarding/add_template")({
@@ -32,6 +33,7 @@ function RouteComponent() {
 
   const [searchValue, setSearchValue] = useState("");
 
+  // TODO
   // Helper function to extract title from document
   const getDocumentTitle = (document: unknown) => {
     try {
@@ -109,6 +111,7 @@ function TemplateCard({ template }: { template: TradeTemplate }) {
   async function handleSubmit() {
     await updateTradeSetup({
       id: search.tradeSetupId as Id<"trade_setups">,
+      snapshotId: search.snapshotId as Id<"snapshots">,
       trade_template: template._id as Id<"trade_templates">,
     });
   }

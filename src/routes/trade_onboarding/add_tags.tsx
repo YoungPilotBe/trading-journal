@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { useAddTags } from "@/hooks/trade-setup/use-add-tags";
+import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
+import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { EffectsProvider } from "@/rjsf/EffectsContext";
 import { customWidgets, schema, uiSchema } from "@/rjsf/strategy.form.schema";
@@ -13,6 +14,7 @@ import { z } from "zod";
 const searchSchema = z.object({
   tradeSetupId: z.string(),
   imageId: z.string(),
+  snapshotId: z.string(),
 });
 
 export const Route = createFileRoute("/trade_onboarding/add_tags")({
@@ -21,34 +23,36 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
 });
 
 function RouteComponent() {
-  const { tradeSetupId, imageId } = Route.useSearch();
+  const { tradeSetupId, snapshotId } = Route.useSearch();
   const { data: tradeSetup } = useGetTradeSetup({
     id: tradeSetupId as Id<"trade_setups">,
   });
+  const { data: snapshot, isLoading } = useGetSnapshot({
+    id: snapshotId as Id<"snapshots">,
+  });
   const navigate = useNavigate();
-  const { mutateAsync: addTags, isPending } = useAddTags();
+  const { mutateAsync: updateSnapshot, isPending } = useUpdateSnapshot();
   const [formData, setFormData] = useState();
 
   useEffect(() => {
-    if (!tradeSetup?.tags) return;
-    setFormData(tradeSetup.tags);
-  }, [tradeSetup?.tags]);
+    if (!snapshot?.tags) return;
+    setFormData(snapshot.tags);
+  }, [snapshot?.tags]);
 
   const onSubmit = async () => {
     // Add tags to the existing trade setup
-    await addTags({
-      id: tradeSetupId as Id<"trade_setups">,
+    await updateSnapshot({
+      snapshotId: snapshotId as Id<"snapshots">,
       tags: formData,
     });
 
     // Navigate to a success page or back to the main app
     navigate({
-      to: "/trade_onboarding/add_timeframes",
-      search: { imageId, tradeSetupId },
+      to: "/dashboard",
     });
   };
 
-  if (!tradeSetup) {
+  if (isLoading || !snapshot) {
     return <div>Loading trade setup...</div>;
   }
 
@@ -58,7 +62,7 @@ function RouteComponent() {
       <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto ">
         <div className="flex flex-col items-start space-y-2 mt-2">
           <span className="text-white font-light font-mono">Tags</span>
-          <EffectsProvider tradeSetup={tradeSetup}>
+          <EffectsProvider tradeSetup={{ ...tradeSetup, ...snapshot.tags }}>
             <Form
               schema={schema}
               uiSchema={uiSchema}

@@ -7,20 +7,31 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { statusOptions } from "@/config/constants";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
+import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
+import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
+import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
 import { useForm, useStore } from "@tanstack/react-form";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
+import { ChevronRightIcon, PlusIcon, XIcon } from "lucide-react";
 import { z } from "zod";
 
 const searchSchema = z.object({
   tradeSetupId: z.string(),
+  snapshotId: z.string(),
 });
 
 const directionOptions = [
@@ -57,21 +68,37 @@ export const Route = createFileRoute("/(app)/dashboard/setup")({
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const { tradeSetupId } = Route.useSearch();
+  const { tradeSetupId, snapshotId } = Route.useSearch();
   const { data: tradeSetup, isLoading: isLoadingTradeSetup } = useGetTradeSetup(
     {
       id: tradeSetupId as Id<"trade_setups">,
     }
   );
-  const { data: image, isLoading: isLoadingImage } = useGetImage({
-    id: tradeSetup?.imageId as Id<"tradingview_images">,
+
+  const { data: snapshot, isLoading: isLoadingSnapshot } = useGetSnapshot({
+    id: snapshotId as Id<"snapshots">,
   });
-  const { mutateAsync: updateTradeSetup, isPending: isPendingUpdate } =
-    useUpdateTradeSetup({
-      onSuccess: () => form.reset(),
+
+  const { data: image, isLoading: isLoadingImage } = useGetImage({
+    id: snapshot?.imageId as Id<"tradingview_images">,
+  });
+
+  const { data: templates, isLoading: isLoadingTemplates } =
+    useGetAllTradeTemplates();
+
+  const {
+    mutateAsync: updateTradeSetup,
+    isPending: isPendingTradeSetupUpdate,
+  } = useUpdateTradeSetup({
+    // onSuccess: () => form.reset(),
+  });
+
+  const { mutateAsync: updateSnapshot, isPending: isPendingSnapshotUpdate } =
+    useUpdateSnapshot({
+      // onSuccess: () => form.reset(),
     });
 
-  const isLoading = isLoadingTradeSetup || isLoadingImage;
+  const isLoading = isLoadingTradeSetup || isLoadingImage || isLoadingSnapshot;
 
   // Initialize form with existing trade setup data
   const form = useForm({
@@ -80,18 +107,40 @@ function RouteComponent() {
     },
     defaultValues: {
       title: tradeSetup?.title || "",
-      status: tradeSetup?.status || "idea",
+      trade_template: tradeSetup?.trade_template || undefined,
+      status: snapshot?.status || "idea",
       direction: tradeSetup?.direction || "long",
       riskReward: tradeSetup?.riskReward ?? undefined,
       timeframes: tradeSetup?.timeframes || ["4h"],
     },
 
     onSubmit: async ({ value: formData }) => {
-      if (tradeSetup) {
-        await updateTradeSetup({ ...formData, id: tradeSetup._id });
+      if (tradeSetup && snapshot) {
+        const { status, ...tradeSetupData } = formData;
+
+        try {
+          await Promise.all([
+            updateTradeSetup({
+              ...tradeSetupData,
+              id: tradeSetup._id,
+              snapshotId: snapshot._id,
+            }),
+            updateSnapshot({
+              status,
+              snapshotId: snapshotId as Id<"snapshots">,
+            }),
+          ]);
+
+          // Reset form on successful submission
+          form.reset();
+        } catch (error) {
+          console.error("Failed to update:", error);
+        }
       }
     },
   });
+
+  const isPending = isPendingSnapshotUpdate || isPendingTradeSetupUpdate;
 
   // Subscribe to form's dirty state to trigger re-renders
   const isDirty = useStore(form.store, (state) => state.isDirty);
@@ -177,7 +226,7 @@ function RouteComponent() {
             }}
           >
             <fieldset
-              disabled={isLoading || isPendingUpdate}
+              disabled={isLoading || isPending}
               className="disabled:opacity-50 disabled:!cursor-default disabled:!pointer-events-none"
             >
               <form.Field
@@ -196,6 +245,110 @@ function RouteComponent() {
                       className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
                       placeholder="Phoenix"
                     />
+                  </div>
+                )}
+              />
+
+              {/* Template Select */}
+              <form.Field
+                name="trade_template"
+                children={(field) => (
+                  <div className="flex justify-between items-center h-9">
+                    <label className="text-xs text-muted" htmlFor={field.name}>
+                      Template
+                    </label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        {field.state.value ? (
+                          <Button
+                            variant="outline"
+                            size="badge"
+                            className="text-[10px] justify-between hover:bg-accent hover:text-accent-foreground group-hover:[&:not(:has(.chevron-link:hover))]:bg-accent group-hover:[&:not(:has(.chevron-link:hover))]:text-accent-foreground group-[.chevron-hovered]:bg-transparent group-[.chevron-hovered]:text-inherit transition-colors gap-1"
+                          >
+                            {
+                              templates?.find(
+                                (t) => t._id === field.state.value
+                              )?.title
+                            }
+                            <Link
+                              to={"/dashboard/trade_templates/trade_template"}
+                              search={{ templateId: field.state.value }}
+                              className="chevron-link rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseEnter={(e) => {
+                                e.currentTarget
+                                  .closest(".group")
+                                  ?.classList.add("chevron-hovered");
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget
+                                  .closest(".group")
+                                  ?.classList.remove("chevron-hovered");
+                              }}
+                            >
+                              <ChevronRightIcon className="size-4 text-inherit" />
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="badge"
+                            className="text-[10px] mb-2"
+                            disabled={isLoadingTemplates}
+                          >
+                            <PlusIcon className="size-2" />
+                            Add Template
+                          </Button>
+                        )}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        sideOffset={0}
+                        alignOffset={0}
+                      >
+                        {templates?.map((template) => (
+                          <DropdownMenuItem
+                            key={template._id}
+                            onClick={() => field.handleChange(template._id)}
+                            className="justify-between"
+                          >
+                            {template.title}
+                            {field.state.value === template._id ? (
+                              // TODO
+                              <button
+                                className="p-1 rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  field.handleChange(undefined);
+                                  form.setFieldValue(
+                                    "trade_template",
+                                    undefined
+                                  );
+                                }}
+                              >
+                                <XIcon className="size-4 text-inherit" />
+                              </button>
+                            ) : (
+                              <Link
+                                to={"/dashboard/trade_templates/trade_template"}
+                                search={{ templateId: template._id }}
+                                className="p-1 rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <ChevronRightIcon className="size-4 text-inherit" />
+                              </Link>
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                        {!templates?.length && (
+                          <DropdownMenuItem disabled>
+                            No templates available
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
               />
@@ -312,9 +465,9 @@ function RouteComponent() {
                 <Button
                   type="submit"
                   className="absolute bottom-0 translate-y-full right-0 duration-500 ease-out font-mono tracking-wide leading-3"
-                  disabled={isPendingUpdate || form.state.isSubmitting}
+                  disabled={isPending || form.state.isSubmitting}
                 >
-                  {isPendingUpdate || form.state.isSubmitting
+                  {isPending || form.state.isSubmitting
                     ? "Updating..."
                     : "Update"}
                 </Button>

@@ -12,11 +12,11 @@ export default defineSchema({
     onboarding_complete: v.boolean(),
     uploadedAt: v.number(),
     // Foreign key to link image to trade setup
-    tradeSetupId: v.optional(v.id("trade_setups")),
+    snapshotId: v.optional(v.id("snapshots")),
   })
     .index("by_source", ["source"])
     .index("by_uploaded_at", ["uploadedAt"])
-    .index("by_trade_setup", ["tradeSetupId"]),
+    .index("by_snapshot", ["snapshotId"]),
 
   drawings: defineTable({
     storageId: v.id("_storage"),
@@ -54,15 +54,8 @@ export default defineSchema({
     title: v.string(),
     asset: v.string(),
 
-    // Trade direction and status
+    // Trade direction
     direction: v.union(v.literal("long"), v.literal("short")),
-    status: v.union(
-      v.literal("idea"),
-      v.literal("watching"),
-      v.literal("executed"),
-      v.literal("closed"),
-      v.literal("reviewed")
-    ),
 
     // Risk management
     riskReward: v.optional(v.string()), // Format: "3:2" or "3.1:2.5"
@@ -72,24 +65,43 @@ export default defineSchema({
     // Timeframes being watched
     timeframes: v.array(v.string()),
 
-    // Timeframe couples
-    timeframeTagCouples: v.optional(v.any()),
-
-    // Strategy tags - JSON object containing strategy form data
-    tags: v.optional(v.any()),
-
-    // Foreign key to link trade setup to the triggering image
-    imageId: v.optional(v.id("tradingview_images")),
-
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_created_at", ["createdAt"])
-    .index("by_status", ["status"])
     .index("by_asset", ["asset"])
     .index("by_direction", ["direction"])
     .index("by_updated_at", ["updatedAt"])
-    .index("by_image_id", ["imageId"])
     .index("by_trade_template", ["trade_template"]),
+
+  snapshots: defineTable({
+    // Reference to the trade setup this snapshot belongs to
+    tradeSetupId: v.id("trade_setups"),
+
+    // Trade status at the time of this snapshot
+    status: v.union(
+      v.literal("idea"),
+      v.literal("watching"),
+      v.literal("executed"),
+      v.literal("closed"),
+      v.literal("reviewed")
+    ),
+
+    tags: v.optional(v.any()),
+
+    // Timeframe couples
+    timeframeTagCouples: v.optional(v.any()),
+
+    // Foreign key to link snapshot to the triggering image
+    imageId: v.optional(v.id("tradingview_images")),
+
+    // Timestamp when this snapshot was created
+    createdAt: v.number(),
+  })
+    .index("by_trade_setup", ["tradeSetupId"])
+    .index("by_created_at", ["createdAt"])
+    .index("by_status", ["status"])
+    .index("by_image_id", ["imageId"])
+    .index("by_trade_setup_and_created_at", ["tradeSetupId", "createdAt"]),
 });

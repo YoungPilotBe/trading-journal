@@ -15,7 +15,6 @@ import { Route as Trade_onboardingRouteRouteImport } from './routes/trade_onboar
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as Trade_onboardingAttach_tradeRouteImport } from './routes/trade_onboarding/attach_trade'
 import { Route as Trade_onboardingAdd_tradeRouteImport } from './routes/trade_onboarding/add_trade'
-import { Route as Trade_onboardingAdd_timeframesRouteImport } from './routes/trade_onboarding/add_timeframes'
 import { Route as Trade_onboardingAdd_templateRouteImport } from './routes/trade_onboarding/add_template'
 import { Route as Trade_onboardingAdd_tagsRouteImport } from './routes/trade_onboarding/add_tags'
 import { Route as appDashboardRouteRouteImport } from './routes/(app)/dashboard/route'
@@ -54,12 +53,6 @@ const Trade_onboardingAdd_tradeRoute =
   Trade_onboardingAdd_tradeRouteImport.update({
     id: '/add_trade',
     path: '/add_trade',
-    getParentRoute: () => Trade_onboardingRouteRoute,
-  } as any)
-const Trade_onboardingAdd_timeframesRoute =
-  Trade_onboardingAdd_timeframesRouteImport.update({
-    id: '/add_timeframes',
-    path: '/add_timeframes',
     getParentRoute: () => Trade_onboardingRouteRoute,
   } as any)
 const Trade_onboardingAdd_templateRoute =
@@ -110,7 +103,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof appDashboardRouteRouteWithChildren
   '/trade_onboarding/add_tags': typeof Trade_onboardingAdd_tagsRoute
   '/trade_onboarding/add_template': typeof Trade_onboardingAdd_templateRoute
-  '/trade_onboarding/add_timeframes': typeof Trade_onboardingAdd_timeframesRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/dashboard/setup': typeof appDashboardSetupRouteRoute
@@ -125,7 +117,6 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/trade_onboarding/add_tags': typeof Trade_onboardingAdd_tagsRoute
   '/trade_onboarding/add_template': typeof Trade_onboardingAdd_templateRoute
-  '/trade_onboarding/add_timeframes': typeof Trade_onboardingAdd_timeframesRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/dashboard/setup': typeof appDashboardSetupRouteRoute
@@ -142,7 +133,6 @@ export interface FileRoutesById {
   '/(app)/dashboard': typeof appDashboardRouteRouteWithChildren
   '/trade_onboarding/add_tags': typeof Trade_onboardingAdd_tagsRoute
   '/trade_onboarding/add_template': typeof Trade_onboardingAdd_templateRoute
-  '/trade_onboarding/add_timeframes': typeof Trade_onboardingAdd_timeframesRoute
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/(app)/dashboard/setup': typeof appDashboardSetupRouteRoute
@@ -160,7 +150,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/trade_onboarding/add_tags'
     | '/trade_onboarding/add_template'
-    | '/trade_onboarding/add_timeframes'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/dashboard/setup'
@@ -175,7 +164,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/trade_onboarding/add_tags'
     | '/trade_onboarding/add_template'
-    | '/trade_onboarding/add_timeframes'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/dashboard/setup'
@@ -191,7 +179,6 @@ export interface FileRouteTypes {
     | '/(app)/dashboard'
     | '/trade_onboarding/add_tags'
     | '/trade_onboarding/add_template'
-    | '/trade_onboarding/add_timeframes'
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/(app)/dashboard/setup'
@@ -252,13 +239,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Trade_onboardingAdd_tradeRouteImport
       parentRoute: typeof Trade_onboardingRouteRoute
     }
-    '/trade_onboarding/add_timeframes': {
-      id: '/trade_onboarding/add_timeframes'
-      path: '/add_timeframes'
-      fullPath: '/trade_onboarding/add_timeframes'
-      preLoaderRoute: typeof Trade_onboardingAdd_timeframesRouteImport
-      parentRoute: typeof Trade_onboardingRouteRoute
-    }
     '/trade_onboarding/add_template': {
       id: '/trade_onboarding/add_template'
       path: '/add_template'
@@ -314,7 +294,6 @@ declare module '@tanstack/react-router' {
 interface Trade_onboardingRouteRouteChildren {
   Trade_onboardingAdd_tagsRoute: typeof Trade_onboardingAdd_tagsRoute
   Trade_onboardingAdd_templateRoute: typeof Trade_onboardingAdd_templateRoute
-  Trade_onboardingAdd_timeframesRoute: typeof Trade_onboardingAdd_timeframesRoute
   Trade_onboardingAdd_tradeRoute: typeof Trade_onboardingAdd_tradeRoute
   Trade_onboardingAttach_tradeRoute: typeof Trade_onboardingAttach_tradeRoute
 }
@@ -322,7 +301,6 @@ interface Trade_onboardingRouteRouteChildren {
 const Trade_onboardingRouteRouteChildren: Trade_onboardingRouteRouteChildren = {
   Trade_onboardingAdd_tagsRoute: Trade_onboardingAdd_tagsRoute,
   Trade_onboardingAdd_templateRoute: Trade_onboardingAdd_templateRoute,
-  Trade_onboardingAdd_timeframesRoute: Trade_onboardingAdd_timeframesRoute,
   Trade_onboardingAdd_tradeRoute: Trade_onboardingAdd_tradeRoute,
   Trade_onboardingAttach_tradeRoute: Trade_onboardingAttach_tradeRoute,
 }

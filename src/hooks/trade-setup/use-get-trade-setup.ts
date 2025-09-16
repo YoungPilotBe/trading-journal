@@ -4,7 +4,7 @@ import { FunctionArgs } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 
 export const useGetTradeSetup = (
-  args: FunctionArgs<typeof api.trade_setup.getTradeSetup>
+  args: FunctionArgs<typeof api.trade_setup.queries.getTradeSetup>
 ) => {
-  return useQuery(convexQuery(api.trade_setup.getTradeSetup, args));
+  return useQuery(convexQuery(api.trade_setup.queries.getTradeSetup, args));
 };

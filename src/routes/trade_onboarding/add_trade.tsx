@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { statusOptions } from "@/config/constants";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
+import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
-import { useGetTradeSetupByImageId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
+import { useGetTradeSetupBySnapshotId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
@@ -15,6 +16,7 @@ import { z } from "zod";
 
 const searchSchema = z.object({
   imageId: z.string(),
+  snapshotId: z.optional(z.string()),
 });
 
 const directionOptions = [
@@ -51,39 +53,45 @@ export const Route = createFileRoute("/trade_onboarding/add_trade")({
 });
 
 function RouteComponent() {
-  const { imageId } = Route.useSearch();
+  const { imageId, snapshotId } = Route.useSearch();
   const { data, isLoading: isLoadingImage } = useGetImage({ id: imageId });
   const { data: existingTradeSetup, isLoading: isLoadingTradeSetup } =
-    useGetTradeSetupByImageId({
-      imageId: imageId as Id<"tradingview_images">,
+    useGetTradeSetupBySnapshotId({
+      snapshotId: snapshotId as Id<"snapshots">,
     });
+
+  const { data: existingSnapshot, isLoading: isLoadingSnapshot } =
+    useGetSnapshot({ id: snapshotId as Id<"snapshots"> });
+
   const { mutateAsync: createTradeSetup, isPending: isPendingSubmit } =
     useCreateTradeSetup({
-      onSuccess: (id) => {
+      onSuccess: ({ tradeSetupId, snapshotId }) => {
         navigate({
           to: "/trade_onboarding/add_template",
           search: {
-            tradeSetupId: id as string,
+            tradeSetupId: tradeSetupId,
             imageId: imageId,
+            snapshotId,
           },
         });
       },
     });
   const { mutateAsync: updateTradeSetup, isPending: isPendingUpdate } =
     useUpdateTradeSetup({
-      onSuccess: (id) => {
+      onSuccess: ({ snapshotId, tradeSetupId }) => {
         navigate({
           to: "/trade_onboarding/add_template",
           search: {
-            tradeSetupId: id as string,
+            tradeSetupId,
             imageId: imageId,
+            snapshotId,
           },
         });
       },
     });
 
   const isPending = isPendingSubmit || isPendingUpdate;
-  const isLoading = isLoadingImage || isLoadingTradeSetup;
+  const isLoading = isLoadingImage || isLoadingTradeSetup || isLoadingSnapshot;
   const navigate = useNavigate();
 
   // State for managing the add timeframe input
@@ -97,7 +105,7 @@ function RouteComponent() {
     },
     defaultValues: {
       title: existingTradeSetup?.title || "",
-      status: existingTradeSetup?.status || "idea",
+      status: existingSnapshot?.status || "idea",
       direction: existingTradeSetup?.direction || "long",
       riskReward: existingTradeSetup?.riskReward ?? undefined,
       timeframes: existingTradeSetup?.timeframes || ["4h"],
@@ -105,7 +113,11 @@ function RouteComponent() {
     onSubmit: async ({ value: formData }) => {
       // Do something with the values passed via handleSubmit
       if (existingTradeSetup) {
-        await updateTradeSetup({ ...formData, id: existingTradeSetup._id });
+        await updateTradeSetup({
+          ...formData,
+          id: existingTradeSetup._id,
+          snapshotId: snapshotId as Id<"snapshots">,
+        });
       } else {
         // Create a new trade setup with the form data
         await createTradeSetup({

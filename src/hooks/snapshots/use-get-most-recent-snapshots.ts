@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { FunctionArgs } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 
-export const useGetTradeSetups = (
-  args: FunctionArgs<typeof api.trade_setup.queries.getTradeSetups>
+export const useGetMostRecentSnapshots = (
+  args: FunctionArgs<typeof api.snaphot.queries.getMostRecentSnapshots>
 ) => {
-  return useQuery(convexQuery(api.trade_setup.queries.getTradeSetups, args));
+  return useQuery(
+    convexQuery(api.snaphot.queries.getMostRecentSnapshots, args)
+  );
 };

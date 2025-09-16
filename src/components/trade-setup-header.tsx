@@ -9,13 +9,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { statusOptions } from "@/config/constants";
+import { useGetMostRecentSnapshots } from "@/hooks/snapshots/use-get-most-recent-snapshots";
 import { useGetTradeSetups } from "@/hooks/trade-setup/use-get-trade-setups";
 import { useGetUniqueAssets } from "@/hooks/trade-setup/use-get-unique-assets";
+import { useGetAllTradeTemplates } from "@/hooks/trade_templates/get_all_trade_templates";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { Link } from "@tanstack/react-router";
 import { Doc, Id } from "convex/_generated/dataModel";
-import { X } from "lucide-react";
-import { useState } from "react";
+import { PlusIcon, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { LoadingSkeleton } from "./ui/loading-skeleton";
 const TradeSetupHeader = () => {
   const [selectedAsset, setSelectedAsset] = useState<string>("all");
   const [selectedDirection, setSelectedDirection] = useState<string>("all");
@@ -32,7 +35,13 @@ const TradeSetupHeader = () => {
   };
 
   const { data: uniqueAssets } = useGetUniqueAssets();
-  const { data, isLoading } = useGetTradeSetups({
+  const { data: mostRecentSnapshots } = useGetMostRecentSnapshots({
+    status:
+      selectedStatus === "all"
+        ? undefined
+        : (selectedStatus as Doc<"snapshots">["status"]),
+  });
+  const { data: tradeSetups, isLoading } = useGetTradeSetups({
     limit: 4,
     asset: selectedAsset === "all" ? undefined : selectedAsset,
     sortBy,
@@ -41,11 +50,24 @@ const TradeSetupHeader = () => {
       selectedDirection === "all"
         ? undefined
         : (selectedDirection as Doc<"trade_setups">["direction"]),
-    status:
-      selectedStatus === "all"
-        ? undefined
-        : (selectedStatus as Doc<"trade_setups">["status"]),
   });
+
+  const data = useMemo(() => {
+    if (!tradeSetups || !mostRecentSnapshots) return [];
+
+    // Create a Map of trade setup ID to snapshot for efficient lookup
+    const snapshotsByTradeSetupId = new Map(
+      mostRecentSnapshots.map((snapshot) => [snapshot.tradeSetupId, snapshot])
+    );
+
+    // Filter trade setups and add their corresponding snapshots
+    return tradeSetups
+      .filter((tradeSetup) => snapshotsByTradeSetupId.has(tradeSetup._id))
+      .map((tradeSetup) => ({
+        ...tradeSetup,
+        snapshot: snapshotsByTradeSetupId.get(tradeSetup._id)!,
+      }));
+  }, [tradeSetups, mostRecentSnapshots]);
 
   if (isLoading) {
     return (
@@ -152,7 +174,7 @@ const TradeSetupHeader = () => {
           <Link
             key={setup._id}
             to="/dashboard/setup"
-            search={{ tradeSetupId: setup._id }}
+            search={{ tradeSetupId: setup._id, snapshotId: setup.snapshot._id }}
             className="group"
           >
             <TradeSetupCard setup={setup} />
@@ -166,11 +188,17 @@ const TradeSetupHeader = () => {
 const TradeSetupCard = ({
   setup,
 }: {
-  setup: NonNullable<ReturnType<typeof useGetTradeSetups>["data"]>[0];
+  setup: Doc<"trade_setups"> & { snapshot: Doc<"snapshots"> };
 }) => {
   const { data: image } = useGetImage({
-    id: setup.imageId as Id<"tradingview_images">,
+    id: setup.snapshot.imageId as Id<"tradingview_images">,
   });
+
+  const { data: templates, isLoading: isLoadingTemplates } =
+    useGetAllTradeTemplates();
+
+  const template = templates?.find((t) => t._id === setup.trade_template);
+
   return (
     <Card className="relative bg-background border-2 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5 group-hover:bg-accent/5 overflow-hidden">
       <CardContent className="h-full flex flex-col justify-center">
@@ -201,21 +229,44 @@ const TradeSetupCard = ({
           </div>
 
           {/* Trade Template */}
-          <div className="text-xs text-muted-foreground font-mono truncate">
-            {setup.tradeTemplateData?.title}
-          </div>
+          <LoadingSkeleton isLoading={isLoadingTemplates} className="w-20">
+            {template ? (
+              <Link
+                to={"/dashboard/trade_templates/trade_template"}
+                search={{ templateId: template._id }}
+              >
+                <Button
+                  variant="outline"
+                  size="badge"
+                  className="text-[10px] mb-2"
+                >
+                  {template.title}
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                variant="outline"
+                size="badge"
+                className="text-[10px] mb-2"
+              >
+                <PlusIcon className="size-2" />
+                Add Template
+              </Button>
+            )}
+          </LoadingSkeleton>
 
           {/* Status and Date */}
           <div className="flex justify-between items-center gap-2">
             <button
-              key={setup.status}
+              key={setup.snapshot.status}
               type="button"
               className={`px-2 py-0.5 border font-mono text-xs rounded transition-all cursor-pointer shrink-0 ${
-                statusOptions.find((option) => option.value === setup.status)
-                  ?.color || "border-gray-400/70 bg-gray-500/5 text-gray-300/80"
+                statusOptions.find(
+                  (option) => option.value === setup.snapshot.status
+                )?.color || "border-gray-400/70 bg-gray-500/5 text-gray-300/80"
               }`}
             >
-              {setup.status}
+              {setup.snapshot.status}
             </button>
             <div className="text-xs text-muted-foreground font-mono">
               {new Date(setup.createdAt).toLocaleDateString()}

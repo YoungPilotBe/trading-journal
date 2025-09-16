@@ -30,7 +30,7 @@ const buttonVariants = cva(
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "size-9",
         giant: "h-40",
-        badge: "h-auto px-2 py-1 gap-2",
+        badge: "h-6 px-2 py-1 gap-2",
       },
     },
     defaultVariants: {

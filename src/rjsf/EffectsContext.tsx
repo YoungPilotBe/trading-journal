@@ -3,12 +3,12 @@ import React, { createContext, useContext } from "react";
 
 export type EffectType = "positive" | "negative";
 
-type TradeSetupWithTags = Doc<"trade_setups"> & {
+type TradeSetupWithTagsAndSnapshotId = Doc<"trade_setups"> & {
   tags?: Record<string, unknown>;
 };
 
 interface EffectsContextType {
-  tradeSetup: TradeSetupWithTags;
+  tradeSetup: TradeSetupWithTagsAndSnapshotId;
   getFieldEffect: (
     fieldName: string,
     fieldValue: string
@@ -18,7 +18,7 @@ interface EffectsContextType {
 const EffectsContext = createContext<EffectsContextType | undefined>(undefined);
 
 interface EffectsProviderProps {
-  tradeSetup: TradeSetupWithTags;
+  tradeSetup: TradeSetupWithTagsAndSnapshotId;
   children: React.ReactNode;
 }
 

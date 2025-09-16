@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { FunctionArgs } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 
-export const useGetTradeSetupByImageId = (
-  args: FunctionArgs<typeof api.trade_setup.getTradeSetupByImageId>
+export const useGetTradeSetupBySnapshotId = (
+  args: FunctionArgs<typeof api.trade_setup.queries.getTradeSetupBySnapshotId>
 ) => {
-  return useQuery(convexQuery(api.trade_setup.getTradeSetupByImageId, args));
+  return useQuery(
+    convexQuery(api.trade_setup.queries.getTradeSetupBySnapshotId, args)
+  );
 };

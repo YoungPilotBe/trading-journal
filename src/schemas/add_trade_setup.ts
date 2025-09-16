@@ -1,4 +1,5 @@
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
+import { Id } from "convex/_generated/dataModel";
 import z from "zod";
 
 export const addTradeSetupSchema = z.object({
@@ -8,8 +9,9 @@ export const addTradeSetupSchema = z.object({
     .max(100, "Title must be less than 100 characters"),
   status: z.enum(["idea", "watching", "executed", "closed", "reviewed"]),
   direction: z.enum(["long", "short"]),
+  trade_template: z.custom<Id<"trade_templates">>(),
   riskReward: z
-    .union([z.string(), z.literal("")]) // accept empty string
+    .union([z.string(), z.literal("")]) // accept empty string and undefined
     .refine((value) => {
       if (!value || value.trim() === "") return true;
       const regex = /^\d{1,2}(\.\d)?:\d{1,2}(\.\d)?$/;

@@ -4,7 +4,7 @@ import { mutation, query } from "./_generated/server";
 
 export const getImage = query({
   args: {
-    id: v.string(),
+    id: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Get the image metadata
