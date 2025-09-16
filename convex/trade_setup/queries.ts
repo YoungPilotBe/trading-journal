@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { sortBy, sortOrder } from "../constants/unions";
 
 // Get a single trade setup by ID
 export const getTradeSetup = query({
@@ -39,8 +40,8 @@ export const getTradeSetups = query({
     asset: v.optional(v.string()),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     limit: v.optional(v.number()),
-    sortBy: v.optional(v.union(v.literal("createdAt"), v.literal("updatedAt"))),
-    sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
+    sortBy,
+    sortOrder,
   },
   handler: async (ctx, { asset, direction, limit, sortBy, sortOrder }) => {
     const convexSortBy = sortBy || "createdAt";

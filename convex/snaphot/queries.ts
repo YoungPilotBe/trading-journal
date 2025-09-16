@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { statusUnion } from "../constants/unions";
+import { sortBy, sortOrder, statusUnion } from "../constants/unions";
 
 export const getSnapshot = query({
   args: {
@@ -13,6 +13,8 @@ export const getSnapshot = query({
 export const getSnapshotByTradeSetup = query({
   args: {
     tradeSetupId: v.id("trade_setups"),
+    sortBy,
+    sortOrder,
   },
   handler: async (ctx, { tradeSetupId }) => {
     return await ctx.db

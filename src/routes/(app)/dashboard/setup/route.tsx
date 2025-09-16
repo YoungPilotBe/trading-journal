@@ -1,3 +1,4 @@
+import SnapshotHistory from "@/components/snapshot-history";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -59,11 +60,7 @@ const sortTimeframes = (timeframes: string[]) => {
 export const Route = createFileRoute("/(app)/dashboard/setup")({
   validateSearch: searchSchema,
   component: RouteComponent,
-  pendingComponent: () => (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-muted-foreground font-mono text-sm">Loading...</div>
-    </div>
-  ),
+  preload: true,
 });
 
 function RouteComponent() {
@@ -485,6 +482,10 @@ function RouteComponent() {
               src={image.url}
               alt="Trading setup chart"
               className="w-full h-full object-contain"
+            />
+            <SnapshotHistory
+              snapshotId={snapshotId as Id<"snapshots">}
+              tradeSetupId={tradeSetupId as Id<"trade_setups">}
             />
           </div>
         ) : (
