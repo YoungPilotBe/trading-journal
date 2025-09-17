@@ -25,8 +25,8 @@ import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup"
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
+import { preloadSetupRouteData } from "@/lib/query-options";
 import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
-import { convexQuery } from "@convex-dev/react-query";
 import { useForm, useStore } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
@@ -41,7 +41,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
-import { api } from "../../../../../convex/_generated/api";
 
 const searchSchema = z.object({
   tradeSetupId: z.string(),
@@ -83,40 +82,7 @@ export const Route = createFileRoute("/(app)/dashboard/setup")({
     deps: { tradeSetupId, snapshotId },
     context: { queryClient },
   }) => {
-    // Preload the data using TanStack Query
-    const promises = [];
-
-    if (tradeSetupId) {
-      promises.push(
-        queryClient.ensureQueryData(
-          convexQuery(api.trade_setup.queries.getTradeSetup, {
-            id: tradeSetupId as Id<"trade_setups">,
-          })
-        )
-      );
-    }
-
-    if (snapshotId) {
-      promises.push(
-        queryClient.ensureQueryData(
-          convexQuery(api.snaphot.queries.getSnapshot, {
-            id: snapshotId as Id<"snapshots">,
-          })
-        )
-      );
-    }
-
-    // Also preload templates
-    promises.push(
-      queryClient.ensureQueryData(
-        convexQuery(api.template.queries.getTemplates, {
-          sortOrder: "desc",
-        })
-      )
-    );
-
-    await Promise.all(promises);
-
+    await preloadSetupRouteData(queryClient, tradeSetupId, snapshotId);
     return { tradeSetupId, snapshotId };
   },
 });
@@ -215,26 +181,6 @@ function RouteComponent() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground font-mono text-sm">
-          Loading...
-        </div>
-      </div>
-    );
-  }
-
-  if (!tradeSetup) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground font-mono text-sm">
-          Trade setup not found
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex gap-8 min-h-screen p-6">
       {/* Left side - General Information (Fixed width) */}
@@ -298,7 +244,7 @@ function RouteComponent() {
                 Asset
               </span>
               <span className="text-foreground font-mono text-sm">
-                {tradeSetup.asset}
+                {tradeSetup?.asset}
               </span>
             </div>
 
@@ -307,7 +253,8 @@ function RouteComponent() {
                 Creation Time
               </span>
               <span className="text-foreground font-mono text-sm">
-                {format(new Date(tradeSetup._creationTime), "MMM dd, HH:mm")}
+                {tradeSetup?._creationTime &&
+                  format(new Date(tradeSetup._creationTime), "MMM dd, HH:mm")}
               </span>
             </div>
           </div>

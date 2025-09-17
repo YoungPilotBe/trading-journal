@@ -25,6 +25,7 @@ import type * as template_queries from "../template/queries.js";
 import type * as trade_setup_internal from "../trade_setup/internal.js";
 import type * as trade_setup_mutations from "../trade_setup/mutations.js";
 import type * as trade_setup_queries from "../trade_setup/queries.js";
+import type * as tradingview_images_queries from "../tradingview_images/queries.js";
 import type * as tradingview_images from "../tradingview_images.js";
 
 /**
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   "trade_setup/internal": typeof trade_setup_internal;
   "trade_setup/mutations": typeof trade_setup_mutations;
   "trade_setup/queries": typeof trade_setup_queries;
+  "tradingview_images/queries": typeof tradingview_images_queries;
   tradingview_images: typeof tradingview_images;
 }>;
 export declare const api: FilterApi<

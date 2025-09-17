@@ -14,7 +14,7 @@ import { useGetTradeSetups } from "@/hooks/trade-setup/use-get-trade-setups";
 import { useGetUniqueAssets } from "@/hooks/trade-setup/use-get-unique-assets";
 import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { PlusIcon, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -190,6 +190,7 @@ const TradeSetupCard = ({
 }: {
   setup: Doc<"trade_setups"> & { snapshot: Doc<"snapshots"> };
 }) => {
+  const navigate = useNavigate();
   const { data: image } = useGetImage({
     id: setup.snapshot.imageId as Id<"tradingview_images">,
   });
@@ -198,6 +199,15 @@ const TradeSetupCard = ({
     useGetTradeTemplates({});
 
   const template = templates?.find((t) => t._id === setup.trade_template);
+
+  const handleTemplateClick = () => {
+    if (template) {
+      navigate({
+        to: "/dashboard/trade_templates/trade_template",
+        search: { templateId: template._id },
+      });
+    }
+  };
 
   return (
     <Card className="relative bg-background border-2 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5 group-hover:bg-accent/5 overflow-hidden">
@@ -231,18 +241,14 @@ const TradeSetupCard = ({
           {/* Trade Template */}
           <LoadingSkeleton isLoading={isLoadingTemplates} className="w-20">
             {template ? (
-              <Link
-                to={"/dashboard/trade_templates/trade_template"}
-                search={{ templateId: template._id }}
+              <Button
+                variant="outline"
+                size="badge"
+                className="text-[10px] mb-2"
+                onClick={handleTemplateClick}
               >
-                <Button
-                  variant="outline"
-                  size="badge"
-                  className="text-[10px] mb-2"
-                >
-                  {template.title}
-                </Button>
-              </Link>
+                {template.title}
+              </Button>
             ) : (
               <Button
                 variant="outline"

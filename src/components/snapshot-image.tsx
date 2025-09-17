@@ -1,7 +1,6 @@
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
-import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useGetSnapshotByTradeSetupId } from "@/hooks/snapshots/use-get-snapshot-by-trade-setup";
-import { useGetImage } from "@/hooks/tradingview_images/get_image";
+import { useGetImageBySnapshot } from "@/hooks/tradingview_images/use-get-image-by-snapshot";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
@@ -22,12 +21,8 @@ export function SnapshotImage({
 }: SnapshotImageProps) {
   const navigate = useNavigate();
 
-  const { data: snapshot, isLoading: isLoadingSnapshot } = useGetSnapshot({
-    id: snapshotId as Id<"snapshots">,
-  });
-
-  const { data: image, isLoading: isLoadingImage } = useGetImage({
-    id: snapshot?.imageId as Id<"tradingview_images">,
+  const { data: image, isLoading: isLoadingImage } = useGetImageBySnapshot({
+    snapshotId: snapshotId as Id<"snapshots">,
   });
 
   // Get all snapshots for this trade setup to enable navigation
@@ -38,8 +33,7 @@ export function SnapshotImage({
       sortOrder: "asc", // ascending to get chronological order
     });
 
-  const isLoading =
-    isLoadingSnapshot || isLoadingImage || isLoadingAllSnapshots;
+  const isLoading = isLoadingImage || isLoadingAllSnapshots;
 
   // Find current snapshot index and determine previous/next snapshots
   const currentIndex =
@@ -51,21 +45,6 @@ export function SnapshotImage({
       ? allSnapshots?.[currentIndex + 1]
       : null;
 
-  if (!image?.url) {
-    return (
-      <div
-        className={cn(
-          "w-full h-full rounded-lg flex items-center justify-center",
-          className
-        )}
-      >
-        <span className="text-muted-foreground font-mono text-sm">
-          No image available
-        </span>
-      </div>
-    );
-  }
-
   return (
     <>
       {/* Regular image view */}
@@ -75,9 +54,12 @@ export function SnapshotImage({
           className
         )}
       >
-        <LoadingSkeleton isLoading={isLoading} className="h-full aspect-video">
+        <LoadingSkeleton
+          isLoading={isLoading || !image?.url}
+          className="h-full aspect-video"
+        >
           <img
-            src={image.url}
+            src={image?.url ?? undefined}
             alt="Trading setup chart"
             className="w-full h-full object-contain cursor-pointer transition-opacity"
             onClick={() =>
@@ -94,6 +76,7 @@ export function SnapshotImage({
             <Link
               to="/dashboard/setup"
               search={{ tradeSetupId, snapshotId: previousSnapshot._id }}
+              preload="render"
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
               onClick={(e) => e.stopPropagation()}
             >
@@ -105,6 +88,7 @@ export function SnapshotImage({
             <Link
               to="/dashboard/setup"
               search={{ tradeSetupId, snapshotId: nextSnapshot._id }}
+              preload="render"
               className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
               onClick={(e) => e.stopPropagation()}
             >
@@ -144,7 +128,7 @@ export function SnapshotImage({
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={image.url}
+              src={image?.url ?? undefined}
               alt="Trading setup chart - Fullscreen"
               className="w-full h-full object-contain rounded-lg"
             />
