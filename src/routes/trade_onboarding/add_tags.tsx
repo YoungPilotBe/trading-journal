@@ -3,9 +3,7 @@ import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { EffectsProvider } from "@/rjsf/EffectsContext";
-import { customWidgets, schema, uiSchema } from "@/rjsf/strategy.form.schema";
-import Form from "@rjsf/shadcn";
-import validator from "@rjsf/validator-ajv8";
+import Tree from "@/tree/tree";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { useEffect, useState } from "react";
@@ -65,7 +63,9 @@ function RouteComponent() {
         <div className="flex flex-col items-start space-y-2 mt-2">
           <span className="text-white font-light font-mono">Tags</span>
           <EffectsProvider tradeSetup={{ ...tradeSetup, ...snapshot.tags }}>
-            <Form
+            <Tree />
+
+            {/* <Form
               schema={schema}
               uiSchema={uiSchema}
               formData={formData}
@@ -78,7 +78,7 @@ function RouteComponent() {
               validator={validator}
               widgets={customWidgets}
               children={true} // This removes the default submit button
-            />
+            /> */}
           </EffectsProvider>
         </div>
 
