@@ -1,4 +1,23 @@
+import { capitalize } from "lodash";
 import type { Branch } from "./tree.utils";
+
+const createContradictingBranch = (
+  prefix: string,
+  contras: [string, string]
+): NonNullable<Branch["children"]> => {
+  return [
+    {
+      key: `${prefix}_${contras[0]}`,
+      title: `${capitalize(contras[0])}`,
+      anti: [`${prefix}_${contras[1]}`],
+    },
+    {
+      key: `${prefix}_${contras[1]}`,
+      title: `${capitalize(contras[1])}`,
+      anti: [`${prefix}_${contras[0]}`],
+    },
+  ];
+};
 
 export const strategyTree: Branch = {
   key: "strategy",
@@ -12,52 +31,28 @@ export const strategyTree: Branch = {
           key: "swing",
           title: "Swing",
           children: [
-            {
-              key: "swing_direction_bullish",
-              title: "Swing Direction - Bullish",
-              anti: ["swing_direction_bearish"],
-            },
-            {
-              key: "swing_direction_bearish",
-              title: "Swing Direction - Bearish",
-              anti: ["swing_direction_bullish"],
-            },
-            {
-              key: "swing_strength_weakening",
-              title: "Swing Strength - Weakening",
-              anti: ["swing_strength_strong"],
-            },
-            {
-              key: "swing_strength_strong",
-              title: "Swing Strength - Strong",
-              anti: ["swing_strength_weakening"],
-            },
+            ...createContradictingBranch("swing_direction", [
+              "bullish",
+              "bearish",
+            ]),
+            ...createContradictingBranch("swing_strength", [
+              "strong",
+              "weakening",
+            ]),
           ],
         },
         {
           key: "fractal",
           title: "Fractal",
           children: [
-            {
-              key: "fractal_direction_bullish",
-              title: "Fractal Direction - Bullish",
-              anti: ["fractal_direction_bearish"],
-            },
-            {
-              key: "fractal_direction_bearish",
-              title: "Fractal Direction - Bearish",
-              anti: ["fractal_direction_bullish"],
-            },
-            {
-              key: "fractal_strength_weakening",
-              title: "Fractal Strength - Weakening",
-              anti: ["fractal_strength_strong"],
-            },
-            {
-              key: "fractal_strength_strong",
-              title: "Fractal Strength - Strong",
-              anti: ["fractal_strength_weakening"],
-            },
+            ...createContradictingBranch("fractal_direction", [
+              "bullish",
+              "bearish",
+            ]),
+            ...createContradictingBranch("fractal_strength", [
+              "strong",
+              "weakening",
+            ]),
           ],
         },
       ],
@@ -67,7 +62,8 @@ export const strategyTree: Branch = {
       title: "Zone",
       children: [
         {
-          key: "supply",
+          key: "zone_supply",
+          anti: ["zone_demand"],
           title: "Supply",
           children: [
             {
@@ -87,7 +83,8 @@ export const strategyTree: Branch = {
           ],
         },
         {
-          key: "demand",
+          key: "zone_demand",
+          anti: ["zone_supply"],
           title: "Demand",
           children: [
             {

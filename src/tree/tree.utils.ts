@@ -250,8 +250,8 @@ function findNodeByKey(tree: Branch, nodeKey: string): Branch | null {
   return null;
 }
 
-// Helper function to toggle leaf selection with anti-selection logic
-function toggleLeafSelectionWithAnti(
+// Helper function to toggle node selection with anti-selection logic (works for both leaves and branches)
+function toggleNodeSelectionWithAnti(
   tree: Branch,
   selectedLeaves: Set<string>,
   nodeKey: string
@@ -269,13 +269,91 @@ function toggleLeafSelectionWithAnti(
     const antiKeys = findNodeAnti(tree, nodeKey);
     antiKeys.forEach((antiKey) => {
       newSelectedLeaves.delete(antiKey);
+
+      // If the anti item is a branch, also deselect all its descendants
+      const antiNode = findNodeByKey(tree, antiKey);
+      if (antiNode && antiNode.children) {
+        const descendantKeys = getAllDescendantKeys(antiNode);
+        descendantKeys.forEach((descendantKey) => {
+          newSelectedLeaves.delete(descendantKey);
+        });
+      }
     });
   }
 
   return newSelectedLeaves;
 }
 
-// Helper function to toggle branch selection with child deselection logic
+// Keep the old function name for backwards compatibility
+function toggleLeafSelectionWithAnti(
+  tree: Branch,
+  selectedLeaves: Set<string>,
+  nodeKey: string
+): Set<string> {
+  return toggleNodeSelectionWithAnti(tree, selectedLeaves, nodeKey);
+}
+
+// Helper function to toggle branch selection with anti-selection logic
+function toggleBranchSelectionWithAnti(
+  tree: Branch,
+  selectedLeaves: Set<string>,
+  expandedKeys: Set<string>,
+  nodeKey: string
+): { selectedLeaves: Set<string>; expandedKeys: Set<string> } {
+  const newSelectedLeaves = new Set(selectedLeaves);
+  const newExpandedKeys = new Set(expandedKeys);
+
+  // Find the node
+  const node = findNodeByKey(tree, nodeKey);
+  if (!node) {
+    return { selectedLeaves: newSelectedLeaves, expandedKeys: newExpandedKeys };
+  }
+
+  // Store the original state to determine what changed
+  const wasSelected = newSelectedLeaves.has(nodeKey);
+
+  if (wasSelected) {
+    // If already selected, deselect it and collapse it
+    newSelectedLeaves.delete(nodeKey);
+    newExpandedKeys.delete(nodeKey);
+
+    // Also collapse and deselect all descendants
+    const descendantKeys = getAllDescendantKeys(node);
+    descendantKeys.forEach((descendantKey) => {
+      newSelectedLeaves.delete(descendantKey);
+      newExpandedKeys.delete(descendantKey);
+    });
+  } else {
+    // If not selected, select it and handle anti-logic
+    newSelectedLeaves.add(nodeKey);
+
+    // Find and deselect/collapse anti items
+    const antiKeys = findNodeAnti(tree, nodeKey);
+    antiKeys.forEach((antiKey) => {
+      newSelectedLeaves.delete(antiKey);
+      newExpandedKeys.delete(antiKey); // Collapse the anti-branch
+
+      // If the anti item is a branch, also deselect and collapse all its descendants
+      const antiNode = findNodeByKey(tree, antiKey);
+      if (antiNode && antiNode.children) {
+        const descendantKeys = getAllDescendantKeys(antiNode);
+        descendantKeys.forEach((descendantKey) => {
+          newSelectedLeaves.delete(descendantKey);
+          newExpandedKeys.delete(descendantKey);
+        });
+      }
+    });
+
+    // If the node was selected and has children, expand it
+    if (node.children && node.children.length > 0) {
+      newExpandedKeys.add(nodeKey);
+    }
+  }
+
+  return { selectedLeaves: newSelectedLeaves, expandedKeys: newExpandedKeys };
+}
+
+// Helper function to toggle branch selection with child deselection logic (for expansion/collapse)
 function toggleBranchSelectionWithChildren(
   tree: Branch,
   selectedLeaves: Set<string>,
@@ -311,12 +389,15 @@ function toggleBranchSelectionWithChildren(
 
 export {
   constructSelectionObject,
+  findNodeByKey,
   findPathToNode,
   flattenTreeToGrid,
   getBranchLength,
   isLeafNode,
+  toggleBranchSelectionWithAnti,
   toggleBranchSelectionWithChildren,
   toggleExpansion,
   toggleLeafSelection,
   toggleLeafSelectionWithAnti,
+  toggleNodeSelectionWithAnti,
 };

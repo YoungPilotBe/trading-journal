@@ -2,8 +2,10 @@ import { useMemo, useState } from "react";
 import { ToggleBadge } from "./ToggleBadge";
 import { strategyTree } from "./tree.constants";
 import {
+  findNodeByKey,
   flattenTreeToGrid,
   getBranchLength,
+  toggleBranchSelectionWithAnti,
   toggleBranchSelectionWithChildren,
   toggleLeafSelectionWithAnti,
 } from "./tree.utils";
@@ -22,14 +24,31 @@ const Tree = () => {
   );
 
   const handleToggle = (nodeKey: string) => {
-    const result = toggleBranchSelectionWithChildren(
-      strategyTree,
-      selectedLeaves,
-      expandedKeys,
-      nodeKey
-    );
-    setExpandedKeys(result.expandedKeys);
-    setSelectedLeaves(result.selectedLeaves);
+    // Check if this branch has anti-selection properties
+    const node = findNodeByKey(strategyTree, nodeKey);
+    const hasAntiSelection = node?.anti && node.anti.length > 0;
+
+    if (hasAntiSelection) {
+      // Use anti-selection logic for branches with anti properties
+      const result = toggleBranchSelectionWithAnti(
+        strategyTree,
+        selectedLeaves,
+        expandedKeys,
+        nodeKey
+      );
+      setExpandedKeys(result.expandedKeys);
+      setSelectedLeaves(result.selectedLeaves);
+    } else {
+      // Use regular expansion logic for branches without anti properties
+      const result = toggleBranchSelectionWithChildren(
+        strategyTree,
+        selectedLeaves,
+        expandedKeys,
+        nodeKey
+      );
+      setExpandedKeys(result.expandedKeys);
+      setSelectedLeaves(result.selectedLeaves);
+    }
   };
 
   const handleLeafSelection = (nodeKey: string) => {
@@ -41,35 +60,49 @@ const Tree = () => {
   return (
     <div className="space-y-4">
       {/* Tree Grid */}
-      <div className="border">
+      <div className="">
         {gridRows.map((row, rowIndex) => (
           <div
             key={rowIndex}
-            className={`grid gap-1 border-b min-h-[40px]`}
+            className={`grid gap-1 h-[45px]`}
             style={{
-              gridTemplateColumns: `repeat(${branchLength}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${branchLength}, 150px)`,
             }}
           >
             {row.map((cell, colIndex) => (
-              <div key={colIndex} className="border-r p-2 flex items-center">
+              <div
+                key={colIndex}
+                className="flex items-stretch w-[150px] h-[45px]"
+              >
                 {cell && (
-                  <div className="flex items-center gap-2 w-full">
+                  <div className="w-full h-full p-0.5 flex items-center justify-center">
                     {cell.isLeaf ? (
-                      <div className="w-full">
-                        <ToggleBadge
-                          value={cell.isSelected || false}
-                          onChange={() => handleLeafSelection(cell.nodeKey)}
-                          label={cell.content}
-                        />
-                      </div>
+                      <ToggleBadge
+                        value={cell.isSelected || false}
+                        onChange={() => handleLeafSelection(cell.nodeKey)}
+                        label={cell.content}
+                        fieldName={cell.nodeKey}
+                      />
                     ) : (
-                      <div className="w-full">
-                        <ToggleBadge
-                          value={cell.isExpanded || false}
-                          onChange={() => handleToggle(cell.nodeKey)}
-                          label={cell.content}
-                        />
-                      </div>
+                      (() => {
+                        // For branches, check if they have anti-selection properties
+                        const node = findNodeByKey(strategyTree, cell.nodeKey);
+                        const hasAntiSelection =
+                          node?.anti && node.anti.length > 0;
+
+                        return (
+                          <ToggleBadge
+                            value={
+                              hasAntiSelection
+                                ? cell.isSelected || false
+                                : cell.isExpanded || false
+                            }
+                            onChange={() => handleToggle(cell.nodeKey)}
+                            label={cell.content}
+                            fieldName={cell.nodeKey}
+                          />
+                        );
+                      })()
                     )}
                   </div>
                 )}
