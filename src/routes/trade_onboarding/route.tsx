@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { pageVariants } from "@/config/pageVariants";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { Id } from "convex/_generated/dataModel";
 import { ChevronLeft } from "lucide-react";
 import { z } from "zod";
 const searchSchema = z.object({
@@ -17,7 +18,9 @@ export const Route = createFileRoute("/trade_onboarding")({
 
 function RouteComponent() {
   const { imageId } = Route.useSearch();
-  const { data, isLoading } = useGetImage({ id: imageId });
+  const { data, isLoading } = useGetImage({
+    id: imageId as Id<"tradingview_images">,
+  });
 
   // Early returns for loading and error states
   if (isLoading) {

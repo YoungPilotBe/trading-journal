@@ -73,7 +73,9 @@ export const AnimatedImageLayout = forwardRef<
       searchParams,
     } = useImageAnimation(pageVariants);
     const navigate = useNavigate();
-    const deleteImage = useConvexMutation(api.tradingview_images.deleteImage);
+    const deleteImage = useConvexMutation(
+      api.tradingview_images.mutations.deleteImage
+    );
 
     const targetStyle = getCurrentTarget();
 

@@ -34,70 +34,6 @@ export const updateTradeSetup = mutation({
   },
 });
 
-// Link an additional image to an existing trade setup
-/*export const linkImageToTradeSetup = mutation({
-  args: {
-    imageId: v.id("tradingview_images"),
-    tradeSetupId: v.id("trade_setups"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.imageId, {
-      tradeSetupId: args.tradeSetupId,
-    });
-
-    return args.imageId;
-  },
-});*/
-
-// export const addTimeframeCouples = mutation({
-//   args: {
-//     id: v.id("trade_setups"),
-//     timeframeTagCouples: v.any(), // Strategy form data as JSON
-//   },
-//   handler: async (ctx, args) => {
-//     // Get the current trade setup to access existing tags
-//     const currentTradeSetup = await ctx.db.get(args.id);
-
-//     // Only keep timeframe couples for tags that are currently active
-//     let validatedTimeframeCouples = args.timeframeTagCouples || {};
-
-//     if (
-//       currentTradeSetup?.tags &&
-//       typeof validatedTimeframeCouples === "object" &&
-//       validatedTimeframeCouples !== null
-//     ) {
-//       // Get the list of active tags (tags that are truthy)
-//       const activeTags = Object.entries(currentTradeSetup.tags || {})
-//         .filter(([, value]) => Boolean(value))
-//         .map(([key]) => key);
-
-//       // Only keep timeframe couples for active tags
-//       const cleanedTimeframeCouples: Record<string, string> = {};
-//       for (const [tagKey, timeframe] of Object.entries(
-//         validatedTimeframeCouples
-//       )) {
-//         if (
-//           activeTags.includes(tagKey) &&
-//           timeframe &&
-//           typeof timeframe === "string"
-//         ) {
-//           // Only keep non-empty timeframes
-//           cleanedTimeframeCouples[tagKey] = timeframe;
-//         }
-//       }
-
-//       validatedTimeframeCouples = cleanedTimeframeCouples;
-//     }
-
-//     await ctx.db.patch(args.id, {
-//       timeframeTagCouples: validatedTimeframeCouples,
-//       updatedAt: Date.now(),
-//     });
-
-//     return args.id;
-//   },
-// });
-
 export const deleteTradeSetup = mutation({
   args: {
     tradeSetupId: v.id("trade_setups"),
@@ -106,6 +42,11 @@ export const deleteTradeSetup = mutation({
     // Delete all the snapshots
     await ctx.runMutation(
       internal.orchestration.mutations.deleteSnapshotsByTradeSetupId,
+      { tradeSetupId }
+    );
+
+    await ctx.runMutation(
+      internal.template.internal.removeTradeSetupFromAllTemplates,
       { tradeSetupId }
     );
 

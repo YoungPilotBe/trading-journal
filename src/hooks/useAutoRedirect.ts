@@ -1,8 +1,6 @@
-import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
-import { api } from "../../convex/_generated/api";
+import { useGetToBeOnboardedImages } from "./tradingview_images/use-get-to-be-onboarded-images";
 
 /**
  * Hook that automatically redirects users to the trade onboarding flow
@@ -10,9 +8,7 @@ import { api } from "../../convex/_generated/api";
  * in the onboarding flow.
  */
 export const useAutoRedirect = () => {
-  const { data: images, isLoading } = useQuery(
-    convexQuery(api.tradingview_images.getToBeOnboardedImages, {})
-  );
+  const { data: images, isLoading } = useGetToBeOnboardedImages({});
   const location = useLocation();
   const navigate = useNavigate();
 

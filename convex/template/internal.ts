@@ -22,3 +22,24 @@ export const addTradeSetupToTemplate = internalMutation({
     }
   },
 });
+
+export const removeTradeSetupFromAllTemplates = internalMutation({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+  },
+  handler: async (ctx, args) => {
+    // Find all templates that contain this tradeSetupId
+    const templates = await ctx.db.query("trade_templates").collect();
+
+    for (const template of templates) {
+      const currentIds = template.tradeSetupIds || [];
+
+      // Only update if the tradeSetupId is present in this template
+      if (currentIds.includes(args.tradeSetupId)) {
+        await ctx.db.patch(template._id, {
+          tradeSetupIds: currentIds.filter((id) => id !== args.tradeSetupId),
+        });
+      }
+    }
+  },
+});
