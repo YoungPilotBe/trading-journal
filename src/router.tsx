@@ -1,18 +1,35 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { createRouter as createTanStackRouter } from "@tanstack/react-router";
+import {
+  createMemoryHistory,
+  createRouter as createTanStackRouter,
+} from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 import { ConvexProvider } from "convex/react";
 import { routeTree } from "./routeTree.gen";
 
 export function createRouter() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL!;
+  // Get the Convex URL from environment variables
+  const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
+
   if (!CONVEX_URL) {
-    console.error("missing envar VITE_CONVEX_URL");
+    throw new Error(
+      "Missing VITE_CONVEX_URL environment variable. Please ensure it's set in your .env file."
+    );
   }
-  const convexQueryClient = new ConvexQueryClient(CONVEX_URL);
+
+  console.log("Initializing Convex with URL:", CONVEX_URL);
+
+  let convexQueryClient: ConvexQueryClient;
+  try {
+    convexQueryClient = new ConvexQueryClient(CONVEX_URL);
+  } catch (error) {
+    console.error("Failed to initialize ConvexQueryClient:", error);
+    throw new Error(
+      "Failed to initialize Convex client. Please check your VITE_CONVEX_URL."
+    );
+  }
 
   const queryClient: QueryClient = new QueryClient({
     defaultOptions: {
@@ -22,17 +39,23 @@ export function createRouter() {
       },
     },
   });
+
   convexQueryClient.connect(queryClient);
+
+  // Create hash history for Electron compatibility
+  const history = createMemoryHistory({
+    initialEntries: ["/"],
+  });
 
   const router = routerWithQueryClient(
     createTanStackRouter({
       routeTree,
+      history,
       defaultPreload: "intent",
       context: { queryClient },
       Wrap: ({ children }) => (
         <ConvexProvider client={convexQueryClient.convexClient}>
-          <ReactQueryDevtools initialIsOpen={false} />
-
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
           {children}
         </ConvexProvider>
       ),

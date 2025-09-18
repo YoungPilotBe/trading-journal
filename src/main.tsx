@@ -3,9 +3,6 @@ import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
 import "./globals.css";
-
-// Import the generated route tree
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { createRouter } from "./router";
 
 // Create a new router instance
@@ -24,7 +21,6 @@ if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <StrictMode>
-      <TanStackRouterDevtools router={router} />
       <RouterProvider router={router} />
     </StrictMode>
   );

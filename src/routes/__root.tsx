@@ -4,9 +4,12 @@
 import globals from "@/globals.css?url";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+
 const RootLayout = () => (
   <>
     <Outlet />
+    <TanStackRouterDevtools />
   </>
 );
 
@@ -23,10 +26,15 @@ export const Route = createRootRouteWithContext<{
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Trading Journal",
       },
     ],
-    links: [{ type: "stylesheet", rel: globals }],
+    links: [
+      {
+        rel: "stylesheet",
+        href: globals,
+      },
+    ],
   }),
   component: RootLayout,
 });
