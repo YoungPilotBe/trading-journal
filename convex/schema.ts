@@ -87,6 +87,9 @@ export default defineSchema({
 
     tags: v.optional(v.any()),
 
+    // Complete tree state configuration (expanded keys, selected nodes, etc.)
+    tags_config: v.optional(v.any()),
+
     // Timeframe couples
     timeframeTagCouples: v.optional(v.any()),
 

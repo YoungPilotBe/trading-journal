@@ -341,9 +341,7 @@ function convertJsonToSelection(
 
       if (value === true) {
         // This is a selected leaf node, find its nodeKey
-        console.log("Looking for node with path:", path);
         const nodeKey = findNodeKeyByPath(tree, path);
-        console.log("Found nodeKey:", nodeKey);
         if (nodeKey) {
           selectedNodes.add(nodeKey);
         }
@@ -355,53 +353,34 @@ function convertJsonToSelection(
   }
 
   traverse(json);
-  console.log("convertJsonToSelection result:", Array.from(selectedNodes));
   return selectedNodes;
 }
 
 function findNodeKeyByPath(tree: TreeNode, path: string[]): string | null {
   function search(node: TreeNode, remainingPath: string[]): string | null {
-    console.log(
-      `Searching node ${node.key} with remaining path:`,
-      remainingPath
-    );
-
     if (remainingPath.length === 0) {
-      console.log(`Found target node: ${node.key}`);
       return node.key;
     }
 
     const [currentSegment, ...restPath] = remainingPath;
 
-    // Match against the node's key, not title
+    // Match against the node's key
     if (node.key === currentSegment) {
-      console.log(
-        `Matched segment ${currentSegment}, continuing with:`,
-        restPath
-      );
       if (restPath.length === 0) {
-        console.log(`Found target node: ${node.key}`);
         return node.key;
       }
 
       if (node.children) {
-        console.log(
-          `Searching children of ${node.key}:`,
-          node.children.map((c) => c.key)
-        );
         for (const child of node.children) {
           const result = search(child, restPath);
           if (result) return result;
         }
       }
-    } else {
-      console.log(`No match: ${node.key} !== ${currentSegment}`);
     }
 
     // If we're at the root and didn't match, try searching children directly
     // This handles the case where the JSON path doesn't include the root
     if (node.key === "strategy" && node.children) {
-      console.log("Root didn't match, searching children directly");
       for (const child of node.children) {
         const result = search(child, remainingPath);
         if (result) return result;
@@ -411,7 +390,6 @@ function findNodeKeyByPath(tree: TreeNode, path: string[]): string | null {
     return null;
   }
 
-  console.log("Starting search for path:", path);
   return search(tree, path);
 }
 

@@ -7,6 +7,7 @@ export const updateSnapshot = mutation({
     snapshotId: v.id("snapshots"),
     status: v.optional(statusUnion),
     tags: v.optional(v.any()),
+    tags_config: v.optional(v.any()),
   },
   handler: async (ctx, { snapshotId, ...updates }) => {
     return await ctx.db.patch(snapshotId, { ...updates });

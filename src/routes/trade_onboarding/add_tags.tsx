@@ -1,13 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { EffectsProvider } from "@/rjsf/EffectsContext";
-import Tree from "@/tree/tree";
+import { Tree } from "@/tree/tree";
 import { convexQuery } from "@convex-dev/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Id } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
 import { useState } from "react";
 import { z } from "zod";
 import { api } from "../../../convex/_generated/api";
+
+interface TreeState {
+  expandedKeys: Set<string>;
+  selectedNodes: Set<string>;
+  tags: Record<string, unknown>;
+}
 
 const searchSchema = z.object({
   tradeSetupId: z.string(),
@@ -54,29 +60,55 @@ function RouteComponent() {
   const navigate = useNavigate();
   const { mutateAsync: updateSnapshot, isPending } = useUpdateSnapshot();
 
-  // Store current tree selection
-  const [currentTreeSelection, setCurrentTreeSelection] = useState<
-    Record<string, unknown>
-  >(snapshot?.tags || {});
+  // Create tree state from snapshot data
+  const createTreeStateFromSnapshot = (
+    snapshot: Doc<"snapshots"> | null
+  ): TreeState | undefined => {
+    if (snapshot?.tags_config) {
+      // Restore complete tree state from saved config
+      return {
+        expandedKeys: new Set<string>(
+          snapshot.tags_config.expandedKeys || ["strategy"]
+        ),
+        selectedNodes: new Set<string>(
+          snapshot.tags_config.selectedNodes || []
+        ),
+        tags: snapshot.tags || {},
+      };
+    } else if (snapshot?.tags) {
+      // Legacy: for backwards compatibility, just use the tags with default expanded state
+      return {
+        expandedKeys: new Set<string>(["strategy"]),
+        selectedNodes: new Set<string>(),
+        tags: snapshot.tags,
+      };
+    }
 
-  console.log("Current tree data:", JSON.stringify(currentTreeSelection));
-
-  const handleTreeChange = (treeSelection: Record<string, unknown>) => {
-    console.log("Tree selection changed:", treeSelection);
-    setCurrentTreeSelection(treeSelection);
+    // Default empty state
+    return undefined;
   };
 
-  const onSubmit = async () => {
-    // Save the current tree selection as tags
+  const [treeState, setTreeState] = useState(() =>
+    createTreeStateFromSnapshot(snapshot)
+  );
+
+  const handleTreeStateChange = (newState: TreeState) => {
+    setTreeState(newState);
+  };
+
+  const handleSubmit = async () => {
     await updateSnapshot({
       snapshotId: snapshotId as Id<"snapshots">,
-      tags: currentTreeSelection,
-    });
+      tags: treeState?.tags || {},
+      tags_config: treeState
+        ? {
+            expandedKeys: Array.from(treeState.expandedKeys),
+            selectedNodes: Array.from(treeState.selectedNodes),
+          }
+        : undefined,
+    }); // Temporary cast until types are regenerated
 
-    // Navigate to a success page or back to the main app
-    navigate({
-      to: "/dashboard",
-    });
+    navigate({ to: "/dashboard" });
   };
 
   return (
@@ -89,15 +121,15 @@ function RouteComponent() {
             tradeSetup={{ ...tradeSetup, ...(snapshot?.tags || {}) }}
           >
             <Tree
-              intialTree={snapshot?.tags || {}}
-              onTreeChange={handleTreeChange}
+              initialTreeState={treeState}
+              onTreeStateChange={handleTreeStateChange}
             />
           </EffectsProvider>
         </div>
 
         <Button
           className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
-          onClick={onSubmit}
+          onClick={handleSubmit}
           disabled={isPending}
         >
           {isPending ? "Saving..." : "Proceed"}

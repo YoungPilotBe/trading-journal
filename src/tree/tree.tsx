@@ -2,113 +2,113 @@ import { useEffect, useMemo, useState } from "react";
 import { ToggleBadge } from "./ToggleBadge";
 import { strategyTree } from "./tree.constants";
 import {
-  convertJsonToSelection,
   convertSelectionToJson,
   findNodeByKey,
   flattenTreeToGrid,
-  getRequiredExpandedKeys,
   getTreeDepth,
   toggleBranchExpansion,
   toggleBranchWithAntiSelection,
   toggleLeafWithAntiSelection,
 } from "./tree.utils";
 
-interface Props {
-  intialTree: Record<string, unknown>;
-  onTreeChange: (tree: Record<string, unknown>) => void;
+interface TreeState {
+  expandedKeys: Set<string>;
+  selectedNodes: Set<string>;
+  tags: Record<string, unknown>;
 }
 
-const Tree = ({ intialTree, onTreeChange }: Props) => {
-  // Initialize selectedNodes from intialTree
-  const initialSelectedNodes = useMemo(() => {
-    if (intialTree && Object.keys(intialTree).length > 0) {
-      return convertJsonToSelection(strategyTree, intialTree);
+interface Props {
+  initialTreeState?: TreeState;
+  onTreeStateChange: (state: TreeState) => void;
+}
+
+const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
+  // Initialize tree state - either from provided state or create default
+  const [treeState, setTreeState] = useState<TreeState>(() => {
+    if (initialTreeState) {
+      // Ensure strategy is always expanded
+      const expandedKeys = new Set(initialTreeState.expandedKeys);
+      expandedKeys.add("strategy");
+      return {
+        ...initialTreeState,
+        expandedKeys,
+      };
     }
-    return new Set<string>();
-  }, [intialTree]);
 
-  // Calculate required expanded keys based on selected nodes
-  const initialExpandedKeys = useMemo(() => {
-    return getRequiredExpandedKeys(strategyTree, initialSelectedNodes);
-  }, [initialSelectedNodes]);
+    // Default state for new tree
+    return {
+      expandedKeys: new Set<string>(["strategy"]),
+      selectedNodes: new Set<string>(),
+      tags: {},
+    };
+  });
 
-  const [expandedKeys, setExpandedKeys] =
-    useState<Set<string>>(initialExpandedKeys);
-  const [selectedNodes, setSelectedNodes] =
-    useState<Set<string>>(initialSelectedNodes);
-
-  // Update both selectedNodes and expandedKeys when intialTree changes
+  // Update tree state when initialTreeState changes
   useEffect(() => {
-    console.log("Tree initialization:", {
-      intialTree,
-      selectedNodes: Array.from(initialSelectedNodes),
-      expandedKeys: Array.from(initialExpandedKeys),
-    });
-    setSelectedNodes(initialSelectedNodes);
-    setExpandedKeys(initialExpandedKeys);
-  }, [initialSelectedNodes, initialExpandedKeys, intialTree]);
+    if (initialTreeState) {
+      const expandedKeys = new Set(initialTreeState.expandedKeys);
+      expandedKeys.add("strategy"); // Always ensure strategy is expanded
+
+      setTreeState({
+        ...initialTreeState,
+        expandedKeys,
+      });
+    }
+  }, [initialTreeState]);
 
   const treeDepth = useMemo(() => getTreeDepth(strategyTree), []);
   const gridRows = useMemo(
-    () => flattenTreeToGrid(strategyTree, expandedKeys, selectedNodes),
-    [expandedKeys, selectedNodes]
+    () =>
+      flattenTreeToGrid(
+        strategyTree,
+        treeState.expandedKeys,
+        treeState.selectedNodes
+      ),
+    [treeState.expandedKeys, treeState.selectedNodes]
   );
+
+  const updateTreeState = (
+    newSelectedNodes: Set<string>,
+    newExpandedKeys?: Set<string>
+  ) => {
+    const updatedState: TreeState = {
+      expandedKeys: newExpandedKeys || treeState.expandedKeys,
+      selectedNodes: newSelectedNodes,
+      tags: convertSelectionToJson(strategyTree, newSelectedNodes),
+    };
+
+    setTreeState(updatedState);
+    onTreeStateChange(updatedState);
+  };
 
   const handleBranchToggle = (nodeKey: string) => {
     const node = findNodeByKey(strategyTree, nodeKey);
     const hasAntiSelection = Boolean(node?.anti?.length);
 
-    if (hasAntiSelection) {
-      // Use anti-selection logic for branches with anti properties
-      const result = toggleBranchWithAntiSelection(
-        strategyTree,
-        selectedNodes,
-        expandedKeys,
-        nodeKey
-      );
-      setExpandedKeys(result.expandedKeys);
-      setSelectedNodes(result.selectedNodes);
+    const result = hasAntiSelection
+      ? toggleBranchWithAntiSelection(
+          strategyTree,
+          treeState.selectedNodes,
+          treeState.expandedKeys,
+          nodeKey
+        )
+      : toggleBranchExpansion(
+          strategyTree,
+          treeState.selectedNodes,
+          treeState.expandedKeys,
+          nodeKey
+        );
 
-      // Immediately notify parent of the change
-      const newSelectionJson = convertSelectionToJson(
-        strategyTree,
-        result.selectedNodes
-      );
-      onTreeChange(newSelectionJson);
-    } else {
-      // Use regular expansion logic for branches without anti properties
-      const result = toggleBranchExpansion(
-        strategyTree,
-        selectedNodes,
-        expandedKeys,
-        nodeKey
-      );
-      setExpandedKeys(result.expandedKeys);
-      setSelectedNodes(result.selectedNodes);
-
-      // Immediately notify parent of the change
-      const newSelectionJson = convertSelectionToJson(
-        strategyTree,
-        result.selectedNodes
-      );
-      onTreeChange(newSelectionJson);
-    }
+    updateTreeState(result.selectedNodes, result.expandedKeys);
   };
 
   const handleLeafToggle = (nodeKey: string) => {
     const newSelectedNodes = toggleLeafWithAntiSelection(
       strategyTree,
-      selectedNodes,
+      treeState.selectedNodes,
       nodeKey
     );
-    setSelectedNodes(newSelectedNodes);
-
-    // Immediately notify parent of the change
-    const newSelectionJson = convertSelectionToJson(
-      strategyTree,
-      newSelectedNodes
-    );
-    onTreeChange(newSelectionJson);
+    updateTreeState(newSelectedNodes);
   };
 
   return (
@@ -163,3 +163,4 @@ const Tree = ({ intialTree, onTreeChange }: Props) => {
 };
 
 export default Tree;
+export { Tree };
