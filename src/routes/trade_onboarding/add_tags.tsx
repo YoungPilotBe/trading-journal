@@ -9,10 +9,11 @@ import { useState } from "react";
 import { z } from "zod";
 import { api } from "../../../convex/_generated/api";
 
+// Complete tree state that includes both UI state and data
 interface TreeState {
-  expandedKeys: Set<string>;
-  selectedNodes: Set<string>;
-  tags: Record<string, unknown>;
+  expandedKeys: Set<string>; // Which branch nodes are expanded
+  selectedNodes: Set<string>; // Which leaf nodes are selected
+  tags: Record<string, unknown>; // JSON representation of selected tags
 }
 
 const searchSchema = z.object({
@@ -75,8 +76,10 @@ function RouteComponent() {
         ),
         tags: snapshot.tags || {},
       };
-    } else if (snapshot?.tags) {
-      // Legacy: for backwards compatibility, just use the tags with default expanded state
+    }
+
+    // If no config exists but we have tags, create a default state
+    if (snapshot?.tags && Object.keys(snapshot.tags).length > 0) {
       return {
         expandedKeys: new Set<string>(["strategy"]),
         selectedNodes: new Set<string>(),
@@ -88,14 +91,17 @@ function RouteComponent() {
     return undefined;
   };
 
+  // Initialize tree state from snapshot data
   const [treeState, setTreeState] = useState(() =>
     createTreeStateFromSnapshot(snapshot)
   );
 
+  // Handle tree state changes from the Tree component
   const handleTreeStateChange = (newState: TreeState) => {
     setTreeState(newState);
   };
 
+  // Save both tags and complete tree state configuration
   const handleSubmit = async () => {
     await updateSnapshot({
       snapshotId: snapshotId as Id<"snapshots">,
@@ -106,7 +112,7 @@ function RouteComponent() {
             selectedNodes: Array.from(treeState.selectedNodes),
           }
         : undefined,
-    }); // Temporary cast until types are regenerated
+    });
 
     navigate({ to: "/dashboard" });
   };

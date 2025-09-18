@@ -329,93 +329,10 @@ function convertSelectionToJson(
   return result;
 }
 
-function convertJsonToSelection(
-  tree: TreeNode,
-  json: Record<string, unknown>
-): Set<string> {
-  const selectedNodes = new Set<string>();
-
-  function traverse(obj: Record<string, unknown>, currentPath: string[] = []) {
-    for (const [key, value] of Object.entries(obj)) {
-      const path = [...currentPath, key];
-
-      if (value === true) {
-        // This is a selected leaf node, find its nodeKey
-        const nodeKey = findNodeKeyByPath(tree, path);
-        if (nodeKey) {
-          selectedNodes.add(nodeKey);
-        }
-      } else if (typeof value === "object" && value !== null) {
-        // This is a branch, continue traversing
-        traverse(value as Record<string, unknown>, path);
-      }
-    }
-  }
-
-  traverse(json);
-  return selectedNodes;
-}
-
-function findNodeKeyByPath(tree: TreeNode, path: string[]): string | null {
-  function search(node: TreeNode, remainingPath: string[]): string | null {
-    if (remainingPath.length === 0) {
-      return node.key;
-    }
-
-    const [currentSegment, ...restPath] = remainingPath;
-
-    // Match against the node's key
-    if (node.key === currentSegment) {
-      if (restPath.length === 0) {
-        return node.key;
-      }
-
-      if (node.children) {
-        for (const child of node.children) {
-          const result = search(child, restPath);
-          if (result) return result;
-        }
-      }
-    }
-
-    // If we're at the root and didn't match, try searching children directly
-    // This handles the case where the JSON path doesn't include the root
-    if (node.key === "strategy" && node.children) {
-      for (const child of node.children) {
-        const result = search(child, remainingPath);
-        if (result) return result;
-      }
-    }
-
-    return null;
-  }
-
-  return search(tree, path);
-}
-
-function getRequiredExpandedKeys(
-  tree: TreeNode,
-  selectedNodes: Set<string>
-): Set<string> {
-  const expandedKeys = new Set<string>(["strategy"]); // Always include root
-
-  selectedNodes.forEach((nodeKey) => {
-    const path = findNodePath(tree, nodeKey);
-    // Add all parent nodes (except the leaf node itself) to expandedKeys
-    for (let i = 0; i < path.length - 1; i++) {
-      expandedKeys.add(path[i]);
-    }
-  });
-
-  return expandedKeys;
-}
-
 export {
-  convertJsonToSelection,
   convertSelectionToJson,
   findNodeByKey,
   flattenTreeToGrid,
-  getRequiredExpandedKeys,
   getTreeDepth,
   toggleBranchExpansion,
   toggleBranchWithAntiSelection,

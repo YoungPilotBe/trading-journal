@@ -11,10 +11,11 @@ import {
   toggleLeafWithAntiSelection,
 } from "./tree.utils";
 
+// Complete tree state that includes both UI state and data
 interface TreeState {
-  expandedKeys: Set<string>;
-  selectedNodes: Set<string>;
-  tags: Record<string, unknown>;
+  expandedKeys: Set<string>; // Which branch nodes are expanded
+  selectedNodes: Set<string>; // Which leaf nodes are selected
+  tags: Record<string, unknown>; // JSON representation of selected tags
 }
 
 interface Props {
@@ -26,7 +27,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
   // Initialize tree state - either from provided state or create default
   const [treeState, setTreeState] = useState<TreeState>(() => {
     if (initialTreeState) {
-      // Ensure strategy is always expanded
+      // Ensure strategy root is always expanded for usability
       const expandedKeys = new Set(initialTreeState.expandedKeys);
       expandedKeys.add("strategy");
       return {
@@ -43,7 +44,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
     };
   });
 
-  // Update tree state when initialTreeState changes
+  // Update tree state when initialTreeState prop changes
   useEffect(() => {
     if (initialTreeState) {
       const expandedKeys = new Set(initialTreeState.expandedKeys);
@@ -67,6 +68,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
     [treeState.expandedKeys, treeState.selectedNodes]
   );
 
+  // Update internal state and notify parent of changes
   const updateTreeState = (
     newSelectedNodes: Set<string>,
     newExpandedKeys?: Set<string>
@@ -81,6 +83,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
     onTreeStateChange(updatedState);
   };
 
+  // Handle clicking on branch nodes (expandable categories)
   const handleBranchToggle = (nodeKey: string) => {
     const node = findNodeByKey(strategyTree, nodeKey);
     const hasAntiSelection = Boolean(node?.anti?.length);
@@ -102,6 +105,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
     updateTreeState(result.selectedNodes, result.expandedKeys);
   };
 
+  // Handle clicking on leaf nodes (selectable items)
   const handleLeafToggle = (nodeKey: string) => {
     const newSelectedNodes = toggleLeafWithAntiSelection(
       strategyTree,
