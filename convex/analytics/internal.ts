@@ -35,6 +35,8 @@ export function extractTagsByStatus(
     const status = snapshot.status;
     const tags = snapshot.tags || [];
 
+    console.log({ tags });
+
     if (!tagsByStatus[status]) {
       tagsByStatus[status] = [];
     }
@@ -54,6 +56,8 @@ export function extractTagsByStatus(
     tagsByStatus[status] = [...new Set(tagsByStatus[status])];
   });
 
+  console.log({ extractedTags: tagsByStatus });
+
   return tagsByStatus;
 }
 
@@ -70,11 +74,20 @@ function extractTagsFromObject(obj: unknown): string[] {
       tags.push(...extractTagsFromObject(item));
     });
   } else if (typeof obj === "object" && obj !== null) {
-    Object.values(obj).forEach((value) => {
-      tags.push(...extractTagsFromObject(value));
+    // Extract both keys and recursively process values
+    Object.entries(obj).forEach(([key, value]) => {
+      // Add the key as a tag name
+      tags.push(key);
+
+      // If the value is an object or array, recursively extract from it
+      if (typeof value === "object" && value !== null) {
+        const nestedTags = extractTagsFromObject(value);
+        tags.push(...nestedTags);
+      }
     });
   }
 
+  console.log(`Final tags extracted from object:`, tags);
   return tags;
 }
 
@@ -85,8 +98,14 @@ export function calculateTagSetSimilarity(
   tags1: string[],
   tags2: string[]
 ): number {
-  if (tags1.length === 0 && tags2.length === 0) return 1.0;
-  if (tags1.length === 0 || tags2.length === 0) return 0.0;
+  if (tags1.length === 0 && tags2.length === 0) {
+    console.log(`    Both tag sets empty -> returning 1.0`);
+    return 1.0;
+  }
+  if (tags1.length === 0 || tags2.length === 0) {
+    console.log(`    One tag set empty -> returning 0.0`);
+    return 0.0;
+  }
 
   const set1 = new Set(tags1);
   const set2 = new Set(tags2);
@@ -94,7 +113,19 @@ export function calculateTagSetSimilarity(
   const intersection = new Set([...set1].filter((x) => set2.has(x)));
   const union = new Set([...set1, ...set2]);
 
-  return intersection.size / union.size;
+  const intersectionArray = Array.from(intersection);
+  const unionArray = Array.from(union);
+  const similarity = intersection.size / union.size;
+
+  console.log(
+    `    Intersection: [${intersectionArray.join(", ")}] (${intersection.size} items)`
+  );
+  console.log(`    Union: [${unionArray.join(", ")}] (${union.size} items)`);
+  console.log(
+    `    Jaccard similarity: ${intersection.size}/${union.size} = ${similarity.toFixed(4)}`
+  );
+
+  return similarity;
 }
 
 /**
@@ -104,10 +135,17 @@ export function calculateTagsByStatusSimilarity(
   tagsByStatus1: TagsByStatus,
   tagsByStatus2: TagsByStatus
 ): number {
+  // DEBUG: Log the input data
+  console.log("=== DEBUGGING calculateTagsByStatusSimilarity ===");
+  console.log("tagsByStatus1:", JSON.stringify(tagsByStatus1, null, 2));
+  console.log("tagsByStatus2:", JSON.stringify(tagsByStatus2, null, 2));
+
   const allStatuses = new Set([
     ...Object.keys(tagsByStatus1),
     ...Object.keys(tagsByStatus2),
   ]);
+
+  console.log("All statuses being compared:", Array.from(allStatuses));
 
   if (allStatuses.size === 0) {
     console.log("NO MATCHING TAGS SO 0.0");
@@ -117,16 +155,31 @@ export function calculateTagsByStatusSimilarity(
   let totalSimilarity = 0;
   let statusCount = 0;
 
+  console.log("--- Per-status similarity breakdown ---");
+
   for (const status of allStatuses) {
     const tags1 = tagsByStatus1[status] || [];
     const tags2 = tagsByStatus2[status] || [];
 
+    console.log(`Status "${status}":`);
+    console.log(`  Tags1: [${tags1.join(", ")}] (${tags1.length} tags)`);
+    console.log(`  Tags2: [${tags2.join(", ")}] (${tags2.length} tags)`);
+
     const similarity = calculateTagSetSimilarity(tags1, tags2);
+    console.log(`  Similarity: ${similarity.toFixed(4)}`);
+
     totalSimilarity += similarity;
     statusCount++;
   }
 
-  return totalSimilarity / statusCount;
+  const finalScore = totalSimilarity / statusCount;
+  console.log("--- Final Results ---");
+  console.log(`Total similarity: ${totalSimilarity.toFixed(4)}`);
+  console.log(`Status count: ${statusCount}`);
+  console.log(`Final average score: ${finalScore.toFixed(4)}`);
+  console.log("=== END DEBUG ===");
+
+  return finalScore;
 }
 
 /**
