@@ -135,7 +135,7 @@ function RouteComponent() {
       trade_template: tradeSetup?.trade_template || undefined,
       status: snapshot?.status || "idea",
       direction: tradeSetup?.direction || "long",
-      riskReward: tradeSetup?.riskReward ?? undefined,
+      riskReward: tradeSetup?.riskReward || undefined,
       timeframes: tradeSetup?.timeframes || ["4h"],
     },
 
@@ -508,10 +508,15 @@ function RouteComponent() {
                     children={(field) => (
                       <>
                         <input
+                          type="number"
+                          step="0.1"
+                          min="0"
                           value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
-                          placeholder="3:2"
+                          onChange={(e) =>
+                            field.handleChange(Number(e.target.value))
+                          }
+                          className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                          placeholder="3.2"
                         />
                         {field.state.meta.errors.length > 0 && (
                           <div className="flex justify-end">

@@ -30,7 +30,7 @@ type JournalEntry = {
   asset: string;
   direction: "long" | "short";
   title: string;
-  riskReward?: string;
+  riskReward?: number;
   timeframes: string[];
   createdAt: number;
   updatedAt: number;
@@ -180,7 +180,7 @@ const TradingJournal = () => {
         ),
         cell: ({ getValue }) => (
           <span className="text-muted-foreground font-mono">
-            {getValue() || "Not set"}
+            {getValue() || "-"}
           </span>
         ),
       }),

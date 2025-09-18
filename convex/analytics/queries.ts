@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAnalyticsConfig, SimilarityWeights } from "../config/analytics";
 import {
+  calculateSnapshotStatusSimilarity,
   calculateTradeSetupSimilarity,
   extractTagsByStatus,
   fetchAllTradeSetupsWithSnapshots,
@@ -24,6 +25,7 @@ export const findSimilarTrades = query({
         asset: v.number(),
       })
     ),
+    filterBySnapshotStatus: v.optional(v.string()),
   },
   handler: async (
     ctx,
@@ -33,7 +35,7 @@ export const findSimilarTrades = query({
       asset: string;
       direction: "long" | "short";
       title: string;
-      riskReward?: string;
+      riskReward?: number;
     })[]
   > => {
     const config = getAnalyticsConfig();
@@ -42,6 +44,7 @@ export const findSimilarTrades = query({
       limit = config.defaultLimit,
       minSimilarityScore = config.defaultMinSimilarityScore,
       customWeights,
+      filterBySnapshotStatus,
     } = args;
 
     try {
@@ -66,18 +69,32 @@ export const findSimilarTrades = query({
         asset: string;
         direction: "long" | "short";
         title: string;
-        riskReward?: string;
+        riskReward?: number;
       })[] = [];
 
       for (const otherTradeSetup of allTradeSetups) {
-        const similarity = calculateTradeSetupSimilarity(
-          targetTradeSetup,
-          otherTradeSetup,
-          customWeights as SimilarityWeights | undefined
-        );
+        let similarity;
+
+        // If filtering by snapshot status, use snapshot-specific similarity calculation
+        if (filterBySnapshotStatus) {
+          similarity = calculateSnapshotStatusSimilarity(
+            targetTradeSetup,
+            otherTradeSetup,
+            filterBySnapshotStatus,
+            customWeights as SimilarityWeights | undefined
+          );
+        } else {
+          // Use the standard trade setup similarity calculation
+          similarity = calculateTradeSetupSimilarity(
+            targetTradeSetup,
+            otherTradeSetup,
+            customWeights as SimilarityWeights | undefined
+          );
+        }
 
         // Only include results above the minimum similarity threshold
-        if (similarity.similarityScore >= minSimilarityScore) {
+        // and if similarity is not null (in case of snapshot filtering with no matching snapshots)
+        if (similarity && similarity.similarityScore >= minSimilarityScore) {
           similarities.push({
             ...similarity,
             asset: otherTradeSetup.asset,

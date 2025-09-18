@@ -10,13 +10,7 @@ export const addTradeSetupSchema = z.object({
   status: z.enum(["idea", "watching", "executed", "closed", "reviewed"]),
   direction: z.enum(["long", "short"]),
   trade_template: z.custom<Id<"trade_templates">>(),
-  riskReward: z
-    .union([z.string(), z.literal("")]) // accept empty string and undefined
-    .refine((value) => {
-      if (!value || value.trim() === "") return true;
-      const regex = /^\d{1,2}(\.\d)?:\d{1,2}(\.\d)?$/;
-      return regex.test(value.trim());
-    }, "Risk/reward must be in format like '5:3' or '3.1:2' (max 1 decimal place)"),
+  riskReward: z.number({ message: "Risk reward must be a number, e.g. 5.3" }),
   timeframes: z.array(
     z
       .string()

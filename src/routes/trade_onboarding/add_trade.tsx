@@ -124,19 +124,20 @@ function RouteComponent() {
 
   // Initialize form with react-hook-form - now with proper default values
   const form = useForm({
-    validators: {
-      onSubmit: addTradeSetupSchema,
-    },
     defaultValues: {
       title: existingTradeSetup?.title || "",
-      status: existingSnapshot?.status || "idea",
-      direction: existingTradeSetup?.direction || "long",
-      riskReward: existingTradeSetup?.riskReward ?? undefined,
+      status: existingSnapshot?.status || ("idea" as const),
+      direction: existingTradeSetup?.direction || ("long" as const),
+      riskReward: existingTradeSetup?.riskReward,
       timeframes: existingTradeSetup?.timeframes || ["4h"],
-    },
+    } as const,
 
     onSubmit: async ({ value: formData }) => {
-      // Do something with the values passed via handleSubmit
+      // Validate the form data using our schema
+      const validationResult = addTradeSetupSchema.safeParse(formData);
+      if (!validationResult.success) {
+        throw new Error("Form validation failed");
+      }
 
       if (existingTradeSetup) {
         if (attach) {
@@ -395,16 +396,24 @@ function RouteComponent() {
                 children={(field) => (
                   <>
                     <input
+                      type="number"
+                      step="0.1"
+                      min="0"
                       value={field.state.value ?? ""}
-                      onChange={(e) => field.handleChange(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.handleChange(
+                          value === "" ? undefined : Number(value)
+                        );
+                      }}
                       disabled={fieldDisabledMap.riskReward}
-                      className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder="3:2"
+                      className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      placeholder="3.2"
                     />
                     {field.state.meta.errors.length > 0 && (
                       <div className="flex justify-end">
                         <span className="text-red-400 text-xs">
-                          {field.state.meta.errors.join(", ")}
+                          {JSON.stringify(field.state.meta.errors)}
                         </span>
                       </div>
                     )}

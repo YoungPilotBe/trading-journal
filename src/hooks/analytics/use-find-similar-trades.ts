@@ -17,6 +17,7 @@ export const useFindSimilarTradesWithOptions = (
     limit?: number;
     minSimilarityScore?: number;
     customWeights?: SimilarityWeights;
+    filterBySnapshotStatus?: string;
     enabled?: boolean;
   } = {}
 ) => {
@@ -25,6 +26,7 @@ export const useFindSimilarTradesWithOptions = (
     limit = config.defaultLimit,
     minSimilarityScore = config.defaultMinSimilarityScore,
     customWeights,
+    filterBySnapshotStatus,
     enabled = true,
   } = options;
 
@@ -34,6 +36,7 @@ export const useFindSimilarTradesWithOptions = (
       limit,
       minSimilarityScore,
       customWeights,
+      filterBySnapshotStatus,
     }),
     enabled: enabled && !!tradeSetupId,
   });

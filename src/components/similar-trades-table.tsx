@@ -31,6 +31,7 @@ import {
 import { Id } from "convex/_generated/dataModel";
 import { BarChart3, Target, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
+import { DualSelector, dualSelectorVariants } from "./dual-selector";
 
 // Types
 type SimilarTradeEntry = {
@@ -46,7 +47,7 @@ type SimilarTradeEntry = {
   asset: string;
   direction: "long" | "short";
   title: string;
-  riskReward?: string;
+  riskReward?: number;
 };
 
 // Smart navigation component that finds the right snapshot
@@ -130,7 +131,7 @@ const SimilarTradesTable = ({
 }: SimilarTradesTableProps) => {
   // State for configuration preset selection
   const [selectedPreset, setSelectedPreset] = useState<ConfigPreset>("default");
-
+  const [selectedTarget, setSelectedTarget] = useState("trade_setups");
   // Get configuration with defaults (will be overridden by preset selection)
   const config = getAnalyticsConfig();
   const finalLimit = limit ?? config.defaultLimit;
@@ -152,6 +153,9 @@ const SimilarTradesTable = ({
       limit: finalLimit,
       minSimilarityScore: finalMinSimilarityScore,
       customWeights: presetConfig.similarityWeights,
+      // When snapshots is selected, filter by current snapshot status
+      filterBySnapshotStatus:
+        selectedTarget === "snapshots" ? currentStatus : undefined,
     }
   );
 
@@ -321,7 +325,15 @@ const SimilarTradesTable = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-medium font-mono">Similar Trades</h3>
+          <DualSelector
+            className={dualSelectorVariants({ size: "lg" })}
+            leftLabel="Trade Setups"
+            leftValue="trade_setups"
+            rightLabel="Snapshots"
+            rightValue="snapshots"
+            value={selectedTarget}
+            onValueChange={setSelectedTarget}
+          />
           <Select
             value={selectedPreset}
             onValueChange={(value) => setSelectedPreset(value as ConfigPreset)}

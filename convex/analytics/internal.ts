@@ -277,6 +277,54 @@ export async function fetchTradeSetupWithSnapshots(
 }
 
 /**
+ * Create a filtered trade setup with only snapshots of a specific status
+ */
+export function filterTradeSetupByStatus(
+  tradeSetup: TradeSetupWithSnapshots,
+  status: string
+): TradeSetupWithSnapshots | null {
+  const filteredSnapshots = tradeSetup.snapshots.filter(
+    (snapshot) => snapshot.status === status
+  );
+
+  // If no snapshots with the specified status, return null
+  if (filteredSnapshots.length === 0) {
+    return null;
+  }
+
+  return {
+    ...tradeSetup,
+    snapshots: filteredSnapshots,
+  };
+}
+
+/**
+ * Calculate similarity between snapshots of specific status
+ */
+export function calculateSnapshotStatusSimilarity(
+  tradeSetup1: TradeSetupWithSnapshots,
+  tradeSetup2: TradeSetupWithSnapshots,
+  status: string,
+  customWeights?: SimilarityWeights
+): SimilarityScore | null {
+  // Filter both trade setups to only include snapshots with the specified status
+  const filteredTradeSetup1 = filterTradeSetupByStatus(tradeSetup1, status);
+  const filteredTradeSetup2 = filterTradeSetupByStatus(tradeSetup2, status);
+
+  // If either trade setup has no snapshots with the specified status, return null
+  if (!filteredTradeSetup1 || !filteredTradeSetup2) {
+    return null;
+  }
+
+  // Use the existing similarity calculation with filtered snapshots
+  return calculateTradeSetupSimilarity(
+    filteredTradeSetup1,
+    filteredTradeSetup2,
+    customWeights
+  );
+}
+
+/**
  * Fetch all trade setups with their snapshots (excluding the target)
  */
 export async function fetchAllTradeSetupsWithSnapshots(
