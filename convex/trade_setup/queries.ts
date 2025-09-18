@@ -30,6 +30,7 @@ export const getUniqueAssets = query({
   handler: async (ctx) => {
     const allSetups = await ctx.db.query("trade_setups").collect();
     const uniqueAssets = [...new Set(allSetups.map((setup) => setup.asset))];
+
     return uniqueAssets.sort();
   },
 });
@@ -59,6 +60,70 @@ export const getTradeSetups = query({
       query = query.filter((q) => q.eq(q.field("direction"), direction));
 
     return limit ? await query.take(limit) : await query.collect();
+  },
+});
+
+// Get trading journal data with date ranges and snapshot counts
+export const getTradingJournalData = query({
+  args: {
+    asset: v.optional(v.string()),
+    direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
+    limit: v.optional(v.number()),
+    sortBy,
+    sortOrder,
+  },
+  handler: async (ctx, { asset, direction, limit, sortBy, sortOrder }) => {
+    const convexSortBy = sortBy || "createdAt";
+    const convexSortOrder = sortOrder || "desc";
+
+    let query = ctx.db
+      .query("trade_setups")
+      .withIndex(
+        convexSortBy === "createdAt" ? "by_created_at" : "by_updated_at"
+      )
+      .order(convexSortOrder);
+
+    if (asset) query = query.filter((q) => q.eq(q.field("asset"), asset));
+    if (direction)
+      query = query.filter((q) => q.eq(q.field("direction"), direction));
+
+    const tradeSetups = limit ? await query.take(limit) : await query.collect();
+
+    // For each trade setup, get all its snapshots to calculate date range
+    const journalData = await Promise.all(
+      tradeSetups.map(async (tradeSetup) => {
+        const snapshots = await ctx.db
+          .query("snapshots")
+          .withIndex("by_trade_setup_and_created_at", (q) =>
+            q.eq("tradeSetupId", tradeSetup._id)
+          )
+          .order("asc")
+          .collect();
+
+        const firstSnapshot = snapshots[0];
+        const lastSnapshot = snapshots[snapshots.length - 1];
+
+        return {
+          id: tradeSetup._id,
+          asset: tradeSetup.asset,
+          direction: tradeSetup.direction,
+          title: tradeSetup.title,
+          riskReward: tradeSetup.riskReward,
+          timeframes: tradeSetup.timeframes,
+          createdAt: tradeSetup.createdAt,
+          updatedAt: tradeSetup.updatedAt,
+          snapshotCount: snapshots.length,
+          dateRange: {
+            start: firstSnapshot?.createdAt || tradeSetup.createdAt,
+            end: lastSnapshot?.createdAt || tradeSetup.createdAt,
+          },
+          latestStatus: lastSnapshot?.status || "idea",
+          latestSnapshotId: lastSnapshot?._id || firstSnapshot?._id,
+        };
+      })
+    );
+
+    return journalData;
   },
 });
 

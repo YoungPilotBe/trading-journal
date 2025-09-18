@@ -44,13 +44,13 @@ export const ToggleBadge = ({
         disabled={disabled || readonly}
         className={clsx(
           // Base styles matching button badge variant - fixed dimensions
-          "w-full h-fit px-1 py-0.5 gap-2 rounded-none text-xs font-thin border transition-all duration-200 flex items-center justify-center flex-shrink-0",
+          "w-full h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border transition-all duration-200 flex items-center justify-center flex-shrink-0",
           // Text handling
           "text-center line-clamp-2 leading-tight",
           // State-based styles
           {
             // Toggled state - bright and obvious
-            "bg-gradient-to-t from-primary/20 to-primary/10 border-primary text-primary shadow-md font-semibold":
+            "bg-primary/20 border-primary text-primary shadow-md font-semibold":
               isToggled,
             // Non-toggled state - muted version
             "bg-gradient-to-t from-muted/20 to-muted/10 border-muted/50 text-muted-foreground hover:from-muted hover:to-accent":
@@ -68,7 +68,7 @@ export const ToggleBadge = ({
           {label}
           {effect && (
             <div
-              className={clsx("w-1.5 h-1.5 rounded-full flex-shrink-0", {
+              className={clsx("size-1 rounded-full flex-shrink-0", {
                 "bg-sky-500": effect === "positive",
                 "bg-red-500": effect === "negative",
               })}
