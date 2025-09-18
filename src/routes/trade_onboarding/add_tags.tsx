@@ -125,6 +125,7 @@ function RouteComponent() {
           <span className="text-white font-light font-mono">Tags</span>
           <EffectsProvider
             tradeSetup={{ ...tradeSetup, ...(snapshot?.tags || {}) }}
+            selectedTags={treeState?.selectedNodes}
           >
             <Tree
               initialTreeState={treeState}

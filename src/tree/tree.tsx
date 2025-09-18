@@ -107,12 +107,27 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
 
   // Handle clicking on leaf nodes (selectable items)
   const handleLeafToggle = (nodeKey: string) => {
-    const newSelectedNodes = toggleLeafWithAntiSelection(
-      strategyTree,
-      treeState.selectedNodes,
-      nodeKey
-    );
-    updateTreeState(newSelectedNodes);
+    const node = findNodeByKey(strategyTree, nodeKey);
+    const hasAntiSelection = Boolean(node?.anti?.length);
+
+    if (hasAntiSelection) {
+      // Use the same logic as branches for anti-selection to handle expandedKeys
+      const result = toggleBranchWithAntiSelection(
+        strategyTree,
+        treeState.selectedNodes,
+        treeState.expandedKeys,
+        nodeKey
+      );
+      updateTreeState(result.selectedNodes, result.expandedKeys);
+    } else {
+      // Regular leaf toggle without anti-selection
+      const newSelectedNodes = toggleLeafWithAntiSelection(
+        strategyTree,
+        treeState.selectedNodes,
+        nodeKey
+      );
+      updateTreeState(newSelectedNodes);
+    }
   };
 
   return (
