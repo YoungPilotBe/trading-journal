@@ -1,4 +1,5 @@
 import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-dialog";
+import SimilarTradesTable from "@/components/similar-trades-table";
 import SnapshotHistory from "@/components/snapshot-history";
 import { SnapshotImage } from "@/components/snapshot-image";
 import {
@@ -90,6 +91,7 @@ export const Route = createFileRoute("/(app)/dashboard/setup")({
 function RouteComponent() {
   const navigate = useNavigate();
   const { tradeSetupId, snapshotId, fullscreen } = Route.useSearch();
+
   const { data: tradeSetup, isLoading: isLoadingTradeSetup } = useGetTradeSetup(
     {
       id: tradeSetupId as Id<"trade_setups">,
@@ -182,376 +184,391 @@ function RouteComponent() {
   };
 
   return (
-    <div className="flex gap-8 min-h-screen p-6">
-      {/* Left side - General Information (Fixed width) */}
-      <div className="flex-shrink-0 w-fit min-w-110 @container">
-        <div className="relative space-y-6">
-          {/* Breadcrumbs */}
-          <div className="mb-6 flex items-center justify-between">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <button
-                      onClick={() => navigate({ to: "/dashboard" })}
-                      className="hover:text-foreground transition-colors"
-                    >
-                      Trade Setups
-                    </button>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>
-                    {tradeSetup?.title || "Trade Setup"}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-
-            {/* Actions Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 translate-x-4"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem className="justify-between">
-                  <Archive />
-                  Archive
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive justify-between"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2Icon className="text-inherit" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Asset Info */}
-          <div className="space-y-4 border-b pb-4">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-mono text-sm">
-                Asset
-              </span>
-              <span className="text-foreground font-mono text-sm">
-                {tradeSetup?.asset}
-              </span>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-mono text-sm">
-                Creation Time
-              </span>
-              <span className="text-foreground font-mono text-sm">
-                {tradeSetup?._creationTime &&
-                  format(new Date(tradeSetup._creationTime), "MMM dd, HH:mm")}
-              </span>
-            </div>
-          </div>
-
-          {/* Form */}
-          <form
-            aria-disabled={isLoading}
-            className="font-mono"
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              form.handleSubmit();
-            }}
-          >
-            <fieldset
-              disabled={isLoading || isPending}
-              className="disabled:opacity-50 disabled:!cursor-default disabled:!pointer-events-none"
-            >
-              <form.Field
-                name="title"
-                children={(field) => (
-                  <div className="flex justify-between items-center h-9">
-                    <label className="text-xs text-muted" htmlFor={field.name}>
-                      Title
-                    </label>
-                    <input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
-                      placeholder="Phoenix"
-                    />
-                  </div>
-                )}
-              />
-
-              {/* Template Select */}
-              <form.Field
-                name="trade_template"
-                children={(field) => (
-                  <div className="flex justify-between items-center h-9">
-                    <label className="text-xs text-muted" htmlFor={field.name}>
-                      Template
-                    </label>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        {field.state.value ? (
-                          <Button
-                            variant="outline"
-                            size="badge"
-                            className="text-[10px] justify-between hover:bg-accent hover:text-accent-foreground group-hover:[&:not(:has(.chevron-link:hover))]:bg-accent group-hover:[&:not(:has(.chevron-link:hover))]:text-accent-foreground group-[.chevron-hovered]:bg-transparent group-[.chevron-hovered]:text-inherit transition-colors gap-1"
-                          >
-                            {
-                              templates?.find(
-                                (t) => t._id === field.state.value
-                              )?.title
-                            }
-                            <Link
-                              to={"/dashboard/trade_templates/trade_template"}
-                              search={{ templateId: field.state.value }}
-                              className="chevron-link rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseEnter={(e) => {
-                                e.currentTarget
-                                  .closest(".group")
-                                  ?.classList.add("chevron-hovered");
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget
-                                  .closest(".group")
-                                  ?.classList.remove("chevron-hovered");
-                              }}
-                            >
-                              <ChevronRightIcon className="size-4 text-inherit" />
-                            </Link>
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="badge"
-                            className="text-[10px] mb-2"
-                            disabled={isLoadingTemplates}
-                          >
-                            <PlusIcon className="size-2" />
-                            Add Template
-                          </Button>
-                        )}
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        sideOffset={0}
-                        alignOffset={0}
-                        className="w-60"
+    <>
+      <div className="flex gap-8 p-6">
+        {/* Left side - General Information (Fixed width) */}
+        <div className="flex-shrink-0 w-fit min-w-110 @container">
+          <div className="relative space-y-6">
+            {/* Breadcrumbs */}
+            <div className="mb-6 flex items-center justify-between">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <button
+                        onClick={() => navigate({ to: "/dashboard" })}
+                        className="hover:text-foreground transition-colors"
                       >
-                        {templates?.map((template) => (
-                          <DropdownMenuItem
-                            key={template._id}
-                            onClick={() => field.handleChange(template._id)}
-                            className="justify-between"
-                          >
-                            <span>{template.title}</span>
-                            {field.state.value === template._id ? (
-                              <button
-                                className="p-1 rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  field.handleChange(undefined);
-                                  form.setFieldValue(
-                                    "trade_template",
-                                    undefined
-                                  );
-                                }}
-                              >
-                                <XIcon className="size-4 text-inherit" />
-                              </button>
-                            ) : (
+                        Trade Setups
+                      </button>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>
+                      {tradeSetup?.title || "Trade Setup"}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+
+              {/* Actions Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 translate-x-4"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="justify-between">
+                    <Archive />
+                    Archive
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive justify-between"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2Icon className="text-inherit" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Asset Info */}
+            <div className="space-y-4 border-b pb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground font-mono text-sm">
+                  Asset
+                </span>
+                <span className="text-foreground font-mono text-sm">
+                  {tradeSetup?.asset}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground font-mono text-sm">
+                  Creation Time
+                </span>
+                <span className="text-foreground font-mono text-sm">
+                  {tradeSetup?._creationTime &&
+                    format(new Date(tradeSetup._creationTime), "MMM dd, HH:mm")}
+                </span>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form
+              aria-disabled={isLoading}
+              className="font-mono"
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                form.handleSubmit();
+              }}
+            >
+              <fieldset
+                disabled={isLoading || isPending}
+                className="disabled:opacity-50 disabled:!cursor-default disabled:!pointer-events-none"
+              >
+                <form.Field
+                  name="title"
+                  children={(field) => (
+                    <div className="flex justify-between items-center h-9">
+                      <label
+                        className="text-xs text-muted"
+                        htmlFor={field.name}
+                      >
+                        Title
+                      </label>
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
+                        placeholder="Phoenix"
+                      />
+                    </div>
+                  )}
+                />
+
+                {/* Template Select */}
+                <form.Field
+                  name="trade_template"
+                  children={(field) => (
+                    <div className="flex justify-between items-center h-9">
+                      <label
+                        className="text-xs text-muted"
+                        htmlFor={field.name}
+                      >
+                        Template
+                      </label>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          {field.state.value ? (
+                            <Button
+                              variant="outline"
+                              size="badge"
+                              className="text-[10px] justify-between hover:bg-accent hover:text-accent-foreground group-hover:[&:not(:has(.chevron-link:hover))]:bg-accent group-hover:[&:not(:has(.chevron-link:hover))]:text-accent-foreground group-[.chevron-hovered]:bg-transparent group-[.chevron-hovered]:text-inherit transition-colors gap-1"
+                            >
+                              {
+                                templates?.find(
+                                  (t) => t._id === field.state.value
+                                )?.title
+                              }
                               <Link
                                 to={"/dashboard/trade_templates/trade_template"}
-                                search={{ templateId: template._id }}
-                                className="p-1 rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
+                                search={{ templateId: field.state.value }}
+                                className="chevron-link rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
                                 onClick={(e) => e.stopPropagation()}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget
+                                    .closest(".group")
+                                    ?.classList.add("chevron-hovered");
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget
+                                    .closest(".group")
+                                    ?.classList.remove("chevron-hovered");
+                                }}
                               >
                                 <ChevronRightIcon className="size-4 text-inherit" />
                               </Link>
-                            )}
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="badge"
+                              className="text-[10px] mb-2"
+                              disabled={isLoadingTemplates}
+                            >
+                              <PlusIcon className="size-2" />
+                              Add Template
+                            </Button>
+                          )}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          sideOffset={0}
+                          alignOffset={0}
+                          className="w-60"
+                        >
+                          {templates?.map((template) => (
+                            <DropdownMenuItem
+                              key={template._id}
+                              onClick={() => field.handleChange(template._id)}
+                              className="justify-between"
+                            >
+                              <span>{template.title}</span>
+                              {field.state.value === template._id ? (
+                                <button
+                                  className="p-1 rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    field.handleChange(undefined);
+                                    form.setFieldValue(
+                                      "trade_template",
+                                      undefined
+                                    );
+                                  }}
+                                >
+                                  <XIcon className="size-4 text-inherit" />
+                                </button>
+                              ) : (
+                                <Link
+                                  to={
+                                    "/dashboard/trade_templates/trade_template"
+                                  }
+                                  search={{ templateId: template._id }}
+                                  className="p-1 rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ChevronRightIcon className="size-4 text-inherit" />
+                                </Link>
+                              )}
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator hidden={!templates?.length} />
+                          <DropdownMenuItem
+                            className="justify-between text-emerald-500"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              navigate({
+                                to: "/dashboard/trade_templates/trade_template",
+                              });
+                            }}
+                          >
+                            <span>Create Template</span>
+                            <PlusIcon className="size-4 text-inherit" />
                           </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                />
+
+                {/* Direction Buttons */}
+                <div className="flex justify-between items-center h-9">
+                  <span className="text-xs text-muted">Direction</span>
+
+                  <form.Field
+                    name="direction"
+                    children={(field) => (
+                      <div className="flex flex-row gap-1">
+                        {directionOptions.map((option) => {
+                          const isSelected = field.state.value === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => field.handleChange(option.value)}
+                              className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                                isSelected
+                                  ? option.color
+                                  : "border-muted text-muted-foreground hover:border-muted-foreground/50"
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  />
+                </div>
+
+                {/* Status Badges */}
+                <div className="flex justify-between items-center h-9">
+                  <span className="text-xs text-muted">Status</span>
+
+                  <form.Field
+                    name="status"
+                    children={(field) => (
+                      <div className="flex flex-row gap-1.5">
+                        {statusOptions.map((option) => {
+                          const isSelected = field.state.value === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => field.handleChange(option.value)}
+                              className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                                isSelected
+                                  ? option.color
+                                  : "border-muted text-muted-foreground hover:border-muted-foreground/50"
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  />
+                </div>
+
+                {/* Timeframes */}
+                <div className="flex justify-between items-center h-9">
+                  <span className="text-xs text-muted">Timeframes</span>
+
+                  <form.Field
+                    name="timeframes"
+                    children={(field) => (
+                      <div className="flex flex-row gap-1">
+                        {sortTimeframes(field.state.value).map((timeframe) => (
+                          <button
+                            key={timeframe}
+                            type="button"
+                            className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-foreground/50 hover:text-foreground"
+                          >
+                            {timeframe}
+                          </button>
                         ))}
-                        <DropdownMenuSeparator hidden={!templates?.length} />
-                        <DropdownMenuItem
-                          className="justify-between text-emerald-500"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            navigate({
-                              to: "/dashboard/trade_templates/trade_template",
-                            });
-                          }}
-                        >
-                          <span>Create Template</span>
-                          <PlusIcon className="size-4 text-inherit" />
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                      </div>
+                    )}
+                  />
+                </div>
+
+                {/* Risk/Reward Input */}
+                <div className="flex justify-between items-center h-9">
+                  <span className="text-xs text-muted">Risk / Reward</span>
+
+                  <form.Field
+                    name="riskReward"
+                    children={(field) => (
+                      <>
+                        <input
+                          value={field.state.value ?? ""}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
+                          placeholder="3:2"
+                        />
+                        {field.state.meta.errors.length > 0 && (
+                          <div className="flex justify-end">
+                            <span className="text-red-400 text-xs">
+                              {field.state.meta.errors.join(", ")}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  />
+                </div>
+
+                {isDirty && (
+                  <Button
+                    type="submit"
+                    className="absolute bottom-0 translate-y-full right-0 duration-500 ease-out font-mono tracking-wide leading-3"
+                    disabled={isPending || form.state.isSubmitting}
+                  >
+                    {isPending || form.state.isSubmitting
+                      ? "Updating..."
+                      : "Update"}
+                  </Button>
                 )}
-              />
-
-              {/* Direction Buttons */}
-              <div className="flex justify-between items-center h-9">
-                <span className="text-xs text-muted">Direction</span>
-
-                <form.Field
-                  name="direction"
-                  children={(field) => (
-                    <div className="flex flex-row gap-1">
-                      {directionOptions.map((option) => {
-                        const isSelected = field.state.value === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => field.handleChange(option.value)}
-                            className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
-                              isSelected
-                                ? option.color
-                                : "border-muted text-muted-foreground hover:border-muted-foreground/50"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                />
-              </div>
-
-              {/* Status Badges */}
-              <div className="flex justify-between items-center h-9">
-                <span className="text-xs text-muted">Status</span>
-
-                <form.Field
-                  name="status"
-                  children={(field) => (
-                    <div className="flex flex-row gap-1.5">
-                      {statusOptions.map((option) => {
-                        const isSelected = field.state.value === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => field.handleChange(option.value)}
-                            className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
-                              isSelected
-                                ? option.color
-                                : "border-muted text-muted-foreground hover:border-muted-foreground/50"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                />
-              </div>
-
-              {/* Timeframes */}
-              <div className="flex justify-between items-center h-9">
-                <span className="text-xs text-muted">Timeframes</span>
-
-                <form.Field
-                  name="timeframes"
-                  children={(field) => (
-                    <div className="flex flex-row gap-1">
-                      {sortTimeframes(field.state.value).map((timeframe) => (
-                        <button
-                          key={timeframe}
-                          type="button"
-                          className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-foreground/50 hover:text-foreground"
-                        >
-                          {timeframe}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                />
-              </div>
-
-              {/* Risk/Reward Input */}
-              <div className="flex justify-between items-center h-9">
-                <span className="text-xs text-muted">Risk / Reward</span>
-
-                <form.Field
-                  name="riskReward"
-                  children={(field) => (
-                    <>
-                      <input
-                        value={field.state.value ?? ""}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
-                        placeholder="3:2"
-                      />
-                      {field.state.meta.errors.length > 0 && (
-                        <div className="flex justify-end">
-                          <span className="text-red-400 text-xs">
-                            {field.state.meta.errors.join(", ")}
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                />
-              </div>
-
-              {isDirty && (
-                <Button
-                  type="submit"
-                  className="absolute bottom-0 translate-y-full right-0 duration-500 ease-out font-mono tracking-wide leading-3"
-                  disabled={isPending || form.state.isSubmitting}
-                >
-                  {isPending || form.state.isSubmitting
-                    ? "Updating..."
-                    : "Update"}
-                </Button>
-              )}
-            </fieldset>
-          </form>
+              </fieldset>
+            </form>
+          </div>
         </div>
-      </div>
 
-      {/* Right side - Image (Flexible width) */}
-      <div className="flex-1 min-w-0">
-        <SnapshotImage
-          snapshotId={snapshotId}
-          tradeSetupId={tradeSetupId}
-          initialFullscreen={fullscreen ?? false}
-        />
-        <SnapshotHistory
-          snapshotId={snapshotId as Id<"snapshots">}
+        {/* Right side - Image (Flexible width) */}
+        <div className="flex-1 min-w-0">
+          <SnapshotImage
+            snapshotId={snapshotId}
+            tradeSetupId={tradeSetupId}
+            initialFullscreen={fullscreen ?? false}
+          />
+          <SnapshotHistory
+            snapshotId={snapshotId as Id<"snapshots">}
+            tradeSetupId={tradeSetupId as Id<"trade_setups">}
+          />
+        </div>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteTradeSetupDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
           tradeSetupId={tradeSetupId as Id<"trade_setups">}
+          tradeSetupTitle={tradeSetup?.title || "Trade Setup"}
+          onConfirm={handleDeleteTradeSetup}
+          isDeleting={isDeletingTradeSetup}
         />
       </div>
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteTradeSetupDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+      <SimilarTradesTable
         tradeSetupId={tradeSetupId as Id<"trade_setups">}
-        tradeSetupTitle={tradeSetup?.title || "Trade Setup"}
-        onConfirm={handleDeleteTradeSetup}
-        isDeleting={isDeletingTradeSetup}
+        limit={4}
+        minSimilarityScore={0.4}
       />
-    </div>
+    </>
   );
 }

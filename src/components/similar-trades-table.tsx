@@ -1,0 +1,420 @@
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { getAnalyticsConfig } from "@/config/analytics";
+import { useFindSimilarTradesWithOptions } from "@/hooks/analytics/use-find-similar-trades";
+import { ConfigPreset, getConfigPreset } from "@/utils/analytics-config";
+import { Link } from "@tanstack/react-router";
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+import { Id } from "convex/_generated/dataModel";
+import { BarChart3, Target, TrendingDown, TrendingUp } from "lucide-react";
+import { useMemo, useState } from "react";
+
+// Types
+type SimilarTradeEntry = {
+  tradeSetupId: Id<"trade_setups">;
+  similarityScore: number;
+  breakdown: {
+    tagsPerStatusSimilarity: number;
+    templateSimilarity: number;
+    assetSimilarity: number;
+    overallScore: number;
+  };
+  // Trade setup data included in the response
+  asset: string;
+  direction: "long" | "short";
+  title: string;
+  riskReward?: string;
+};
+
+// Column helper
+const columnHelper = createColumnHelper<SimilarTradeEntry>();
+
+// Skeleton components
+const TableRowSkeleton = () => (
+  <TableRow>
+    <TableCell>
+      <Skeleton className="h-4 w-16" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-32" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-12" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-20" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-16" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-16" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-16" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-16" />
+    </TableCell>
+  </TableRow>
+);
+
+interface SimilarTradesTableProps {
+  tradeSetupId: Id<"trade_setups">;
+  limit?: number;
+  minSimilarityScore?: number;
+}
+
+const SimilarTradesTable = ({
+  tradeSetupId,
+  limit,
+  minSimilarityScore,
+}: SimilarTradesTableProps) => {
+  // State for configuration preset selection
+  const [selectedPreset, setSelectedPreset] = useState<ConfigPreset>("default");
+
+  // Get configuration with defaults (will be overridden by preset selection)
+  const config = getAnalyticsConfig();
+  const finalLimit = limit ?? config.defaultLimit;
+  const finalMinSimilarityScore =
+    minSimilarityScore ?? config.defaultMinSimilarityScore;
+
+  // State for sorting
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "similarityScore", desc: true },
+  ]);
+
+  // Get the selected preset configuration
+  const presetConfig = getConfigPreset(selectedPreset);
+
+  // Fetch similar trades data using the selected configuration
+  const { data: similarTrades, isLoading } = useFindSimilarTradesWithOptions(
+    tradeSetupId,
+    {
+      limit: finalLimit,
+      minSimilarityScore: finalMinSimilarityScore,
+      customWeights: presetConfig.similarityWeights,
+    }
+  );
+
+  // Define columns
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("asset", {
+        header: ({ column }) => (
+          <button
+            className="flex flex-row items-center hover:bg-muted/50 p-1 rounded font-mono text-xs"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Pair
+          </button>
+        ),
+        cell: ({ getValue }) => (
+          <div className="font-medium text-foreground font-mono">
+            {getValue()}
+          </div>
+        ),
+      }),
+      columnHelper.accessor("title", {
+        header: ({ column }) => (
+          <button
+            className="flex flex-row items-center hover:bg-muted/50 p-1 rounded font-mono text-xs"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Title
+          </button>
+        ),
+        cell: ({ getValue }) => (
+          <span className="text-primary group-hover:underline transition-all font-mono">
+            {getValue()}
+          </span>
+        ),
+      }),
+      columnHelper.accessor("direction", {
+        header: ({ column }) => (
+          <button
+            className="flex flex-row items-center hover:bg-muted/50 p-1 rounded font-mono text-xs"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Direction
+          </button>
+        ),
+        cell: ({ getValue }) => {
+          const direction = getValue();
+
+          return (
+            <Badge
+              variant={direction === "long" ? "default" : "destructive"}
+              className="capitalize text-xs px-2 py-0.5 font-medium shrink-0"
+            >
+              {direction === "long" ? (
+                <TrendingUp className="w-3 h-3 mr-1" />
+              ) : (
+                <TrendingDown className="w-3 h-3 mr-1" />
+              )}
+              {direction}
+            </Badge>
+          );
+        },
+      }),
+      columnHelper.accessor("riskReward", {
+        header: ({ column }) => (
+          <button
+            className="flex flex-row items-center hover:bg-muted/50 p-1 rounded font-mono text-xs"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            <Target className="mr-2 h-4 w-4" />
+            Risk / Reward
+          </button>
+        ),
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground font-mono">
+            {getValue() || "Not set"}
+          </span>
+        ),
+      }),
+      columnHelper.accessor("similarityScore", {
+        header: ({ column }) => (
+          <button
+            className="flex flex-row items-center hover:bg-muted/50 p-1 rounded font-mono text-xs"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Overall
+          </button>
+        ),
+        cell: ({ getValue }) => {
+          const score = getValue();
+          return (
+            <div className="flex items-center space-x-2">
+              <div className="w-16 bg-muted rounded-full h-2">
+                <div
+                  className="bg-primary h-2 rounded-full"
+                  style={{ width: `${score * 100}%` }}
+                />
+              </div>
+              <span className="text-xs font-mono text-muted-foreground">
+                {Math.round(score * 100)}%
+              </span>
+            </div>
+          );
+        },
+        sortingFn: (rowA, rowB) => {
+          return rowA.original.similarityScore - rowB.original.similarityScore;
+        },
+      }),
+      columnHelper.accessor("breakdown.tagsPerStatusSimilarity", {
+        header: () => (
+          <div className="flex items-center font-mono text-xs">Tags</div>
+        ),
+        cell: ({ getValue }) => (
+          <span className="text-xs font-mono text-muted-foreground">
+            {Math.round(getValue() * 100)}%
+          </span>
+        ),
+      }),
+      columnHelper.accessor("breakdown.templateSimilarity", {
+        header: () => (
+          <div className="flex items-center font-mono text-xs">Strategy</div>
+        ),
+        cell: ({ getValue }) => (
+          <span className="text-xs font-mono text-muted-foreground">
+            {Math.round(getValue() * 100)}%
+          </span>
+        ),
+      }),
+      columnHelper.accessor("breakdown.assetSimilarity", {
+        header: () => (
+          <div className="flex items-center font-mono text-xs">Asset</div>
+        ),
+        cell: ({ getValue }) => (
+          <span className="text-xs font-mono text-muted-foreground">
+            {Math.round(getValue() * 100)}%
+          </span>
+        ),
+      }),
+    ],
+    []
+  );
+
+  // Create table instance
+  const table = useReactTable({
+    data: similarTrades || [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    state: {
+      sorting,
+    },
+  });
+
+  if (!tradeSetupId) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-muted-foreground font-mono">
+          Select a trade setup to see similar trades
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-medium font-mono">Similar Trades</h3>
+          <Select
+            value={selectedPreset}
+            onValueChange={(value) => setSelectedPreset(value as ConfigPreset)}
+          >
+            <SelectTrigger className="w-44" variant="badge" size="small">
+              <SelectValue placeholder="Analysis Mode">
+                {(() => {
+                  const presetTitles: Record<ConfigPreset, string> = {
+                    default: "Default",
+                    "execution-focused": "Execution Focused",
+                    "strategy-focused": "Strategy Focused",
+                    balanced: "Balanced",
+                    custom: "Custom",
+                  };
+                  return presetTitles[selectedPreset] || "Analysis Mode";
+                })()}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">
+                <div className="flex flex-col">
+                  <span className="font-medium">Default</span>
+                  <span className="text-xs text-muted-foreground">
+                    Balanced approach • Tags: 50% • Strategy: 30% • Asset: 20%
+                  </span>
+                </div>
+              </SelectItem>
+              <SelectItem value="execution-focused">
+                <div className="flex flex-col">
+                  <span className="font-medium">Execution Focused</span>
+                  <span className="text-xs text-muted-foreground">
+                    How trades were executed • Tags: 70% • Strategy: 30% •
+                    Asset: 0%
+                  </span>
+                </div>
+              </SelectItem>
+              <SelectItem value="strategy-focused">
+                <div className="flex flex-col">
+                  <span className="font-medium">Strategy Focused</span>
+                  <span className="text-xs text-muted-foreground">
+                    Strategy similarity • Tags: 30% • Strategy: 50% • Asset: 20%
+                  </span>
+                </div>
+              </SelectItem>
+              <SelectItem value="balanced">
+                <div className="flex flex-col">
+                  <span className="font-medium">Balanced</span>
+                  <span className="text-xs text-muted-foreground">
+                    Equal weights • Tags: 33% • Strategy: 33% • Asset: 34%
+                  </span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, index) => (
+                <TableRowSkeleton key={index} />
+              ))
+            ) : similarTrades && similarTrades.length > 0 ? (
+              // Data rows
+              table.getRowModel().rows.map((row) => (
+                <Link
+                  key={row.id}
+                  to="/dashboard/setup"
+                  search={{
+                    tradeSetupId: row.original.tradeSetupId,
+                    snapshotId: "", // Will navigate to most recent
+                  }}
+                  className="contents"
+                >
+                  <TableRow data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </Link>
+              ))
+            ) : (
+              // Empty state
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <p className="text-muted-foreground font-mono">
+                      No similar trades found
+                    </p>
+                    <p className="text-sm text-muted-foreground font-mono">
+                      Try adjusting the similarity threshold or create more
+                      trade setups
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+};
+
+export default SimilarTradesTable;
