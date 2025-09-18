@@ -4,7 +4,7 @@ import type { FunctionArgs } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 
 export const useGetTradeImage = (
-  args: FunctionArgs<typeof api.tradingview_images.getImage>
+  args: FunctionArgs<typeof api.tradingview_images.queries.getImage>
 ) => {
-  return useQuery(convexQuery(api.tradingview_images.getImage, args));
+  return useQuery(convexQuery(api.tradingview_images.queries.getImage, args));
 };

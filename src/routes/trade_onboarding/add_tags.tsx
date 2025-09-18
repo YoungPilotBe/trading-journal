@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
-import { EffectsProvider } from "@/rjsf/EffectsContext";
+import { EffectsProvider } from "@/tree/EffectsContext";
 import { Tree } from "@/tree/tree";
 import { convexQuery } from "@convex-dev/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";

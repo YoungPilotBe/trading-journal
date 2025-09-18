@@ -60,7 +60,9 @@ export const Route = createFileRoute("/trade_onboarding/add_trade")({
 function RouteComponent() {
   const { imageId, snapshotId, attach } = Route.useSearch();
   // attach parameter indicates this is an attachment flow from existing trade setup
-  const { data, isLoading: isLoadingImage } = useGetImage({ id: imageId });
+  const { data, isLoading: isLoadingImage } = useGetImage({
+    id: imageId as Id<"tradingview_images">,
+  });
   const { data: existingTradeSetup, isLoading: isLoadingTradeSetup } =
     useGetTradeSetupBySnapshotId({
       snapshotId: snapshotId as Id<"snapshots">,
