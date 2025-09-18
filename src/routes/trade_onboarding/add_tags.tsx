@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
-import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { EffectsProvider } from "@/rjsf/EffectsContext";
 import Tree from "@/tree/tree";
+import { convexQuery } from "@convex-dev/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
+import { api } from "../../../convex/_generated/api";
 
 const searchSchema = z.object({
   tradeSetupId: z.string(),
@@ -19,31 +19,58 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/trade_onboarding/add_tags")({
   component: RouteComponent,
   validateSearch: searchSchema,
+  loaderDeps: ({ search: { tradeSetupId, snapshotId } }) => ({
+    tradeSetupId,
+    snapshotId,
+  }),
+  loader: async ({
+    context: { queryClient },
+    deps: { tradeSetupId, snapshotId },
+  }) => {
+    // Prefetch both tradeSetup and snapshot data
+    const [tradeSetup, snapshot] = await Promise.all([
+      queryClient.ensureQueryData(
+        convexQuery(api.trade_setup.queries.getTradeSetup, {
+          id: tradeSetupId as Id<"trade_setups">,
+        })
+      ),
+      queryClient.ensureQueryData(
+        convexQuery(api.snaphot.queries.getSnapshot, {
+          id: snapshotId as Id<"snapshots">,
+        })
+      ),
+    ]);
+
+    return {
+      tradeSetup,
+      snapshot,
+    };
+  },
 });
 
 function RouteComponent() {
-  const { tradeSetupId, snapshotId } = Route.useSearch();
-  const { data: tradeSetup } = useGetTradeSetup({
-    id: tradeSetupId as Id<"trade_setups">,
-  });
-
-  const { data: snapshot, isLoading } = useGetSnapshot({
-    id: snapshotId as Id<"snapshots">,
-  });
+  const { snapshotId } = Route.useSearch();
+  const { tradeSetup, snapshot } = Route.useLoaderData();
   const navigate = useNavigate();
   const { mutateAsync: updateSnapshot, isPending } = useUpdateSnapshot();
-  const [formData, setFormData] = useState();
 
-  useEffect(() => {
-    if (!snapshot?.tags) return;
-    setFormData(snapshot.tags);
-  }, [snapshot?.tags]);
+  // Store current tree selection
+  const [currentTreeSelection, setCurrentTreeSelection] = useState<
+    Record<string, unknown>
+  >(snapshot?.tags || {});
+
+  console.log("Current tree data:", JSON.stringify(currentTreeSelection));
+
+  const handleTreeChange = (treeSelection: Record<string, unknown>) => {
+    console.log("Tree selection changed:", treeSelection);
+    setCurrentTreeSelection(treeSelection);
+  };
 
   const onSubmit = async () => {
-    // Add tags to the existing trade setup
+    // Save the current tree selection as tags
     await updateSnapshot({
       snapshotId: snapshotId as Id<"snapshots">,
-      tags: formData,
+      tags: currentTreeSelection,
     });
 
     // Navigate to a success page or back to the main app
@@ -52,18 +79,19 @@ function RouteComponent() {
     });
   };
 
-  if (isLoading || !snapshot) {
-    return <div>Loading trade setup...</div>;
-  }
-
   return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Right-side form panel - similar to add_trade layout */}
       <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto ">
         <div className="flex flex-col items-start space-y-2 mt-2">
           <span className="text-white font-light font-mono">Tags</span>
-          <EffectsProvider tradeSetup={{ ...tradeSetup, ...snapshot.tags }}>
-            <Tree />
+          <EffectsProvider
+            tradeSetup={{ ...tradeSetup, ...(snapshot?.tags || {}) }}
+          >
+            <Tree
+              intialTree={snapshot?.tags || {}}
+              onTreeChange={handleTreeChange}
+            />
           </EffectsProvider>
         </div>
 

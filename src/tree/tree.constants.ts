@@ -1,11 +1,11 @@
 import { capitalize } from "lodash";
-import type { Branch } from "./tree.utils";
+import type { TreeNode } from "./tree.utils";
 
 const createContradictingBranch = (
   prefix: string,
   contras: [string, string],
-  children?: Branch[]
-): NonNullable<Branch["children"]> => {
+  children?: TreeNode[]
+): NonNullable<TreeNode["children"]> => {
   return [
     {
       key: `${prefix}_${contras[0]}`,
@@ -69,7 +69,7 @@ const createOBIMChildren = () => [
   },
 ];
 
-export const strategyTree: Branch = {
+export const strategyTree: TreeNode = {
   key: "strategy",
   title: "Strategy",
   children: [

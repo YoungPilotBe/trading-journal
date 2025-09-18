@@ -1,29 +1,25 @@
-export type Branch = {
+export type TreeNode = {
   key: string;
   title: string;
-  children?: Branch[];
-  anti?: string[]; // Array of keys that should be deselected when this item is selected
+  children?: TreeNode[];
+  anti?: string[]; // Keys that should be deselected when this item is selected
 };
 
-function getBranchLength(tree: Branch): number {
-  // Base case: if no children, this branch has length 1 (just itself)
+function getTreeDepth(tree: TreeNode): number {
   if (!tree.children || tree.children.length === 0) {
     return 1;
   }
 
-  // Recursively find the maximum depth among all children
   let maxChildDepth = 0;
   for (const child of tree.children) {
-    const childDepth = getBranchLength(child);
+    const childDepth = getTreeDepth(child);
     maxChildDepth = Math.max(maxChildDepth, childDepth);
   }
 
-  // Add 1 for the current level
   return maxChildDepth + 1;
 }
 
-// Function to flatten tree into grid rows with expansion state
-type GridCell = {
+export type GridCell = {
   content: string;
   level: number;
   rowIndex: number;
@@ -35,31 +31,33 @@ type GridCell = {
 };
 
 function flattenTreeToGrid(
-  tree: Branch,
+  tree: TreeNode,
   expandedKeys: Set<string> = new Set(),
-  selectedLeaves: Set<string> = new Set()
+  selectedNodes: Set<string> = new Set()
 ): GridCell[][] {
   const rows: GridCell[][] = [];
-  const maxDepth = getBranchLength(tree);
+  const maxDepth = getTreeDepth(tree);
 
-  function processNode(node: Branch, level: number, rowIndex: number): number {
-    // Ensure the row exists
+  function processNode(
+    node: TreeNode,
+    level: number,
+    rowIndex: number
+  ): number {
     if (!rows[rowIndex]) {
       rows[rowIndex] = new Array(maxDepth).fill(null);
     }
 
-    const hasChildren = node.children && node.children.length > 0;
+    const hasChildren = Boolean(node.children?.length);
     const isExpanded = expandedKeys.has(node.key);
     const isLeaf = !hasChildren;
-    const isSelected = selectedLeaves.has(node.key);
+    const isSelected = selectedNodes.has(node.key);
 
-    // Place the current node in the grid
     rows[rowIndex][level] = {
       content: node.title,
       level,
       rowIndex,
       nodeKey: node.key,
-      hasChildren: !!hasChildren,
+      hasChildren,
       isExpanded,
       isLeaf,
       isSelected,
@@ -67,12 +65,10 @@ function flattenTreeToGrid(
 
     let currentRowIndex = rowIndex;
 
-    // Process children only if this node is expanded
     if (hasChildren && isExpanded) {
       for (let i = 0; i < node.children!.length; i++) {
         const child = node.children![i];
         currentRowIndex = processNode(child, level + 1, currentRowIndex);
-        // Move to next row for the next child (except for the last one)
         if (i < node.children!.length - 1) {
           currentRowIndex++;
         }
@@ -86,23 +82,8 @@ function flattenTreeToGrid(
   return rows;
 }
 
-// Helper function to toggle expansion state
-function toggleExpansion(
-  expandedKeys: Set<string>,
-  nodeKey: string
-): Set<string> {
-  const newExpandedKeys = new Set(expandedKeys);
-  if (newExpandedKeys.has(nodeKey)) {
-    newExpandedKeys.delete(nodeKey);
-  } else {
-    newExpandedKeys.add(nodeKey);
-  }
-  return newExpandedKeys;
-}
-
-// Helper function to find path from root to a specific node
-function findPathToNode(tree: Branch, targetKey: string): string[] {
-  function searchNode(node: Branch, path: string[]): string[] | null {
+function findNodePath(tree: TreeNode, targetKey: string): string[] {
+  function search(node: TreeNode, path: string[]): string[] | null {
     const currentPath = [...path, node.key];
 
     if (node.key === targetKey) {
@@ -111,7 +92,7 @@ function findPathToNode(tree: Branch, targetKey: string): string[] {
 
     if (node.children) {
       for (const child of node.children) {
-        const result = searchNode(child, currentPath);
+        const result = search(child, currentPath);
         if (result) {
           return result;
         }
@@ -121,74 +102,18 @@ function findPathToNode(tree: Branch, targetKey: string): string[] {
     return null;
   }
 
-  return searchNode(tree, []) || [];
+  return search(tree, []) || [];
 }
 
-// Helper function to check if a node is a leaf (has no children)
-function isLeafNode(tree: Branch, nodeKey: string): boolean {
-  function findNode(node: Branch): boolean | null {
-    if (node.key === nodeKey) {
-      return !node.children || node.children.length === 0;
-    }
-
-    if (node.children) {
-      for (const child of node.children) {
-        const result = findNode(child);
-        if (result !== null) {
-          return result;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  return findNode(tree) || false;
-}
-
-// Helper function to construct selection object from selected leaves
-function constructSelectionObject(
-  tree: Branch,
-  selectedLeaves: Set<string>
-): Record<string, unknown> {
-  const selectionObject: Record<string, unknown> = {};
-
-  selectedLeaves.forEach((leafKey) => {
-    const path = findPathToNode(tree, leafKey);
-    if (path.length > 0) {
-      // Remove the root from the path and reverse it so leaf is the key
-      const pathWithoutRoot = path.slice(1); // Remove root
-
-      if (pathWithoutRoot.length > 0) {
-        const leafName = pathWithoutRoot[pathWithoutRoot.length - 1];
-        const parentPath = pathWithoutRoot.slice(0, -1);
-
-        // Build nested object structure
-        let current: Record<string, unknown> = selectionObject;
-        for (const segment of parentPath) {
-          if (!current[segment]) {
-            current[segment] = {};
-          }
-          current = current[segment] as Record<string, unknown>;
-        }
-        current[leafName] = true;
-      }
-    }
-  });
-
-  return selectionObject;
-}
-
-// Helper function to find a node's anti array
-function findNodeAnti(tree: Branch, nodeKey: string): string[] {
-  function searchNode(node: Branch): string[] | null {
+function getNodeAntiKeys(tree: TreeNode, nodeKey: string): string[] {
+  function search(node: TreeNode): string[] | null {
     if (node.key === nodeKey) {
       return node.anti || [];
     }
 
     if (node.children) {
       for (const child of node.children) {
-        const result = searchNode(child);
+        const result = search(child);
         if (result !== null) {
           return result;
         }
@@ -198,42 +123,26 @@ function findNodeAnti(tree: Branch, nodeKey: string): string[] {
     return null;
   }
 
-  return searchNode(tree) || [];
+  return search(tree) || [];
 }
 
-// Helper function to toggle leaf selection with anti-selection logic
-function toggleLeafSelection(
-  selectedLeaves: Set<string>,
-  nodeKey: string
-): Set<string> {
-  const newSelectedLeaves = new Set(selectedLeaves);
-  if (newSelectedLeaves.has(nodeKey)) {
-    newSelectedLeaves.delete(nodeKey);
-  } else {
-    newSelectedLeaves.add(nodeKey);
-  }
-  return newSelectedLeaves;
-}
-
-// Helper function to get all descendant keys from a node
-function getAllDescendantKeys(node: Branch): string[] {
+function getAllDescendantKeys(node: TreeNode): string[] {
   const descendants: string[] = [];
 
-  function collectDescendants(currentNode: Branch) {
+  function collect(currentNode: TreeNode) {
     if (currentNode.children) {
       for (const child of currentNode.children) {
         descendants.push(child.key);
-        collectDescendants(child);
+        collect(child);
       }
     }
   }
 
-  collectDescendants(node);
+  collect(node);
   return descendants;
 }
 
-// Helper function to find a node by key
-function findNodeByKey(tree: Branch, nodeKey: string): Branch | null {
+function findNodeByKey(tree: TreeNode, nodeKey: string): TreeNode | null {
   if (tree.key === nodeKey) {
     return tree;
   }
@@ -250,154 +159,142 @@ function findNodeByKey(tree: Branch, nodeKey: string): Branch | null {
   return null;
 }
 
-// Helper function to toggle node selection with anti-selection logic (works for both leaves and branches)
-function toggleNodeSelectionWithAnti(
-  tree: Branch,
-  selectedLeaves: Set<string>,
+function toggleNodeWithAntiSelection(
+  tree: TreeNode,
+  selectedNodes: Set<string>,
   nodeKey: string
 ): Set<string> {
-  const newSelectedLeaves = new Set(selectedLeaves);
+  const newSelectedNodes = new Set(selectedNodes);
 
-  if (newSelectedLeaves.has(nodeKey)) {
-    // If already selected, just deselect it
-    newSelectedLeaves.delete(nodeKey);
+  if (newSelectedNodes.has(nodeKey)) {
+    newSelectedNodes.delete(nodeKey);
   } else {
-    // If not selected, select it and deselect any anti items
-    newSelectedLeaves.add(nodeKey);
+    newSelectedNodes.add(nodeKey);
 
-    // Find and deselect anti items
-    const antiKeys = findNodeAnti(tree, nodeKey);
+    // Handle anti-selection logic
+    const antiKeys = getNodeAntiKeys(tree, nodeKey);
     antiKeys.forEach((antiKey) => {
-      newSelectedLeaves.delete(antiKey);
+      newSelectedNodes.delete(antiKey);
 
       // If the anti item is a branch, also deselect all its descendants
       const antiNode = findNodeByKey(tree, antiKey);
-      if (antiNode && antiNode.children) {
+      if (antiNode?.children) {
         const descendantKeys = getAllDescendantKeys(antiNode);
         descendantKeys.forEach((descendantKey) => {
-          newSelectedLeaves.delete(descendantKey);
+          newSelectedNodes.delete(descendantKey);
         });
       }
     });
   }
 
-  return newSelectedLeaves;
+  return newSelectedNodes;
 }
 
-// Keep the old function name for backwards compatibility
-function toggleLeafSelectionWithAnti(
-  tree: Branch,
-  selectedLeaves: Set<string>,
+function toggleLeafWithAntiSelection(
+  tree: TreeNode,
+  selectedNodes: Set<string>,
   nodeKey: string
 ): Set<string> {
-  return toggleNodeSelectionWithAnti(tree, selectedLeaves, nodeKey);
+  return toggleNodeWithAntiSelection(tree, selectedNodes, nodeKey);
 }
 
-// Helper function to toggle branch selection with anti-selection logic
-function toggleBranchSelectionWithAnti(
-  tree: Branch,
-  selectedLeaves: Set<string>,
+function toggleBranchWithAntiSelection(
+  tree: TreeNode,
+  selectedNodes: Set<string>,
   expandedKeys: Set<string>,
   nodeKey: string
-): { selectedLeaves: Set<string>; expandedKeys: Set<string> } {
-  const newSelectedLeaves = new Set(selectedLeaves);
+): { selectedNodes: Set<string>; expandedKeys: Set<string> } {
+  const newSelectedNodes = new Set(selectedNodes);
   const newExpandedKeys = new Set(expandedKeys);
 
-  // Find the node
   const node = findNodeByKey(tree, nodeKey);
   if (!node) {
-    return { selectedLeaves: newSelectedLeaves, expandedKeys: newExpandedKeys };
+    return { selectedNodes: newSelectedNodes, expandedKeys: newExpandedKeys };
   }
 
-  // Store the original state to determine what changed
-  const wasSelected = newSelectedLeaves.has(nodeKey);
+  const wasSelected = newSelectedNodes.has(nodeKey);
 
   if (wasSelected) {
-    // If already selected, deselect it and collapse it
-    newSelectedLeaves.delete(nodeKey);
+    // Deselect and collapse
+    newSelectedNodes.delete(nodeKey);
     newExpandedKeys.delete(nodeKey);
 
     // Also collapse and deselect all descendants
     const descendantKeys = getAllDescendantKeys(node);
     descendantKeys.forEach((descendantKey) => {
-      newSelectedLeaves.delete(descendantKey);
+      newSelectedNodes.delete(descendantKey);
       newExpandedKeys.delete(descendantKey);
     });
   } else {
-    // If not selected, select it and handle anti-logic
-    newSelectedLeaves.add(nodeKey);
+    // Select and handle anti-logic
+    newSelectedNodes.add(nodeKey);
 
-    // Find and deselect/collapse anti items
-    const antiKeys = findNodeAnti(tree, nodeKey);
+    // Handle anti-selection
+    const antiKeys = getNodeAntiKeys(tree, nodeKey);
     antiKeys.forEach((antiKey) => {
-      newSelectedLeaves.delete(antiKey);
-      newExpandedKeys.delete(antiKey); // Collapse the anti-branch
+      newSelectedNodes.delete(antiKey);
+      newExpandedKeys.delete(antiKey);
 
-      // If the anti item is a branch, also deselect and collapse all its descendants
       const antiNode = findNodeByKey(tree, antiKey);
-      if (antiNode && antiNode.children) {
+      if (antiNode?.children) {
         const descendantKeys = getAllDescendantKeys(antiNode);
         descendantKeys.forEach((descendantKey) => {
-          newSelectedLeaves.delete(descendantKey);
+          newSelectedNodes.delete(descendantKey);
           newExpandedKeys.delete(descendantKey);
         });
       }
     });
 
-    // If the node was selected and has children, expand it
-    if (node.children && node.children.length > 0) {
+    // Expand if has children
+    if (node.children?.length) {
       newExpandedKeys.add(nodeKey);
     }
   }
 
-  return { selectedLeaves: newSelectedLeaves, expandedKeys: newExpandedKeys };
+  return { selectedNodes: newSelectedNodes, expandedKeys: newExpandedKeys };
 }
 
-// Helper function to toggle branch selection with child deselection logic (for expansion/collapse)
-function toggleBranchSelectionWithChildren(
-  tree: Branch,
-  selectedLeaves: Set<string>,
+function toggleBranchExpansion(
+  tree: TreeNode,
+  selectedNodes: Set<string>,
   expandedKeys: Set<string>,
   nodeKey: string
-): { selectedLeaves: Set<string>; expandedKeys: Set<string> } {
-  const newSelectedLeaves = new Set(selectedLeaves);
+): { selectedNodes: Set<string>; expandedKeys: Set<string> } {
+  const newSelectedNodes = new Set(selectedNodes);
   const newExpandedKeys = new Set(expandedKeys);
 
-  // Find the node
   const node = findNodeByKey(tree, nodeKey);
   if (!node) {
-    return { selectedLeaves: newSelectedLeaves, expandedKeys: newExpandedKeys };
+    return { selectedNodes: newSelectedNodes, expandedKeys: newExpandedKeys };
   }
 
   // Toggle expansion
   if (newExpandedKeys.has(nodeKey)) {
     newExpandedKeys.delete(nodeKey);
 
-    // When collapsing a branch, deselect all its descendants (both leaves and branches)
+    // When collapsing, deselect all descendants
     const descendantKeys = getAllDescendantKeys(node);
     descendantKeys.forEach((descendantKey) => {
-      newSelectedLeaves.delete(descendantKey);
-      // Also remove from expanded keys if it was a branch
+      newSelectedNodes.delete(descendantKey);
       newExpandedKeys.delete(descendantKey);
     });
   } else {
     newExpandedKeys.add(nodeKey);
   }
 
-  return { selectedLeaves: newSelectedLeaves, expandedKeys: newExpandedKeys };
+  return { selectedNodes: newSelectedNodes, expandedKeys: newExpandedKeys };
 }
 
-// Helper function to convert selected leaves to a nested JSON object
 function convertSelectionToJson(
-  tree: Branch,
-  selectedLeaves: Set<string>
+  tree: TreeNode,
+  selectedNodes: Set<string>
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
-  selectedLeaves.forEach((leafKey) => {
-    const path = findPathToNode(tree, leafKey);
+  selectedNodes.forEach((nodeKey) => {
+    const path = findNodePath(tree, nodeKey);
     if (path.length > 0) {
-      // Remove the root from the path (first element)
+      // Remove the root from the path
       const pathWithoutRoot = path.slice(1);
 
       if (pathWithoutRoot.length > 0) {
@@ -407,15 +304,24 @@ function convertSelectionToJson(
         // Navigate/create the nested structure
         for (let i = 0; i < pathWithoutRoot.length - 1; i++) {
           const segment = pathWithoutRoot[i];
-          if (!current[segment]) {
+
+          // If the current segment is already set to true (boolean),
+          // we need to convert it to an object to add children
+          if (current[segment] === true) {
+            current[segment] = {};
+          } else if (
+            !current[segment] ||
+            typeof current[segment] !== "object"
+          ) {
             current[segment] = {};
           }
+
           current = current[segment] as Record<string, unknown>;
         }
 
-        // Set the final leaf to true
-        const leafName = pathWithoutRoot[pathWithoutRoot.length - 1];
-        current[leafName] = true;
+        // Set the final node to true
+        const nodeName = pathWithoutRoot[pathWithoutRoot.length - 1];
+        current[nodeName] = true;
       }
     }
   });
@@ -423,18 +329,117 @@ function convertSelectionToJson(
   return result;
 }
 
+function convertJsonToSelection(
+  tree: TreeNode,
+  json: Record<string, unknown>
+): Set<string> {
+  const selectedNodes = new Set<string>();
+
+  function traverse(obj: Record<string, unknown>, currentPath: string[] = []) {
+    for (const [key, value] of Object.entries(obj)) {
+      const path = [...currentPath, key];
+
+      if (value === true) {
+        // This is a selected leaf node, find its nodeKey
+        console.log("Looking for node with path:", path);
+        const nodeKey = findNodeKeyByPath(tree, path);
+        console.log("Found nodeKey:", nodeKey);
+        if (nodeKey) {
+          selectedNodes.add(nodeKey);
+        }
+      } else if (typeof value === "object" && value !== null) {
+        // This is a branch, continue traversing
+        traverse(value as Record<string, unknown>, path);
+      }
+    }
+  }
+
+  traverse(json);
+  console.log("convertJsonToSelection result:", Array.from(selectedNodes));
+  return selectedNodes;
+}
+
+function findNodeKeyByPath(tree: TreeNode, path: string[]): string | null {
+  function search(node: TreeNode, remainingPath: string[]): string | null {
+    console.log(
+      `Searching node ${node.key} with remaining path:`,
+      remainingPath
+    );
+
+    if (remainingPath.length === 0) {
+      console.log(`Found target node: ${node.key}`);
+      return node.key;
+    }
+
+    const [currentSegment, ...restPath] = remainingPath;
+
+    // Match against the node's key, not title
+    if (node.key === currentSegment) {
+      console.log(
+        `Matched segment ${currentSegment}, continuing with:`,
+        restPath
+      );
+      if (restPath.length === 0) {
+        console.log(`Found target node: ${node.key}`);
+        return node.key;
+      }
+
+      if (node.children) {
+        console.log(
+          `Searching children of ${node.key}:`,
+          node.children.map((c) => c.key)
+        );
+        for (const child of node.children) {
+          const result = search(child, restPath);
+          if (result) return result;
+        }
+      }
+    } else {
+      console.log(`No match: ${node.key} !== ${currentSegment}`);
+    }
+
+    // If we're at the root and didn't match, try searching children directly
+    // This handles the case where the JSON path doesn't include the root
+    if (node.key === "strategy" && node.children) {
+      console.log("Root didn't match, searching children directly");
+      for (const child of node.children) {
+        const result = search(child, remainingPath);
+        if (result) return result;
+      }
+    }
+
+    return null;
+  }
+
+  console.log("Starting search for path:", path);
+  return search(tree, path);
+}
+
+function getRequiredExpandedKeys(
+  tree: TreeNode,
+  selectedNodes: Set<string>
+): Set<string> {
+  const expandedKeys = new Set<string>(["strategy"]); // Always include root
+
+  selectedNodes.forEach((nodeKey) => {
+    const path = findNodePath(tree, nodeKey);
+    // Add all parent nodes (except the leaf node itself) to expandedKeys
+    for (let i = 0; i < path.length - 1; i++) {
+      expandedKeys.add(path[i]);
+    }
+  });
+
+  return expandedKeys;
+}
+
 export {
-  constructSelectionObject,
+  convertJsonToSelection,
   convertSelectionToJson,
   findNodeByKey,
-  findPathToNode,
   flattenTreeToGrid,
-  getBranchLength,
-  isLeafNode,
-  toggleBranchSelectionWithAnti,
-  toggleBranchSelectionWithChildren,
-  toggleExpansion,
-  toggleLeafSelection,
-  toggleLeafSelectionWithAnti,
-  toggleNodeSelectionWithAnti,
+  getRequiredExpandedKeys,
+  getTreeDepth,
+  toggleBranchExpansion,
+  toggleBranchWithAntiSelection,
+  toggleLeafWithAntiSelection,
 };
