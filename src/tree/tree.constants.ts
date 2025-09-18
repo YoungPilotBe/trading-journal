@@ -3,21 +3,71 @@ import type { Branch } from "./tree.utils";
 
 const createContradictingBranch = (
   prefix: string,
-  contras: [string, string]
+  contras: [string, string],
+  children?: Branch[]
 ): NonNullable<Branch["children"]> => {
   return [
     {
       key: `${prefix}_${contras[0]}`,
       title: `${capitalize(contras[0])}`,
       anti: [`${prefix}_${contras[1]}`],
+      children,
     },
     {
       key: `${prefix}_${contras[1]}`,
       title: `${capitalize(contras[1])}`,
       anti: [`${prefix}_${contras[0]}`],
+      children,
     },
   ];
 };
+
+const createOBIMChildren = () => [
+  {
+    key: "obim_extension",
+    title: "Extension",
+    children: [
+      {
+        key: "obim_extension_fvg",
+        title: "FVG",
+      },
+      {
+        key: "obim_extension_25%",
+        title: "25%",
+      },
+    ],
+  },
+
+  {
+    key: "obim_pivot",
+    title: "Pivot",
+    children: [
+      {
+        key: "obim_pivot_extremum_point",
+        title: "Pivot Point",
+      },
+    ],
+  },
+  {
+    key: "obim_liquidity",
+    title: "Liquidity",
+    children: [
+      {
+        key: "obim_grabbed_liquidity",
+        title: "Grabbed Liquidity",
+      },
+      {
+        key: "obim_caused_wick_bos",
+        title: "Caused Wick BOS",
+      },
+    ],
+  },
+
+  {
+    key: "obim_staircased",
+    title: "Staircased",
+  },
+];
 
 export const strategyTree: Branch = {
   key: "strategy",
@@ -25,7 +75,7 @@ export const strategyTree: Branch = {
   children: [
     {
       key: "market_structure",
-      title: "Market Structure",
+      title: "MS",
       children: [
         {
           key: "swing",
@@ -74,10 +124,10 @@ export const strategyTree: Branch = {
               key: "supply_pivot",
               title: "Supply Pivot",
               children: [
-                {
-                  key: "supply_pivot_extremum_point",
-                  title: "Supply Pivot Point",
-                },
+                ...createContradictingBranch("supply_pivot", [
+                  "extremum",
+                  "decision",
+                ]),
               ],
             },
           ],
@@ -95,77 +145,42 @@ export const strategyTree: Branch = {
               key: "demand_pivot",
               title: "Demand Pivot",
               children: [
-                {
-                  key: "demand_pivot_extremum_point",
-                  title: "Demand Pivot Point",
-                },
+                ...createContradictingBranch("demand_pivot", [
+                  "extremum",
+                  "decision",
+                ]),
               ],
             },
           ],
         },
+      ],
+    },
+    {
+      key: "obim",
+      title: "OBIM",
+      children: [
+        ...createContradictingBranch(
+          "obim_direction",
+          ["bullish", "bearish"],
+          createOBIMChildren()
+        ),
+      ],
+    },
+    {
+      key: "range",
+      title: "Range",
+      children: [
         {
-          key: "obim",
-          title: "OBIM",
-          children: [
-            {
-              key: "obim_direction",
-              title: "OBIM Direction",
-            },
-            {
-              key: "obim_extension",
-              title: "OBIM Extension",
-              children: [
-                {
-                  key: "obim_extension_type",
-                  title: "OBIM Extension Type",
-                },
-              ],
-            },
-            {
-              key: "obim_caused_wick_bos",
-              title: "OBIM Caused Wick BOS",
-            },
-            {
-              key: "obim_pivot",
-              title: "OBIM Pivot",
-              children: [
-                {
-                  key: "obim_pivot_extremum_point",
-                  title: "OBIM Pivot Point",
-                },
-              ],
-            },
-            {
-              key: "obim_grabbed_liquidity",
-              title: "OBIM Grabbed Liquidity",
-            },
-            {
-              key: "obim_tooth_liquidity",
-              title: "OBIM Tooth Liquidity",
-            },
-            {
-              key: "obim_staircased",
-              title: "OBIM Staircased",
-            },
-          ],
+          key: "VAH",
+          title: "VAH",
         },
         {
-          key: "range",
-          title: "Range",
-          children: [
-            {
-              key: "VAH",
-              title: "VAH",
-            },
-            {
-              key: "POC",
-              title: "POC",
-            },
-            {
-              key: "VAL",
-              title: "VAL",
-            },
-          ],
+          key: "POC",
+          title: "POC",
+        },
+        {
+          key: "VAL",
+          title: "VAL",
         },
       ],
     },
@@ -173,10 +188,11 @@ export const strategyTree: Branch = {
       key: "wyckoff",
       title: "Wyckoff",
       children: [
-        {
-          key: "wyckoff_phase",
-          title: "Wyckoff Phase",
-        },
+        ...createContradictingBranch(
+          "wyckoff",
+          ["accumulation", "distribution"],
+          createContradictingBranch("wyckoff_model", ["model 1", "model 2"])
+        ),
       ],
     },
   ],

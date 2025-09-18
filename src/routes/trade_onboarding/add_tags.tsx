@@ -64,21 +64,6 @@ function RouteComponent() {
           <span className="text-white font-light font-mono">Tags</span>
           <EffectsProvider tradeSetup={{ ...tradeSetup, ...snapshot.tags }}>
             <Tree />
-
-            {/* <Form
-              schema={schema}
-              uiSchema={uiSchema}
-              formData={formData}
-              onChange={(e) => {
-                setFormData(e.formData);
-              }}
-              onSubmit={() => {
-                onSubmit();
-              }}
-              validator={validator}
-              widgets={customWidgets}
-              children={true} // This removes the default submit button
-            /> */}
           </EffectsProvider>
         </div>
 

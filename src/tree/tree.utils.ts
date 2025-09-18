@@ -387,8 +387,45 @@ function toggleBranchSelectionWithChildren(
   return { selectedLeaves: newSelectedLeaves, expandedKeys: newExpandedKeys };
 }
 
+// Helper function to convert selected leaves to a nested JSON object
+function convertSelectionToJson(
+  tree: Branch,
+  selectedLeaves: Set<string>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  selectedLeaves.forEach((leafKey) => {
+    const path = findPathToNode(tree, leafKey);
+    if (path.length > 0) {
+      // Remove the root from the path (first element)
+      const pathWithoutRoot = path.slice(1);
+
+      if (pathWithoutRoot.length > 0) {
+        // Build nested object structure
+        let current: Record<string, unknown> = result;
+
+        // Navigate/create the nested structure
+        for (let i = 0; i < pathWithoutRoot.length - 1; i++) {
+          const segment = pathWithoutRoot[i];
+          if (!current[segment]) {
+            current[segment] = {};
+          }
+          current = current[segment] as Record<string, unknown>;
+        }
+
+        // Set the final leaf to true
+        const leafName = pathWithoutRoot[pathWithoutRoot.length - 1];
+        current[leafName] = true;
+      }
+    }
+  });
+
+  return result;
+}
+
 export {
   constructSelectionObject,
+  convertSelectionToJson,
   findNodeByKey,
   findPathToNode,
   flattenTreeToGrid,

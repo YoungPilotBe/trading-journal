@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ToggleBadge } from "./ToggleBadge";
 import { strategyTree } from "./tree.constants";
 import {
+  convertSelectionToJson,
   findNodeByKey,
   flattenTreeToGrid,
   getBranchLength,
@@ -13,7 +14,7 @@ import {
 const Tree = () => {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
     new Set(["strategy"])
-  ); // Start with root expanded
+  );
 
   const [selectedLeaves, setSelectedLeaves] = useState<Set<string>>(new Set()); // Track selected leaves
 
@@ -22,6 +23,16 @@ const Tree = () => {
     () => flattenTreeToGrid(strategyTree, expandedKeys, selectedLeaves),
     [expandedKeys, selectedLeaves]
   );
+
+  // Convert selection to JSON whenever it changes
+  const selectionJson = useMemo(() => {
+    return convertSelectionToJson(strategyTree, selectedLeaves);
+  }, [selectedLeaves]);
+
+  // Log the JSON for demonstration (you can remove this)
+  useEffect(() => {
+    console.log("Current selection as JSON:", selectionJson);
+  }, [selectionJson]);
 
   const handleToggle = (nodeKey: string) => {
     // Check if this branch has anti-selection properties
@@ -51,6 +62,8 @@ const Tree = () => {
     }
   };
 
+  useEffect(() => console.log({ expandedKeys }), [expandedKeys]);
+
   const handleLeafSelection = (nodeKey: string) => {
     setSelectedLeaves((prev) =>
       toggleLeafSelectionWithAnti(strategyTree, prev, nodeKey)
@@ -64,16 +77,13 @@ const Tree = () => {
         {gridRows.map((row, rowIndex) => (
           <div
             key={rowIndex}
-            className={`grid gap-1 h-[45px]`}
+            className={`grid gap-1`}
             style={{
-              gridTemplateColumns: `repeat(${branchLength}, 150px)`,
+              gridTemplateColumns: `repeat(${branchLength}, 100px)`,
             }}
           >
             {row.map((cell, colIndex) => (
-              <div
-                key={colIndex}
-                className="flex items-stretch w-[150px] h-[45px]"
-              >
+              <div key={colIndex} className="flex items-stretch w-[100px]">
                 {cell && (
                   <div className="w-full h-full p-0.5 flex items-center justify-center">
                     {cell.isLeaf ? (

@@ -10,7 +10,6 @@ interface SimplifiedToggleBadgeProps {
   readonly?: boolean;
   badgeStyle?: string;
   fieldName: string;
-  fieldValue?: string;
 }
 
 export const ToggleBadge = ({
@@ -21,10 +20,9 @@ export const ToggleBadge = ({
   readonly = false,
   badgeStyle = "border-muted text-muted-foreground",
   fieldName,
-  fieldValue,
 }: SimplifiedToggleBadgeProps) => {
   const [isToggled, setIsToggled] = useState<boolean>(Boolean(value));
-  const effect = useFieldEffect(fieldName, fieldValue);
+  const effect = useFieldEffect(fieldName);
 
   useEffect(() => {
     setIsToggled(Boolean(value));
@@ -46,7 +44,7 @@ export const ToggleBadge = ({
         disabled={disabled || readonly}
         className={clsx(
           // Base styles matching button badge variant - fixed dimensions
-          "w-full h-[40px] px-2 py-1 gap-2 rounded-none text-xs font-medium border transition-all duration-200 flex items-center justify-center flex-shrink-0",
+          "w-full h-fit px-1 py-0.5 gap-2 rounded-none text-xs font-thin border transition-all duration-200 flex items-center justify-center flex-shrink-0",
           // Text handling
           "text-center line-clamp-2 leading-tight",
           // State-based styles
@@ -66,12 +64,12 @@ export const ToggleBadge = ({
           isToggled && badgeStyle
         )}
       >
-        <span className="line-clamp-2 leading-tight flex items-center justify-center gap-1">
+        <span className="flex flex-row items-center justify-between gap-1 font-mono">
           {label}
           {effect && (
             <div
               className={clsx("w-1.5 h-1.5 rounded-full flex-shrink-0", {
-                "bg-green-500": effect === "positive",
+                "bg-sky-500": effect === "positive",
                 "bg-red-500": effect === "negative",
               })}
             />
