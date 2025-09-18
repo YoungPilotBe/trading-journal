@@ -568,6 +568,7 @@ function RouteComponent() {
         tradeSetupId={tradeSetupId as Id<"trade_setups">}
         limit={4}
         minSimilarityScore={0.4}
+        currentStatus={snapshot?.status}
       />
     </>
   );

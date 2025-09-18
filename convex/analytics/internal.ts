@@ -109,7 +109,10 @@ export function calculateTagsByStatusSimilarity(
     ...Object.keys(tagsByStatus2),
   ]);
 
-  if (allStatuses.size === 0) return 1.0;
+  if (allStatuses.size === 0) {
+    console.log("NO MATCHING TAGS SO 0.0");
+    return 0.0;
+  }
 
   let totalSimilarity = 0;
   let statusCount = 0;

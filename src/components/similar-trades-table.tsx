@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { getAnalyticsConfig } from "@/config/analytics";
 import { useFindSimilarTradesWithOptions } from "@/hooks/analytics/use-find-similar-trades";
+import { useGetSnapshotByStatus } from "@/hooks/analytics/use-get-snapshot-by-status";
 import { ConfigPreset, getConfigPreset } from "@/utils/analytics-config";
 import { Link } from "@tanstack/react-router";
 import {
@@ -46,6 +47,39 @@ type SimilarTradeEntry = {
   direction: "long" | "short";
   title: string;
   riskReward?: string;
+};
+
+// Smart navigation component that finds the right snapshot
+const SmartTradeLink = ({
+  tradeSetupId,
+  currentStatus,
+  children,
+}: {
+  tradeSetupId: Id<"trade_setups">;
+  currentStatus?: string;
+  children: React.ReactNode;
+}) => {
+  // Get the snapshot with matching status (or most recent if no match)
+  const { data: targetSnapshot } = useGetSnapshotByStatus(
+    tradeSetupId,
+    currentStatus || "idea",
+    { enabled: !!tradeSetupId && !!currentStatus }
+  );
+
+  const targetSnapshotId = targetSnapshot?._id || "";
+
+  return (
+    <Link
+      to="/dashboard/setup"
+      search={{
+        tradeSetupId,
+        snapshotId: targetSnapshotId,
+      }}
+      className="contents"
+    >
+      {children}
+    </Link>
+  );
 };
 
 // Column helper
@@ -85,12 +119,14 @@ interface SimilarTradesTableProps {
   tradeSetupId: Id<"trade_setups">;
   limit?: number;
   minSimilarityScore?: number;
+  currentStatus?: string;
 }
 
 const SimilarTradesTable = ({
   tradeSetupId,
   limit,
   minSimilarityScore,
+  currentStatus,
 }: SimilarTradesTableProps) => {
   // State for configuration preset selection
   const [selectedPreset, setSelectedPreset] = useState<ConfigPreset>("default");
@@ -370,14 +406,10 @@ const SimilarTradesTable = ({
             ) : similarTrades && similarTrades.length > 0 ? (
               // Data rows
               table.getRowModel().rows.map((row) => (
-                <Link
+                <SmartTradeLink
                   key={row.id}
-                  to="/dashboard/setup"
-                  search={{
-                    tradeSetupId: row.original.tradeSetupId,
-                    snapshotId: "", // Will navigate to most recent
-                  }}
-                  className="contents"
+                  tradeSetupId={row.original.tradeSetupId}
+                  currentStatus={currentStatus}
                 >
                   <TableRow data-state={row.getIsSelected() && "selected"}>
                     {row.getVisibleCells().map((cell) => (
@@ -389,7 +421,7 @@ const SimilarTradesTable = ({
                       </TableCell>
                     ))}
                   </TableRow>
-                </Link>
+                </SmartTradeLink>
               ))
             ) : (
               // Empty state

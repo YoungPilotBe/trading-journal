@@ -196,3 +196,34 @@ export const getAnalyticsOverview = query({
     };
   },
 });
+
+/**
+ * Get a snapshot with a specific status for a trade setup
+ * Falls back to the most recent snapshot if no matching status found
+ */
+export const getSnapshotByStatus = query({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+    status: v.string(),
+  },
+  handler: async (ctx, { tradeSetupId, status }) => {
+    // Get all snapshots for this trade setup
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup", (q) => q.eq("tradeSetupId", tradeSetupId))
+      .order("desc") // Most recent first
+      .collect();
+
+    // First, try to find a snapshot with the exact status
+    const matchingSnapshot = snapshots.find(
+      (snapshot) => snapshot.status === status
+    );
+
+    if (matchingSnapshot) {
+      return matchingSnapshot;
+    }
+
+    // If no exact match, return the most recent snapshot
+    return snapshots[0] || null;
+  },
+});

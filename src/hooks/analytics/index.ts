@@ -3,6 +3,7 @@ export {
   useFindSimilarTrades,
   useFindSimilarTradesWithOptions,
 } from "./use-find-similar-trades";
+export { useGetSnapshotByStatus } from "./use-get-snapshot-by-status";
 export {
   useTradeSetupAnalysis,
   useTradeSetupAnalysisWithOptions,
