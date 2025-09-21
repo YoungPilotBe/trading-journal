@@ -1,8 +1,13 @@
+import { LucideIcon } from "lucide-react";
+
 export type TreeNode = {
   key: string;
   title: string;
   children?: TreeNode[];
   anti?: string[]; // Keys that should be deselected when this item is selected
+  icon?: LucideIcon; // Lucide React icon component
+  iconClassName?: string; // CSS classes for the icon
+  isDir?: boolean; // Whether this node should be rendered as a directory
 };
 
 function getTreeDepth(tree: TreeNode): number {
@@ -28,6 +33,9 @@ export type GridCell = {
   isExpanded?: boolean;
   isLeaf: boolean;
   isSelected?: boolean;
+  icon?: LucideIcon;
+  iconClassName?: string;
+  isDir?: boolean;
 };
 
 function flattenTreeToGrid(
@@ -61,6 +69,10 @@ function flattenTreeToGrid(
       isExpanded,
       isLeaf,
       isSelected,
+      icon: node.icon,
+      iconClassName: node.iconClassName,
+      isDir:
+        node.isDir || node.title.includes("_+_") || node.key.includes("_+_"),
     };
 
     let currentRowIndex = rowIndex;
@@ -329,12 +341,179 @@ function convertSelectionToJson(
   return result;
 }
 
+// Wrapper functions to handle arrays of TreeNodes
+function getTreeDepthArray(trees: TreeNode[]): number {
+  if (trees.length === 0) return 1;
+
+  let maxDepth = 0;
+  for (const tree of trees) {
+    const depth = getTreeDepth(tree);
+    maxDepth = Math.max(maxDepth, depth);
+  }
+
+  return maxDepth;
+}
+
+function flattenTreeArrayToGrid(
+  trees: TreeNode[],
+  expandedKeys: Set<string> = new Set(),
+  selectedNodes: Set<string> = new Set()
+): GridCell[][] {
+  const allRows: GridCell[][] = [];
+  const maxDepth = getTreeDepthArray(trees);
+
+  let currentRowIndex = 0;
+
+  for (let treeIndex = 0; treeIndex < trees.length; treeIndex++) {
+    const tree = trees[treeIndex];
+    const treeRows = flattenTreeToGrid(tree, expandedKeys, selectedNodes);
+
+    // Adjust row indices for the combined grid
+    treeRows.forEach((row) => {
+      const adjustedRow = new Array(maxDepth).fill(null);
+      row.forEach((cell, colIndex) => {
+        if (cell) {
+          adjustedRow[colIndex] = {
+            ...cell,
+            rowIndex: currentRowIndex,
+          };
+        }
+      });
+      allRows.push(adjustedRow);
+      currentRowIndex++;
+    });
+  }
+
+  return allRows;
+}
+
+function findNodeByKeyArray(
+  trees: TreeNode[],
+  nodeKey: string
+): TreeNode | null {
+  for (const tree of trees) {
+    const result = findNodeByKey(tree, nodeKey);
+    if (result) {
+      return result;
+    }
+  }
+  return null;
+}
+
+function convertSelectionToJsonArray(
+  trees: TreeNode[],
+  selectedNodes: Set<string>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
+  for (const tree of trees) {
+    const treeResult = convertSelectionToJson(tree, selectedNodes);
+    Object.assign(result, treeResult);
+  }
+
+  return result;
+}
+
+function toggleBranchWithAntiSelectionArray(
+  trees: TreeNode[],
+  selectedNodes: Set<string>,
+  expandedKeys: Set<string>,
+  nodeKey: string
+): { selectedNodes: Set<string>; expandedKeys: Set<string> } {
+  for (const tree of trees) {
+    const node = findNodeByKey(tree, nodeKey);
+    if (node) {
+      return toggleBranchWithAntiSelection(
+        tree,
+        selectedNodes,
+        expandedKeys,
+        nodeKey
+      );
+    }
+  }
+  return { selectedNodes, expandedKeys };
+}
+
+function toggleBranchExpansionArray(
+  trees: TreeNode[],
+  selectedNodes: Set<string>,
+  expandedKeys: Set<string>,
+  nodeKey: string
+): { selectedNodes: Set<string>; expandedKeys: Set<string> } {
+  for (const tree of trees) {
+    const node = findNodeByKey(tree, nodeKey);
+    if (node) {
+      return toggleBranchExpansion(tree, selectedNodes, expandedKeys, nodeKey);
+    }
+  }
+  return { selectedNodes, expandedKeys };
+}
+
+function toggleLeafWithAntiSelectionArray(
+  trees: TreeNode[],
+  selectedNodes: Set<string>,
+  nodeKey: string
+): Set<string> {
+  for (const tree of trees) {
+    const node = findNodeByKey(tree, nodeKey);
+    if (node) {
+      return toggleLeafWithAntiSelection(tree, selectedNodes, nodeKey);
+    }
+  }
+  return selectedNodes;
+}
+
+// Unified toggle function that handles both branches and leaves
+function toggleNodeArray(
+  trees: TreeNode[],
+  selectedNodes: Set<string>,
+  expandedKeys: Set<string>,
+  nodeKey: string,
+  isBranch: boolean,
+  hasAntiSelection: boolean
+): { selectedNodes: Set<string>; expandedKeys: Set<string> } {
+  if (hasAntiSelection) {
+    // Use anti-selection logic for both branches and leaves
+    return toggleBranchWithAntiSelectionArray(
+      trees,
+      selectedNodes,
+      expandedKeys,
+      nodeKey
+    );
+  } else if (isBranch) {
+    // Regular branch expansion without anti-selection
+    return toggleBranchExpansionArray(
+      trees,
+      selectedNodes,
+      expandedKeys,
+      nodeKey
+    );
+  } else {
+    // Regular leaf toggle without anti-selection
+    const newSelectedNodes = toggleLeafWithAntiSelectionArray(
+      trees,
+      selectedNodes,
+      nodeKey
+    );
+    return { selectedNodes: newSelectedNodes, expandedKeys };
+  }
+}
+
 export {
   convertSelectionToJson,
+  convertSelectionToJsonArray,
   findNodeByKey,
+  findNodeByKeyArray,
+  flattenTreeArrayToGrid,
   flattenTreeToGrid,
   getTreeDepth,
+  // Array wrapper functions
+  getTreeDepthArray,
   toggleBranchExpansion,
+  toggleBranchExpansionArray,
   toggleBranchWithAntiSelection,
+  toggleBranchWithAntiSelectionArray,
   toggleLeafWithAntiSelection,
+  toggleLeafWithAntiSelectionArray,
+  toggleNodeArray,
 };

@@ -1,5 +1,26 @@
 import { capitalize } from "lodash";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  Droplets,
+  GitBranch,
+  LogIn,
+  LogOut,
+  Mountain,
+  Settings,
+  Shield,
+  Square,
+  Target,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import type { TreeNode } from "./tree.utils";
+
+// Base icon className for all tree icons
+export const TREE_ICON_BASE_CLASS = "w-3 h-3 flex-shrink-0";
 
 // Configuration for conditional effects based on parent selections
 export interface ConditionalEffectRule {
@@ -18,75 +39,57 @@ export interface ConditionalEffectRule {
 // Configuration for conditional effects
 export const conditionalEffectsConfig: ConditionalEffectRule[] = [
   {
-    parentField: "swing_direction",
+    parentField: "swing",
     conditions: {
-      swing_direction_bullish: {
+      swing_bullish: {
         childEffects: {
-          swing_strength_strong: "positive",
-          swing_strength_weakening: "negative",
+          // Market structure bullish effects can be defined here
         },
       },
-      swing_direction_bearish: {
+      swing_bearish: {
         childEffects: {
-          swing_strength_strong: "negative",
-          swing_strength_weakening: "positive",
+          // Market structure bearish effects can be defined here
         },
       },
     },
   },
   {
-    parentField: "fractal_direction",
+    parentField: "fractal",
     conditions: {
-      fractal_direction_bullish: {
+      fractal_bullish: {
         childEffects: {
-          fractal_strength_strong: "positive",
-          fractal_strength_weakening: "negative",
+          // Fractal bullish effects can be defined here
         },
       },
-      fractal_direction_bearish: {
+      fractal_bearish: {
         childEffects: {
-          fractal_strength_strong: "negative",
-          fractal_strength_weakening: "positive",
+          // Fractal bearish effects can be defined here
         },
       },
     },
   },
   {
-    parentField: "obim_direction",
+    parentField: "demand",
     conditions: {
-      obim_direction_bullish: {
+      demand: {
         childEffects: {
-          obim_extension_fvg: "positive",
-          "obim_extension_25%": "positive",
-          obim_grabbed_liquidity: "positive",
-          obim_caused_wick_bos: "negative",
-          obim_staircased: "positive",
-        },
-      },
-      obim_direction_bearish: {
-        childEffects: {
-          obim_extension_fvg: "negative",
-          "obim_extension_25%": "negative",
-          obim_grabbed_liquidity: "negative",
-          obim_caused_wick_bos: "positive",
-          obim_staircased: "negative",
+          extension_fvg: "positive",
+          extension_25_percent: "positive",
+          liquidity_fueled: "positive",
+          liquidity_wicked: "negative",
         },
       },
     },
   },
   {
-    parentField: "wyckoff",
+    parentField: "supply",
     conditions: {
-      wyckoff_accumulation: {
+      supply: {
         childEffects: {
-          "wyckoff_model_model 1": "positive",
-          "wyckoff_model_model 2": "positive",
-        },
-      },
-      wyckoff_distribution: {
-        childEffects: {
-          "wyckoff_model_model 1": "negative",
-          "wyckoff_model_model 2": "negative",
+          extension_fvg: "negative",
+          extension_25_percent: "negative",
+          liquidity_fueled: "negative",
+          liquidity_wicked: "positive",
         },
       },
     },
@@ -114,194 +117,330 @@ const createContradictingBranch = (
   ];
 };
 
-const createOBIMChildren = () => [
+// Helper function to create Fixed Range Confluence children
+const createFixedRangeConfluenceChildren = (prefix: string) => [
   {
-    key: "obim_extension",
+    key: `${prefix}_vah`,
+    title: "VAH",
+  },
+  {
+    key: `${prefix}_poc`,
+    title: "POC",
+  },
+  {
+    key: `${prefix}_val`,
+    title: "VAL",
+  },
+];
+
+// Helper function to create liquidity children
+const createLiquidityChildren = (prefix: string) => [
+  {
+    key: `${prefix}_liquidity_fueled`,
+    title: "Fueled",
+  },
+  {
+    key: `${prefix}_liquidity_wicked`,
+    title: "Wicked",
+  },
+];
+
+// Helper function to create OBIM children for Supply/Demand
+const createSupplyDemandOBIMChildren = (prefix: string) => [
+  {
+    key: `${prefix}_obim_extension`,
     title: "Extension",
     children: [
       {
-        key: "obim_extension_fvg",
+        key: `${prefix}_obim_extension_fvg`,
         title: "FVG",
       },
       {
-        key: "obim_extension_25%",
+        key: `${prefix}_obim_extension_25_percent`,
         title: "25%",
       },
     ],
   },
-
   {
-    key: "obim_pivot",
+    key: `${prefix}_obim_inducement`,
+    title: "Inducement",
+  },
+  {
+    key: `${prefix}_obim_pivot`,
     title: "Pivot",
     children: [
       {
-        key: "obim_pivot_extremum_point",
-        title: "Pivot Point",
+        key: `${prefix}_obim_pivot_ep`,
+        title: "EP",
+      },
+      {
+        key: `${prefix}_obim_pivot_dp`,
+        title: "DP",
       },
     ],
   },
   {
-    key: "obim_liquidity",
+    key: `${prefix}_obim_fixed_range_confluence`,
+    title: "Fixed Range Confluence",
+    children: createFixedRangeConfluenceChildren(
+      `${prefix}_obim_fixed_range_confluence`
+    ),
+  },
+  {
+    key: `${prefix}_obim_liquidity`,
     title: "Liquidity",
-    children: [
-      {
-        key: "obim_grabbed_liquidity",
-        title: "Grabbed Liquidity",
-      },
-      {
-        key: "obim_caused_wick_bos",
-        title: "Caused Wick BOS",
-      },
-    ],
-  },
-
-  {
-    key: "obim_staircased",
-    title: "Staircased",
+    children: createLiquidityChildren(`${prefix}_obim`),
   },
 ];
 
-export const strategyTree: TreeNode = {
-  key: "strategy",
-  title: "Strategy",
-  children: [
-    {
-      key: "market_structure",
-      title: "MS",
-      children: [
-        {
-          key: "swing",
-          title: "Swing",
-          children: [
-            ...createContradictingBranch(
-              "swing_direction",
-              ["bullish", "bearish"],
-              createContradictingBranch("swing_strength", [
-                "strong",
-                "weakening",
-              ])
-            ),
-          ],
-        },
-        {
-          key: "fractal",
-          title: "Fractal",
-          children: [
-            ...createContradictingBranch(
-              "fractal_direction",
-              ["bullish", "bearish"],
-              createContradictingBranch("fractal_strength", [
-                "strong",
-                "weakening",
-              ])
-            ),
-          ],
-        },
-      ],
-    },
-    {
-      key: "zone",
-      title: "Zone",
-      children: [
-        {
-          key: "zone_supply",
-          anti: ["zone_demand"],
-          title: "Supply",
-          children: [
-            {
-              key: "supply_range",
-              title: "Range",
-              anti: ["supply_pivot"],
-            },
-            {
-              key: "supply_pivot",
-              title: "Pivot",
-              anti: ["supply_range"],
-              children: [
-                {
-                  key: "supply_pivot_type_extremum",
-                  title: "Extremum",
-                  anti: ["supply_pivot_type_decision"],
-                },
-                {
-                  key: "supply_pivot_type_decision",
-                  title: "Decision",
-                  anti: ["supply_pivot_type_extremum"],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          key: "zone_demand",
-          anti: ["zone_supply"],
-          title: "Demand",
-          children: [
-            {
-              key: "demand_range",
-              title: "Range",
-              anti: ["demand_pivot"],
-            },
-            {
-              key: "demand_pivot",
-              title: "Pivot",
-              anti: ["demand_range"],
-              children: [
-                {
-                  key: "demand_pivot_type_extremum",
-                  title: "Extremum",
-                  anti: ["demand_pivot_type_decision"],
-                },
-                {
-                  key: "demand_pivot_type_decision",
-                  title: "Decision",
-                  anti: ["demand_pivot_type_extremum"],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      key: "obim",
-      title: "OBIM",
-      children: [
-        ...createContradictingBranch(
-          "obim_direction",
-          ["bullish", "bearish"],
-          createOBIMChildren()
-        ),
-      ],
-    },
-    {
-      key: "range",
-      title: "Range",
-      children: [
-        {
-          key: "VAH",
-          title: "VAH",
-        },
-        {
-          key: "POC",
-          title: "POC",
-        },
-        {
-          key: "VAL",
-          title: "VAL",
-        },
-      ],
-    },
-    {
-      key: "wyckoff",
-      title: "Wyckoff",
-      children: [
-        ...createContradictingBranch(
-          "wyckoff",
-          ["accumulation", "distribution"],
-          createContradictingBranch("wyckoff_model", ["model 1", "model 2"])
-        ),
-      ],
-    },
-  ],
-};
+// Helper function to create Range children for Demand
+const createDemandRangeChildren = (prefix: string) => [
+  {
+    key: `${prefix}_range_inducement`,
+    title: "Inducement",
+  },
+  {
+    key: `${prefix}_range_s2b`,
+    title: "S2B",
+  },
+  {
+    key: `${prefix}_range_chain`,
+    title: "Chain",
+  },
+  {
+    key: `${prefix}_range_fixed_range_confluence`,
+    title: "Fixed Range Confluence",
+    children: createFixedRangeConfluenceChildren(
+      `${prefix}_range_fixed_range_confluence`
+    ),
+  },
+];
+
+// Helper function to create Range children for Supply
+const createSupplyRangeChildren = (prefix: string) => [
+  {
+    key: `${prefix}_range_inducement`,
+    title: "Inducement",
+  },
+  {
+    key: `${prefix}_range_b2s`,
+    title: "B2S",
+  },
+  {
+    key: `${prefix}_range_chain`,
+    title: "Chain",
+  },
+  {
+    key: `${prefix}_range_fixed_range_confluence`,
+    title: "Fixed Range Confluence",
+    children: createFixedRangeConfluenceChildren(
+      `${prefix}_range_fixed_range_confluence`
+    ),
+  },
+];
+
+export const strategyTree: TreeNode[] = [
+  {
+    key: "market_structure",
+    title: "MS",
+    icon: BarChart3,
+    iconClassName: "",
+    children: [
+      {
+        key: "swing",
+        title: "Swing",
+        icon: Activity,
+        iconClassName: "",
+        children: createContradictingBranch("swing", ["bullish", "bearish"]),
+      },
+      {
+        key: "fractal",
+        title: "Fractal",
+        icon: GitBranch,
+        iconClassName: "",
+        children: createContradictingBranch("fractal", ["bullish", "bearish"]),
+      },
+      {
+        key: "optional_settings",
+        title: "_+_",
+        icon: Settings,
+        iconClassName: "",
+        isDir: true,
+        children: [
+          {
+            key: "protected_levels",
+            title: "Protected",
+            icon: Shield,
+            iconClassName: "",
+            children: [
+              {
+                key: "protected_high",
+                anti: ["protected_low"],
+                title: "High",
+                icon: ArrowUp,
+                iconClassName: "",
+              },
+              {
+                key: "protected_low",
+                anti: ["protected_high"],
+                title: "Low",
+                icon: ArrowDown,
+                iconClassName: "",
+              },
+            ],
+          },
+          {
+            key: "weak_levels",
+            title: "Weak",
+            icon: AlertTriangle,
+            iconClassName: "",
+            children: [
+              {
+                key: "weak_high",
+                anti: ["weak_low"],
+                title: "High",
+                icon: ArrowUp,
+                iconClassName: "",
+              },
+              {
+                key: "weak_low",
+                anti: ["weak_high"],
+                title: "Low",
+                icon: ArrowDown,
+                iconClassName: "",
+              },
+            ],
+          },
+          {
+            key: "liquidity_wicking",
+            title: "Liquidity",
+            icon: Droplets,
+            iconClassName: "",
+            children: [
+              {
+                key: "wicking_tops",
+                title: "Wicking Tops",
+                icon: Mountain,
+                iconClassName: "scale-x-[-1]",
+              },
+              {
+                key: "wicking_bottoms",
+                title: "Wicking Bottoms",
+                icon: Mountain,
+                iconClassName: "rotate-180",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    key: "entry",
+    title: "Entry",
+    icon: LogIn,
+    iconClassName: "",
+    children: [
+      {
+        key: "entry_demand",
+        title: "Demand",
+        icon: TrendingUp,
+        iconClassName: "text-emerald-500",
+        anti: ["entry_supply"],
+        children: [
+          {
+            key: "entry_demand_range",
+            title: "Range",
+            icon: Square,
+            iconClassName: "",
+            children: createDemandRangeChildren("entry_demand"),
+          },
+          {
+            key: "entry_demand_obim",
+            title: "OBIM",
+            icon: Target,
+            iconClassName: "",
+            children: createSupplyDemandOBIMChildren("entry_demand"),
+          },
+        ],
+      },
+      {
+        key: "entry_supply",
+        title: "Supply",
+        icon: TrendingDown,
+        iconClassName: "text-rose-500",
+        anti: ["entry_demand"],
+        children: [
+          {
+            key: "entry_supply_range",
+            title: "Range",
+            icon: Square,
+            iconClassName: "",
+            children: createSupplyRangeChildren("entry_supply"),
+          },
+          {
+            key: "entry_supply_obim",
+            title: "OBIM",
+            icon: Target,
+            iconClassName: "",
+            children: createSupplyDemandOBIMChildren("entry_supply"),
+          },
+        ],
+      },
+    ],
+  },
+  {
+    key: "exit",
+    title: "Exit",
+    icon: LogOut,
+    iconClassName: "",
+    children: [
+      {
+        key: "exit_demand",
+        title: "Demand",
+        icon: TrendingUp,
+        iconClassName: "text-emerald-500",
+        anti: ["exit_supply"],
+        children: [
+          {
+            key: "exit_demand_range",
+            title: "Range",
+            icon: Square,
+            iconClassName: "",
+            children: createDemandRangeChildren("exit_demand"),
+          },
+          {
+            key: "exit_demand_obim",
+            title: "OBIM",
+            icon: Target,
+            iconClassName: "",
+            children: createSupplyDemandOBIMChildren("exit_demand"),
+          },
+        ],
+      },
+      {
+        key: "exit_supply",
+        title: "Supply",
+        icon: TrendingDown,
+        iconClassName: "text-rose-500",
+        anti: ["exit_demand"],
+        children: [
+          {
+            key: "exit_supply_range",
+            title: "Range",
+            icon: Square,
+            iconClassName: "",
+            children: createSupplyRangeChildren("exit_supply"),
+          },
+          {
+            key: "exit_supply_obim",
+            title: "OBIM",
+            icon: Target,
+            iconClassName: "",
+            children: createSupplyDemandOBIMChildren("exit_supply"),
+          },
+        ],
+      },
+    ],
+  },
+];

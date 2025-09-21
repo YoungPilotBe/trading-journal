@@ -1,6 +1,8 @@
 import { useFieldEffect } from "@/tree/EffectsContext";
 import { clsx } from "clsx";
+import { ChevronRight, LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { TREE_ICON_BASE_CLASS } from "./tree.constants";
 
 interface SimplifiedToggleBadgeProps {
   value: boolean;
@@ -10,6 +12,9 @@ interface SimplifiedToggleBadgeProps {
   readonly?: boolean;
   badgeStyle?: string;
   fieldName: string;
+  icon?: LucideIcon;
+  iconClassName?: string;
+  isDir?: boolean;
 }
 
 export const ToggleBadge = ({
@@ -20,6 +25,9 @@ export const ToggleBadge = ({
   readonly = false,
   badgeStyle = "border-muted text-muted-foreground",
   fieldName,
+  icon,
+  iconClassName = "",
+  isDir = false,
 }: SimplifiedToggleBadgeProps) => {
   const [isToggled, setIsToggled] = useState<boolean>(Boolean(value));
   const effect = useFieldEffect(fieldName);
@@ -36,6 +44,16 @@ export const ToggleBadge = ({
     onChange();
   };
 
+  // Render the Lucide icon if provided
+  const renderIcon = () => {
+    if (!icon) return null;
+
+    const IconComponent = icon;
+    return (
+      <IconComponent className={clsx(TREE_ICON_BASE_CLASS, iconClassName)} />
+    );
+  };
+
   return (
     <div className="w-full h-full">
       <button
@@ -44,9 +62,11 @@ export const ToggleBadge = ({
         disabled={disabled || readonly}
         className={clsx(
           // Base styles matching button badge variant - fixed dimensions
-          "w-full h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border transition-all duration-200 flex items-center justify-center flex-shrink-0",
+          isDir
+            ? "ml-auto w-fit h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border transition-all duration-200 flex items-center justify-end flex-shrink-0"
+            : "w-full h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border transition-all duration-200 flex items-center justify-center flex-shrink-0",
           // Text handling
-          "text-center line-clamp-2 leading-tight",
+          !isDir && "text-center line-clamp-2 leading-tight",
           // State-based styles
           {
             // Toggled state - bright and obvious
@@ -64,17 +84,26 @@ export const ToggleBadge = ({
           isToggled && badgeStyle
         )}
       >
-        <span className="flex flex-row items-center justify-between gap-1 font-mono">
-          {label}
-          {effect && (
-            <div
-              className={clsx("size-1 rounded-full flex-shrink-0", {
-                "bg-sky-500": effect === "positive",
-                "bg-red-500": effect === "negative",
-              })}
-            />
-          )}
-        </span>
+        {isDir ? (
+          // Directory style - just arrow on the right
+          <ChevronRight className={clsx(TREE_ICON_BASE_CLASS)} />
+        ) : (
+          // Normal badge style
+          <span className="flex flex-row items-center justify-between gap-1 font-mono">
+            <div className="flex flex-row items-center gap-1">
+              {renderIcon()}
+              {label}
+            </div>
+            {effect && (
+              <div
+                className={clsx("size-1 rounded-full flex-shrink-0", {
+                  "bg-sky-500": effect === "positive",
+                  "bg-red-500": effect === "negative",
+                })}
+              />
+            )}
+          </span>
+        )}
       </button>
     </div>
   );

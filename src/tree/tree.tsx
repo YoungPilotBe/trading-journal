@@ -2,13 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ToggleBadge } from "./ToggleBadge";
 import { strategyTree } from "./tree.constants";
 import {
-  convertSelectionToJson,
-  findNodeByKey,
-  flattenTreeToGrid,
-  getTreeDepth,
-  toggleBranchExpansion,
-  toggleBranchWithAntiSelection,
-  toggleLeafWithAntiSelection,
+  convertSelectionToJsonArray,
+  findNodeByKeyArray,
+  flattenTreeArrayToGrid,
+  getTreeDepthArray,
+  toggleNodeArray,
 } from "./tree.utils";
 
 // Complete tree state that includes both UI state and data
@@ -27,18 +25,14 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
   // Initialize tree state - either from provided state or create default
   const [treeState, setTreeState] = useState<TreeState>(() => {
     if (initialTreeState) {
-      // Ensure strategy root is always expanded for usability
-      const expandedKeys = new Set(initialTreeState.expandedKeys);
-      expandedKeys.add("strategy");
       return {
         ...initialTreeState,
-        expandedKeys,
       };
     }
 
     // Default state for new tree
     return {
-      expandedKeys: new Set<string>(["strategy"]),
+      expandedKeys: new Set<string>(),
       selectedNodes: new Set<string>(),
       tags: {},
     };
@@ -47,20 +41,16 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
   // Update tree state when initialTreeState prop changes
   useEffect(() => {
     if (initialTreeState) {
-      const expandedKeys = new Set(initialTreeState.expandedKeys);
-      expandedKeys.add("strategy"); // Always ensure strategy is expanded
-
       setTreeState({
         ...initialTreeState,
-        expandedKeys,
       });
     }
   }, [initialTreeState]);
 
-  const treeDepth = useMemo(() => getTreeDepth(strategyTree), []);
+  const treeDepth = useMemo(() => getTreeDepthArray(strategyTree), []);
   const gridRows = useMemo(
     () =>
-      flattenTreeToGrid(
+      flattenTreeArrayToGrid(
         strategyTree,
         treeState.expandedKeys,
         treeState.selectedNodes
@@ -76,58 +66,28 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
     const updatedState: TreeState = {
       expandedKeys: newExpandedKeys || treeState.expandedKeys,
       selectedNodes: newSelectedNodes,
-      tags: convertSelectionToJson(strategyTree, newSelectedNodes),
+      tags: convertSelectionToJsonArray(strategyTree, newSelectedNodes),
     };
 
     setTreeState(updatedState);
     onTreeStateChange(updatedState);
   };
 
-  // Handle clicking on branch nodes (expandable categories)
-  const handleBranchToggle = (nodeKey: string) => {
-    const node = findNodeByKey(strategyTree, nodeKey);
-    const hasAntiSelection = Boolean(node?.anti?.length);
-
-    const result = hasAntiSelection
-      ? toggleBranchWithAntiSelection(
-          strategyTree,
-          treeState.selectedNodes,
-          treeState.expandedKeys,
-          nodeKey
-        )
-      : toggleBranchExpansion(
-          strategyTree,
-          treeState.selectedNodes,
-          treeState.expandedKeys,
-          nodeKey
-        );
-
+  // Unified handler for both branch and leaf nodes
+  const handleNodeToggle = (
+    nodeKey: string,
+    isBranch: boolean,
+    hasAntiSelection: boolean
+  ) => {
+    const result = toggleNodeArray(
+      strategyTree,
+      treeState.selectedNodes,
+      treeState.expandedKeys,
+      nodeKey,
+      isBranch,
+      hasAntiSelection
+    );
     updateTreeState(result.selectedNodes, result.expandedKeys);
-  };
-
-  // Handle clicking on leaf nodes (selectable items)
-  const handleLeafToggle = (nodeKey: string) => {
-    const node = findNodeByKey(strategyTree, nodeKey);
-    const hasAntiSelection = Boolean(node?.anti?.length);
-
-    if (hasAntiSelection) {
-      // Use the same logic as branches for anti-selection to handle expandedKeys
-      const result = toggleBranchWithAntiSelection(
-        strategyTree,
-        treeState.selectedNodes,
-        treeState.expandedKeys,
-        nodeKey
-      );
-      updateTreeState(result.selectedNodes, result.expandedKeys);
-    } else {
-      // Regular leaf toggle without anti-selection
-      const newSelectedNodes = toggleLeafWithAntiSelection(
-        strategyTree,
-        treeState.selectedNodes,
-        nodeKey
-      );
-      updateTreeState(newSelectedNodes);
-    }
   };
 
   return (
@@ -149,14 +109,28 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
                     {cell.isLeaf ? (
                       <ToggleBadge
                         value={cell.isSelected || false}
-                        onChange={() => handleLeafToggle(cell.nodeKey)}
+                        onChange={() => {
+                          const node = findNodeByKeyArray(
+                            strategyTree,
+                            cell.nodeKey
+                          );
+                          const hasAntiSelection = Boolean(node?.anti?.length);
+                          handleNodeToggle(
+                            cell.nodeKey,
+                            false,
+                            hasAntiSelection
+                          );
+                        }}
                         label={cell.content}
                         fieldName={cell.nodeKey}
+                        icon={cell.icon}
+                        iconClassName={cell.iconClassName}
+                        isDir={cell.isDir}
                       />
                     ) : (
                       <ToggleBadge
                         value={(() => {
-                          const node = findNodeByKey(
+                          const node = findNodeByKeyArray(
                             strategyTree,
                             cell.nodeKey
                           );
@@ -165,9 +139,23 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
                             ? cell.isSelected || false
                             : cell.isExpanded || false;
                         })()}
-                        onChange={() => handleBranchToggle(cell.nodeKey)}
+                        onChange={() => {
+                          const node = findNodeByKeyArray(
+                            strategyTree,
+                            cell.nodeKey
+                          );
+                          const hasAntiSelection = Boolean(node?.anti?.length);
+                          handleNodeToggle(
+                            cell.nodeKey,
+                            true,
+                            hasAntiSelection
+                          );
+                        }}
                         label={cell.content}
                         fieldName={cell.nodeKey}
+                        icon={cell.icon}
+                        iconClassName={cell.iconClassName}
+                        isDir={cell.isDir}
                       />
                     )}
                   </div>
