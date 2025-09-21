@@ -22,10 +22,15 @@ interface TreeState {
 
 interface Props {
   initialTreeState: TreeState;
-  onTreeStateChange: (state: TreeState) => void;
+  onTreeStateChange?: (state: TreeState) => void;
+  viewOnly?: boolean;
 }
 
-const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
+const Tree = ({
+  initialTreeState,
+  onTreeStateChange,
+  viewOnly = false,
+}: Props) => {
   // Initialize tree state - either from provided state or create default
   const [treeState, setTreeState] = useState<TreeState>(() => {
     if (initialTreeState) {
@@ -65,7 +70,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
     };
 
     setTreeState(updatedState);
-    onTreeStateChange(updatedState);
+    if (onTreeStateChange) onTreeStateChange(updatedState);
   };
 
   // Unified handler for both branch and leaf nodes
@@ -143,6 +148,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
                           cell.parentKey
                         )}
                         onSave={handleInputFieldSave}
+                        readOnly={viewOnly}
                       />
                     ) : cell.isLeaf ? (
                       <ToggleBadge
@@ -164,6 +170,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
                         icon={cell.icon}
                         iconClassName={cell.iconClassName}
                         isDir={cell.isDir}
+                        readOnly={viewOnly}
                       />
                     ) : (
                       <ToggleBadge
@@ -194,6 +201,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
                         icon={cell.icon}
                         iconClassName={cell.iconClassName}
                         isDir={cell.isDir}
+                        readOnly={viewOnly}
                       />
                     )}
                   </>

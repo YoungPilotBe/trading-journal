@@ -2,6 +2,7 @@ import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-d
 import SimilarTradesTable from "@/components/similar-trades-table";
 import SnapshotHistory from "@/components/snapshot-history";
 import { SnapshotImage } from "@/components/snapshot-image";
+import TagViewTable from "@/components/tag-view-table";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -235,6 +236,7 @@ function RouteComponent() {
                           tradeSetupId,
                           imageId: snapshot?.imageId || "",
                           snapshotId,
+                          viewOnly: true,
                         },
                       })
                     }
@@ -591,6 +593,10 @@ function RouteComponent() {
         limit={4}
         minSimilarityScore={0.4}
         currentStatus={snapshot?.status}
+      />
+      <TagViewTable
+        snapshotId={snapshotId as Id<"snapshots">}
+        tradeSetupId={tradeSetupId as Id<"trade_setups">}
       />
     </>
   );

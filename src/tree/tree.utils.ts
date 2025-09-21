@@ -1,3 +1,4 @@
+import { Doc } from "convex/_generated/dataModel";
 import { LucideIcon } from "lucide-react";
 import { z } from "zod";
 
@@ -629,9 +630,30 @@ function toggleNodeArray(
   }
 }
 
+function createTreeStateFromSnapshot(snapshot: Doc<"snapshots">) {
+  if (snapshot?.tags_config) {
+    // Restore complete tree state from saved config
+    return {
+      expandedKeys: new Set<string>(
+        snapshot.tags_config.expandedKeys || ["strategy"]
+      ),
+      selectedNodes: new Set<string>(snapshot.tags_config.selectedNodes || []),
+      tags: snapshot.tags || {},
+    };
+  }
+
+  // If no config exists but we have tags, create a default state
+  return {
+    expandedKeys: new Set<string>(["strategy"]),
+    selectedNodes: new Set<string>(),
+    tags: snapshot.tags,
+  };
+}
+
 export {
   convertSelectionToJson,
   convertSelectionToJsonArray,
+  createTreeStateFromSnapshot,
   findNodeByKey,
   findNodeByKeyArray,
   findNodePath,

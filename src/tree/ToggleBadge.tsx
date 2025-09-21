@@ -4,30 +4,33 @@ import { ChevronRight, LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TREE_ICON_BASE_CLASS } from "./tree.constants";
 
-interface SimplifiedToggleBadgeProps {
+interface SimplifiedToggleBadgeProps
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    "onChange" | "onClick" | "value"
+  > {
   value: boolean;
   onChange: () => void;
   label: string;
-  disabled?: boolean;
-  readonly?: boolean;
   badgeStyle?: string;
   fieldName: string;
   icon?: LucideIcon;
   iconClassName?: string;
   isDir?: boolean;
+  readOnly?: boolean;
 }
 
 export const ToggleBadge = ({
   value,
   onChange,
   label,
-  disabled = false,
-  readonly = false,
   badgeStyle = "border-muted text-muted-foreground",
   fieldName,
   icon,
   iconClassName = "",
   isDir = false,
+  readOnly = false,
+  ...buttonProps
 }: SimplifiedToggleBadgeProps) => {
   const [isToggled, setIsToggled] = useState<boolean>(Boolean(value));
   const effect = useFieldEffect(fieldName);
@@ -37,7 +40,7 @@ export const ToggleBadge = ({
   }, [value]);
 
   const handleToggle = () => {
-    if (disabled || readonly) return;
+    if (buttonProps.disabled || readOnly) return;
 
     const newValue = !isToggled;
     setIsToggled(newValue);
@@ -58,7 +61,7 @@ export const ToggleBadge = ({
     <button
       type="button"
       onClick={handleToggle}
-      disabled={disabled || readonly}
+      {...buttonProps}
       className={clsx(
         // Base styles matching button badge variant - fixed dimensions
         isDir
@@ -75,12 +78,13 @@ export const ToggleBadge = ({
           "bg-gradient-to-t from-muted/20 to-muted/10 border-muted/50 text-muted-foreground hover:from-muted hover:to-accent":
             !isToggled,
           // Disabled/readonly state
-          "opacity-50 cursor-not-allowed": disabled || readonly,
+          "opacity-50 cursor-not-allowed": buttonProps.disabled || readOnly,
           // Interactive cursor
-          "cursor-pointer": !disabled && !readonly,
+          "cursor-pointer": !buttonProps.disabled && !readOnly,
         },
         // Custom badgeStyle overrides
-        isToggled && badgeStyle
+        isToggled && badgeStyle,
+        buttonProps.className
       )}
     >
       {isDir ? (

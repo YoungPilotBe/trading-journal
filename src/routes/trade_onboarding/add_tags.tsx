@@ -2,9 +2,10 @@ import { Button } from "@/components/ui/button";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { EffectsProvider } from "@/tree/EffectsContext";
 import { Tree } from "@/tree/tree";
+import { createTreeStateFromSnapshot } from "@/tree/tree.utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Doc, Id } from "convex/_generated/dataModel";
+import { Id } from "convex/_generated/dataModel";
 import { useState } from "react";
 import { z } from "zod";
 import { api } from "../../../convex/_generated/api";
@@ -21,6 +22,7 @@ const searchSchema = z.object({
   imageId: z.string(),
   snapshotId: z.string(),
   attach: z.optional(z.boolean()),
+  viewOnly: z.optional(z.boolean()),
 });
 
 export const Route = createFileRoute("/trade_onboarding/add_tags")({
@@ -56,35 +58,10 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
 });
 
 function RouteComponent() {
-  const { snapshotId } = Route.useSearch();
+  const { snapshotId, viewOnly = false } = Route.useSearch();
   const { tradeSetup, snapshot } = Route.useLoaderData();
   const navigate = useNavigate();
   const { mutateAsync: updateSnapshot, isPending } = useUpdateSnapshot();
-
-  // Create tree state from snapshot data
-  const createTreeStateFromSnapshot = (
-    snapshot: Doc<"snapshots">
-  ): TreeState => {
-    if (snapshot?.tags_config) {
-      // Restore complete tree state from saved config
-      return {
-        expandedKeys: new Set<string>(
-          snapshot.tags_config.expandedKeys || ["strategy"]
-        ),
-        selectedNodes: new Set<string>(
-          snapshot.tags_config.selectedNodes || []
-        ),
-        tags: snapshot.tags || {},
-      };
-    }
-
-    // If no config exists but we have tags, create a default state
-    return {
-      expandedKeys: new Set<string>(["strategy"]),
-      selectedNodes: new Set<string>(),
-      tags: snapshot.tags,
-    };
-  };
 
   // Initialize tree state from snapshot data
   const [treeState, setTreeState] = useState(() =>
@@ -125,17 +102,20 @@ function RouteComponent() {
             <Tree
               initialTreeState={treeState}
               onTreeStateChange={handleTreeStateChange}
+              viewOnly={viewOnly}
             />
           </EffectsProvider>
         </div>
 
-        <Button
-          className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
-          onClick={handleSubmit}
-          disabled={isPending}
-        >
-          {isPending ? "Saving..." : snapshot?.tags ? "Update" : "Proceed"}
-        </Button>
+        {!viewOnly && (
+          <Button
+            className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
+            onClick={handleSubmit}
+            disabled={isPending}
+          >
+            {isPending ? "Saving..." : snapshot?.tags ? "Update" : "Proceed"}
+          </Button>
+        )}
       </div>
     </div>
   );

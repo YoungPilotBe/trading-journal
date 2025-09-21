@@ -3,15 +3,17 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import type { InputFieldConfig } from "./tree.utils";
 
-interface InputFieldProps {
+interface InputFieldProps
+  extends Omit<
+    React.InputHTMLAttributes<HTMLInputElement>,
+    "onChange" | "onBlur" | "onKeyDown" | "value"
+  > {
   config: InputFieldConfig;
   parentKey: string;
   fieldName: string;
   initialValue?: string;
   shouldFocus?: boolean;
   onSave: (data: { key: string; values: Record<string, unknown> }) => void;
-  disabled?: boolean;
-  readonly?: boolean;
 }
 
 export const InputField = ({
@@ -21,8 +23,7 @@ export const InputField = ({
   initialValue = "",
   shouldFocus = false,
   onSave,
-  disabled = false,
-  readonly = false,
+  ...inputProps
 }: InputFieldProps) => {
   const [value, setValue] = useState<string>(initialValue);
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +37,12 @@ export const InputField = ({
   }, [initialValue, value]);
 
   useEffect(() => {
-    const shouldAutoFocus = shouldFocus && !disabled && !readonly;
+    const shouldAutoFocus =
+      shouldFocus && !inputProps.disabled && !inputProps.readOnly;
     if (shouldAutoFocus && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [shouldFocus, disabled, readonly]);
+  }, [shouldFocus, inputProps.disabled, inputProps.readOnly]);
 
   const validateAndTransform = (
     rawValue: string
@@ -112,8 +114,8 @@ export const InputField = ({
         }}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        disabled={disabled || readonly}
         placeholder={config.placeholder || "Enter value..."}
+        {...inputProps}
         className={clsx(
           // Base styles matching ToggleBadge dimensions and appearance
           "w-full h-fit px-1 py-0.5 rounded-sm text-xs font-thin border transition-all duration-200",
@@ -124,9 +126,13 @@ export const InputField = ({
           // Error state
           error && "border-red-500 bg-red-50/50 text-red-700",
           // Disabled/readonly state
-          (disabled || readonly) && "opacity-50 cursor-not-allowed",
+          (inputProps.disabled || inputProps.readOnly) &&
+            "opacity-50 cursor-not-allowed",
           // Interactive cursor
-          !disabled && !readonly && "cursor-text hover:border-muted"
+          !inputProps.disabled &&
+            !inputProps.readOnly &&
+            "cursor-text hover:border-muted",
+          inputProps.className
         )}
       />
 
