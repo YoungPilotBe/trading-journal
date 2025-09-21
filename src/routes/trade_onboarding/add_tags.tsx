@@ -63,8 +63,8 @@ function RouteComponent() {
 
   // Create tree state from snapshot data
   const createTreeStateFromSnapshot = (
-    snapshot: Doc<"snapshots"> | null
-  ): TreeState | undefined => {
+    snapshot: Doc<"snapshots">
+  ): TreeState => {
     if (snapshot?.tags_config) {
       // Restore complete tree state from saved config
       return {
@@ -79,21 +79,16 @@ function RouteComponent() {
     }
 
     // If no config exists but we have tags, create a default state
-    if (snapshot?.tags && Object.keys(snapshot.tags).length > 0) {
-      return {
-        expandedKeys: new Set<string>(["strategy"]),
-        selectedNodes: new Set<string>(),
-        tags: snapshot.tags,
-      };
-    }
-
-    // Default empty state
-    return undefined;
+    return {
+      expandedKeys: new Set<string>(["strategy"]),
+      selectedNodes: new Set<string>(),
+      tags: snapshot.tags,
+    };
   };
 
   // Initialize tree state from snapshot data
   const [treeState, setTreeState] = useState(() =>
-    createTreeStateFromSnapshot(snapshot)
+    createTreeStateFromSnapshot(snapshot!)
   );
 
   // Handle tree state changes from the Tree component
@@ -139,7 +134,7 @@ function RouteComponent() {
           onClick={handleSubmit}
           disabled={isPending}
         >
-          {isPending ? "Saving..." : "Proceed"}
+          {isPending ? "Saving..." : snapshot?.tags ? "Update" : "Proceed"}
         </Button>
       </div>
     </div>

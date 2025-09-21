@@ -1,4 +1,18 @@
 import { LucideIcon } from "lucide-react";
+import { z } from "zod";
+
+// Custom value transformation function type
+export type CustomValueTransform = (rawValue: unknown) => unknown;
+
+// Input field configuration type
+export type InputFieldConfig = {
+  schema: z.ZodSchema<unknown>; // Zod schema for validation
+  placeholder?: string;
+  custom?: Array<{
+    key: string; // The property name in the final object
+    transform: CustomValueTransform; // Function to transform rawValue
+  }>;
+};
 
 export type TreeNode = {
   key: string;
@@ -8,6 +22,7 @@ export type TreeNode = {
   icon?: LucideIcon; // Lucide React icon component
   iconClassName?: string; // CSS classes for the icon
   isDir?: boolean; // Whether this node should be rendered as a directory
+  inputField?: InputFieldConfig; // Configuration for input field
 };
 
 function getTreeDepth(tree: TreeNode): number {
@@ -36,6 +51,8 @@ export type GridCell = {
   icon?: LucideIcon;
   iconClassName?: string;
   isDir?: boolean;
+  inputField?: InputFieldConfig;
+  parentKey?: string; // Key of the parent node (for input fields)
 };
 
 function flattenTreeToGrid(
@@ -44,12 +61,13 @@ function flattenTreeToGrid(
   selectedNodes: Set<string> = new Set()
 ): GridCell[][] {
   const rows: GridCell[][] = [];
-  const maxDepth = getTreeDepth(tree);
+  const maxDepth = getTreeDepth(tree) + 1; // +1 to account for input fields
 
   function processNode(
     node: TreeNode,
     level: number,
-    rowIndex: number
+    rowIndex: number,
+    parentKey?: string
   ): number {
     if (!rows[rowIndex]) {
       rows[rowIndex] = new Array(maxDepth).fill(null);
@@ -73,6 +91,7 @@ function flattenTreeToGrid(
       iconClassName: node.iconClassName,
       isDir:
         node.isDir || node.title.includes("_+_") || node.key.includes("_+_"),
+      parentKey,
     };
 
     let currentRowIndex = rowIndex;
@@ -80,11 +99,39 @@ function flattenTreeToGrid(
     if (hasChildren && isExpanded) {
       for (let i = 0; i < node.children!.length; i++) {
         const child = node.children![i];
-        currentRowIndex = processNode(child, level + 1, currentRowIndex);
+        currentRowIndex = processNode(
+          child,
+          level + 1,
+          currentRowIndex,
+          node.key
+        );
         if (i < node.children!.length - 1) {
           currentRowIndex++;
         }
       }
+    }
+
+    // If node has an input field and is selected (leaf node), add input field in the next column
+    if (node.inputField && isSelected && isLeaf && level + 1 < maxDepth) {
+      console.log(
+        `Creating input field for node: ${node.key}, level: ${level}, maxDepth: ${maxDepth}`
+      );
+      if (!rows[rowIndex]) {
+        rows[rowIndex] = new Array(maxDepth).fill(null);
+      }
+
+      rows[rowIndex][level + 1] = {
+        content: "", // Empty content for input field
+        level: level + 1,
+        rowIndex,
+        nodeKey: `${node.key}_input`,
+        hasChildren: false,
+        isExpanded: false,
+        isLeaf: true,
+        isSelected: false,
+        inputField: node.inputField,
+        parentKey: node.key,
+      };
     }
 
     return currentRowIndex;
@@ -360,7 +407,7 @@ function flattenTreeArrayToGrid(
   selectedNodes: Set<string> = new Set()
 ): GridCell[][] {
   const allRows: GridCell[][] = [];
-  const maxDepth = getTreeDepthArray(trees);
+  const maxDepth = getTreeDepthArray(trees) + 1; // +1 to account for input fields
 
   let currentRowIndex = 0;
 
@@ -398,6 +445,89 @@ function findNodeByKeyArray(
     }
   }
   return null;
+}
+
+function findNodePathArray(trees: TreeNode[], targetKey: string): string[] {
+  for (const tree of trees) {
+    const path = findNodePath(tree, targetKey);
+    if (path.length > 0) {
+      // Remove the root from the path since we're working with arrays
+      return path.slice(1);
+    }
+  }
+  return [targetKey]; // Fallback if not found
+}
+
+/**
+ * Sets a value at a nested path in an object, creating intermediate objects as needed
+ * @param obj - The target object to modify
+ * @param path - Array of keys representing the path to the target location
+ * @param value - The value to set at the target location
+ * @param merge - Whether to merge with existing value (default: true)
+ */
+function setNestedValue(
+  obj: Record<string, unknown>,
+  path: string[],
+  value: Record<string, unknown>,
+  merge: boolean = true
+): void {
+  let current = obj;
+
+  // Navigate to the correct nested path
+  for (let i = 0; i < path.length; i++) {
+    const pathPart = path[i];
+
+    if (!current[pathPart]) {
+      current[pathPart] = {};
+    }
+
+    // If this is the last part, we're at the target node
+    if (i === path.length - 1) {
+      if (merge) {
+        // Merge the value with any existing data for this node
+        current[pathPart] = {
+          ...((current[pathPart] as Record<string, unknown>) || {}),
+          ...value,
+        };
+      } else {
+        // Replace the existing value
+        current[pathPart] = value;
+      }
+    } else {
+      current = current[pathPart] as Record<string, unknown>;
+    }
+  }
+}
+
+/**
+ * Gets a value at a nested path in an object
+ * @param obj - The source object to read from
+ * @param path - Array of keys representing the path to the target location
+ * @returns The value at the path, or undefined if not found
+ */
+function getNestedValue(
+  obj: Record<string, unknown>,
+  path: string[]
+): Record<string, unknown> | undefined {
+  let current = obj;
+
+  // Navigate to the correct nested path
+  for (let i = 0; i < path.length; i++) {
+    const pathPart = path[i];
+
+    if (!current[pathPart]) {
+      return undefined;
+    }
+
+    if (i === path.length - 1) {
+      // Return the value at the target location
+      return current[pathPart] as Record<string, unknown>;
+    } else {
+      current = current[pathPart] as Record<string, unknown>;
+    }
+  }
+
+  return undefined;
 }
 
 function convertSelectionToJsonArray(
@@ -504,11 +634,15 @@ export {
   convertSelectionToJsonArray,
   findNodeByKey,
   findNodeByKeyArray,
+  findNodePath,
+  findNodePathArray,
   flattenTreeArrayToGrid,
   flattenTreeToGrid,
+  getNestedValue,
   getTreeDepth,
   // Array wrapper functions
   getTreeDepthArray,
+  setNestedValue,
   toggleBranchExpansion,
   toggleBranchExpansionArray,
   toggleBranchWithAntiSelection,

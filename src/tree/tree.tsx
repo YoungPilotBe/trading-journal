@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { InputField } from "./InputField";
 import { ToggleBadge } from "./ToggleBadge";
 import { strategyTree } from "./tree.constants";
 import {
   convertSelectionToJsonArray,
   findNodeByKeyArray,
+  findNodePathArray,
   flattenTreeArrayToGrid,
+  getNestedValue,
   getTreeDepthArray,
+  setNestedValue,
   toggleNodeArray,
 } from "./tree.utils";
 
@@ -17,7 +21,7 @@ interface TreeState {
 }
 
 interface Props {
-  initialTreeState?: TreeState;
+  initialTreeState: TreeState;
   onTreeStateChange: (state: TreeState) => void;
 }
 
@@ -38,16 +42,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
     };
   });
 
-  // Update tree state when initialTreeState prop changes
-  useEffect(() => {
-    if (initialTreeState) {
-      setTreeState({
-        ...initialTreeState,
-      });
-    }
-  }, [initialTreeState]);
-
-  const treeDepth = useMemo(() => getTreeDepthArray(strategyTree), []);
+  const treeDepth = useMemo(() => getTreeDepthArray(strategyTree) + 1, []); // +1 for input fields
   const gridRows = useMemo(
     () =>
       flattenTreeArrayToGrid(
@@ -90,6 +85,22 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
     updateTreeState(result.selectedNodes, result.expandedKeys);
   };
 
+  // Handler for saving input field data
+  const handleInputFieldSave = (data: {
+    key: string;
+    values: Record<string, unknown>;
+  }) => {
+    const newTags = { ...treeState.tags };
+
+    // Find the correct path to the node in the tree structure
+    const nodePath = findNodePathArray(strategyTree, data.key);
+
+    // Set the nested value using the utility function
+    setNestedValue(newTags, nodePath, data.values, true);
+
+    setTreeState((prev) => ({ ...prev, tags: newTags }));
+  };
+
   return (
     <div className="space-y-4">
       {/* Tree Grid */}
@@ -97,16 +108,43 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
         {gridRows.map((row, rowIndex) => (
           <div
             key={rowIndex}
-            className={`grid gap-1`}
+            className={`grid gap-2`}
             style={{
               gridTemplateColumns: `repeat(${treeDepth}, 100px)`,
             }}
           >
             {row.map((cell, colIndex) => (
-              <div key={colIndex} className="flex items-stretch w-[100px]">
+              <div
+                key={colIndex}
+                className="flex items-stretch w-[100px] py-0.5"
+              >
                 {cell && (
-                  <div className="w-full h-full p-0.5 flex items-center justify-center">
-                    {cell.isLeaf ? (
+                  <>
+                    {cell.inputField && cell.parentKey ? (
+                      <InputField
+                        config={cell.inputField}
+                        parentKey={cell.parentKey}
+                        fieldName={cell.nodeKey.replace("_input", "")}
+                        initialValue={(() => {
+                          // Extract existing value from tags
+                          const nodePath = findNodePathArray(
+                            strategyTree,
+                            cell.parentKey
+                          );
+                          const existingData = getNestedValue(
+                            treeState.tags,
+                            nodePath
+                          );
+                          return existingData?.value
+                            ? String(existingData.value)
+                            : "";
+                        })()}
+                        shouldFocus={treeState.selectedNodes.has(
+                          cell.parentKey
+                        )}
+                        onSave={handleInputFieldSave}
+                      />
+                    ) : cell.isLeaf ? (
                       <ToggleBadge
                         value={cell.isSelected || false}
                         onChange={() => {
@@ -158,7 +196,7 @@ const Tree = ({ initialTreeState, onTreeStateChange }: Props) => {
                         isDir={cell.isDir}
                       />
                     )}
-                  </div>
+                  </>
                 )}
               </div>
             ))}

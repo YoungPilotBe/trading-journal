@@ -12,11 +12,13 @@ import {
   Mountain,
   Settings,
   Shield,
+  Spline,
   Square,
   Target,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { z } from "zod";
 import type { TreeNode } from "./tree.utils";
 
 // Base icon className for all tree icons
@@ -194,27 +196,29 @@ const createSupplyDemandOBIMChildren = (prefix: string) => [
 ];
 
 // Helper function to create Range children for Demand
-const createDemandRangeChildren = (prefix: string) => [
-  {
-    key: `${prefix}_range_inducement`,
-    title: "Inducement",
-  },
-  {
-    key: `${prefix}_range_s2b`,
-    title: "S2B",
-  },
-  {
-    key: `${prefix}_range_chain`,
-    title: "Chain",
-  },
-  {
-    key: `${prefix}_range_fixed_range_confluence`,
-    title: "Fixed Range Confluence",
-    children: createFixedRangeConfluenceChildren(
-      `${prefix}_range_fixed_range_confluence`
-    ),
-  },
-];
+const createDemandRangeChildren = (prefix: string) =>
+  [
+    {
+      key: `${prefix}_range_inducement`,
+      title: "Inducement",
+    },
+    {
+      key: `${prefix}_range_s2b`,
+      title: "S2B",
+    },
+    {
+      key: `${prefix}_range_chain`,
+      title: "Chain",
+      inputField: customDrives(),
+    },
+    {
+      key: `${prefix}_range_fixed_range_confluence`,
+      title: "Fixed Range Confluence",
+      children: createFixedRangeConfluenceChildren(
+        `${prefix}_range_fixed_range_confluence`
+      ),
+    },
+  ] satisfies TreeNode[];
 
 // Helper function to create Range children for Supply
 const createSupplyRangeChildren = (prefix: string) => [
@@ -229,6 +233,7 @@ const createSupplyRangeChildren = (prefix: string) => [
   {
     key: `${prefix}_range_chain`,
     title: "Chain",
+    inputField: customDrives(),
   },
   {
     key: `${prefix}_range_fixed_range_confluence`,
@@ -238,6 +243,35 @@ const createSupplyRangeChildren = (prefix: string) => [
     ),
   },
 ];
+
+const customPrice = () => {
+  return {
+    schema: z.coerce.number().positive("Price must be positive"),
+    placeholder: "Enter price...",
+    custom: [
+      {
+        key: "price",
+        transform: (rawValue: unknown) => rawValue,
+      },
+    ],
+  };
+};
+
+const customDrives = () => {
+  return {
+    schema: z.coerce
+      .number()
+      .int("Drives must be a whole number")
+      .positive("Drives must be positive"),
+    placeholder: "Enter # drives",
+    custom: [
+      {
+        key: "drives",
+        transform: (rawValue: unknown) => rawValue,
+      },
+    ],
+  };
+};
 
 export const strategyTree: TreeNode[] = [
   {
@@ -279,6 +313,7 @@ export const strategyTree: TreeNode[] = [
                 title: "High",
                 icon: ArrowUp,
                 iconClassName: "",
+                inputField: customPrice(),
               },
               {
                 key: "protected_low",
@@ -286,6 +321,7 @@ export const strategyTree: TreeNode[] = [
                 title: "Low",
                 icon: ArrowDown,
                 iconClassName: "",
+                inputField: customPrice(),
               },
             ],
           },
@@ -301,6 +337,7 @@ export const strategyTree: TreeNode[] = [
                 title: "High",
                 icon: ArrowUp,
                 iconClassName: "",
+                inputField: customPrice(),
               },
               {
                 key: "weak_low",
@@ -308,11 +345,12 @@ export const strategyTree: TreeNode[] = [
                 title: "Low",
                 icon: ArrowDown,
                 iconClassName: "",
+                inputField: customPrice(),
               },
             ],
           },
           {
-            key: "liquidity_wicking",
+            key: "market_structure_liquidity",
             title: "Liquidity",
             icon: Droplets,
             iconClassName: "",
@@ -328,6 +366,27 @@ export const strategyTree: TreeNode[] = [
                 title: "Wicking Bottoms",
                 icon: Mountain,
                 iconClassName: "rotate-180",
+              },
+              {
+                key: "liquidity_curve",
+                title: "Curve",
+                iconClassName: "",
+                children: [
+                  {
+                    key: "liquidity_curve_up",
+                    title: "Up",
+                    icon: Spline,
+                    iconClassName: "rotate-180 text-emerald-500",
+                    anti: ["liquidity_curve_down"],
+                  },
+                  {
+                    key: "liquidity_curve_down",
+                    title: "Down",
+                    icon: Spline,
+                    iconClassName: "rotate-90 text-rose-500",
+                    anti: ["liquidity_curve_up"],
+                  },
+                ],
               },
             ],
           },

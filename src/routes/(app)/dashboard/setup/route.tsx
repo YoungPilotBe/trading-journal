@@ -37,6 +37,7 @@ import {
   ChevronRightIcon,
   MoreVertical,
   PlusIcon,
+  Tags,
   Trash2Icon,
   XIcon,
 } from "lucide-react";
@@ -225,6 +226,22 @@ function RouteComponent() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="justify-between"
+                    onClick={() =>
+                      navigate({
+                        to: "/trade_onboarding/add_tags",
+                        search: {
+                          tradeSetupId,
+                          imageId: snapshot?.imageId || "",
+                          snapshotId,
+                        },
+                      })
+                    }
+                  >
+                    <Tags />
+                    View Tags
+                  </DropdownMenuItem>
                   <DropdownMenuItem className="justify-between">
                     <Archive />
                     Archive
