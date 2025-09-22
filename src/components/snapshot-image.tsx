@@ -4,7 +4,10 @@ import { useGetImageBySnapshot } from "@/hooks/tradingview_images/use-get-image-
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Tags, X } from "lucide-react";
+import { useState } from "react";
+import { DualSelector } from "./dual-selector";
+import TagViewTable from "./tag-view-table";
 
 interface SnapshotImageProps {
   snapshotId: string;
@@ -20,6 +23,7 @@ export function SnapshotImage({
   className,
 }: SnapshotImageProps) {
   const navigate = useNavigate();
+  const [view, setView] = useState<"image" | "tags">("tags");
 
   const { data: image, isLoading: isLoadingImage } = useGetImageBySnapshot({
     snapshotId: snapshotId as Id<"snapshots">,
@@ -50,52 +54,72 @@ export function SnapshotImage({
       {/* Regular image view */}
       <div
         className={cn(
-          "relative w-full @[110px]:h-full rounded-lg overflow-hidden group",
+          "relative w-full @[110px]:h-full rounded-lg overflow-y-auto h-full group",
           className
         )}
       >
-        <LoadingSkeleton
-          isLoading={isLoading || !image?.url}
-          className="h-full aspect-video"
-        >
-          <img
-            src={image?.url ?? undefined}
-            alt="Trading setup chart"
-            className="w-full h-full object-contain cursor-pointer transition-opacity"
-            onClick={() =>
-              navigate({
-                to: "/dashboard/setup",
-                search: { tradeSetupId, snapshotId, fullscreen: true },
-              })
-            }
-            style={{ maxWidth: "100%", maxHeight: "100%" }}
+        <div className="absolute top-0 right-0 z-10">
+          <DualSelector
+            className="py-4 rounded-bl-lg rounded-tr-lg overflow-hidden"
+            leftLabel={<Camera />}
+            leftValue="image"
+            rightLabel={<Tags />}
+            rightValue="tags"
+            value={view}
+            onValueChange={(value) => setView(value as "tags" | "image")}
           />
+        </div>
 
-          {/* Navigation arrows - only show on hover */}
-          {previousSnapshot && (
-            <Link
-              to="/dashboard/setup"
-              search={{ tradeSetupId, snapshotId: previousSnapshot._id }}
-              preload="render"
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Link>
-          )}
+        {view === "tags" ? (
+          <TagViewTable
+            className="max-w-[500px] ml-2 "
+            snapshotId={snapshotId as Id<"snapshots">}
+            tradeSetupId={tradeSetupId as Id<"trade_setups">}
+          />
+        ) : (
+          <LoadingSkeleton
+            isLoading={isLoading || !image?.url}
+            className="h-full aspect-video"
+          >
+            <img
+              src={image?.url ?? undefined}
+              alt="Trading setup chart"
+              className="w-full h-full object-contain cursor-pointer transition-opacity"
+              onClick={() =>
+                navigate({
+                  to: "/dashboard/setup",
+                  search: { tradeSetupId, snapshotId, fullscreen: true },
+                })
+              }
+              style={{ maxWidth: "100%", maxHeight: "100%" }}
+            />
 
-          {nextSnapshot && (
-            <Link
-              to="/dashboard/setup"
-              search={{ tradeSetupId, snapshotId: nextSnapshot._id }}
-              preload="render"
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          )}
-        </LoadingSkeleton>
+            {/* Navigation arrows - only show on hover */}
+            {previousSnapshot && (
+              <Link
+                to="/dashboard/setup"
+                search={{ tradeSetupId, snapshotId: previousSnapshot._id }}
+                preload="render"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Link>
+            )}
+
+            {nextSnapshot && (
+              <Link
+                to="/dashboard/setup"
+                search={{ tradeSetupId, snapshotId: nextSnapshot._id }}
+                preload="render"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            )}
+          </LoadingSkeleton>
+        )}
       </div>
 
       {/* Fullscreen overlay */}

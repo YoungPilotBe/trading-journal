@@ -4,23 +4,28 @@ import { EffectsProvider } from "@/tree/EffectsContext";
 import Tree from "@/tree/tree";
 import { createTreeStateFromSnapshot } from "@/tree/tree.utils";
 import { Id } from "convex/_generated/dataModel";
+import { useMemo } from "react";
 
-interface Props {
+interface Props extends React.InputHTMLAttributes<HTMLDivElement> {
   tradeSetupId: Id<"trade_setups">;
   snapshotId: Id<"snapshots">;
 }
 
-const TagViewTable = ({ snapshotId, tradeSetupId }: Props) => {
+const TagViewTable = ({ snapshotId, tradeSetupId, ...treeProps }: Props) => {
   const { data: snapshot } = useGetSnapshot({ id: snapshotId });
   const { data: tradeSetup } = useGetTradeSetup({ id: tradeSetupId });
-  const treeState = createTreeStateFromSnapshot(snapshot!);
+
+  const treeState = useMemo(() => {
+    console.log("Creating new Tree");
+    return createTreeStateFromSnapshot(snapshot!);
+  }, [snapshot]);
 
   return (
     <EffectsProvider
       tradeSetup={{ ...tradeSetup, ...(snapshot?.tags || {}) }}
       selectedTags={treeState?.selectedNodes}
     >
-      <Tree initialTreeState={treeState} viewOnly />
+      <Tree initialTreeState={treeState} viewOnly {...treeProps} />
     </EffectsProvider>
   );
 };

@@ -289,7 +289,7 @@ const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
 
   return (
     <TooltipProvider>
-      <div className="w-full h-12 relative px-4">
+      <div className="w-full h-12 relative px-4 shrink-0">
         {/* Timeline line */}
         <div className="absolute top-1/2 left-4 right-4 h-px bg-muted transform -translate-y-1/2 mask-x-from-95%" />
 

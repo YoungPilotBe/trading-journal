@@ -2,7 +2,8 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
-  createMemoryHistory,
+  createBrowserHistory,
+  createHashHistory,
   createRouter as createTanStackRouter,
 } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
@@ -42,10 +43,22 @@ export function createRouter() {
 
   convexQueryClient.connect(queryClient);
 
-  // Create hash history for Electron compatibility
-  const history = createMemoryHistory({
-    initialEntries: ["/"],
-  });
+  // Create appropriate history based on environment
+  const history = (() => {
+    // Check if we're running in Electron
+    const isElectron =
+      typeof window !== "undefined" &&
+      window.process &&
+      window.process.type === "renderer";
+
+    if (isElectron) {
+      // Use hash history in Electron for better compatibility
+      return createHashHistory();
+    } else {
+      // Use browser history in regular browser environment
+      return createBrowserHistory();
+    }
+  })();
 
   const router = routerWithQueryClient(
     createTanStackRouter({

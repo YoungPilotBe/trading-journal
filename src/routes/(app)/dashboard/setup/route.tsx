@@ -2,7 +2,6 @@ import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-d
 import SimilarTradesTable from "@/components/similar-trades-table";
 import SnapshotHistory from "@/components/snapshot-history";
 import { SnapshotImage } from "@/components/snapshot-image";
-import TagViewTable from "@/components/tag-view-table";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -187,7 +186,7 @@ function RouteComponent() {
 
   return (
     <>
-      <div className="flex gap-8 p-6">
+      <div className="flex gap-8 p-6 h-[400px]">
         {/* Left side - General Information (Fixed width) */}
         <div className="flex-shrink-0 w-fit min-w-110 @container">
           <div className="relative space-y-6">
@@ -236,7 +235,6 @@ function RouteComponent() {
                           tradeSetupId,
                           imageId: snapshot?.imageId || "",
                           snapshotId,
-                          viewOnly: true,
                         },
                       })
                     }
@@ -566,11 +564,12 @@ function RouteComponent() {
         </div>
 
         {/* Right side - Image (Flexible width) */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 h-full">
           <SnapshotImage
             snapshotId={snapshotId}
             tradeSetupId={tradeSetupId}
             initialFullscreen={fullscreen ?? false}
+            className="h-full"
           />
           <SnapshotHistory
             snapshotId={snapshotId as Id<"snapshots">}
@@ -593,10 +592,6 @@ function RouteComponent() {
         limit={4}
         minSimilarityScore={0.4}
         currentStatus={snapshot?.status}
-      />
-      <TagViewTable
-        snapshotId={snapshotId as Id<"snapshots">}
-        tradeSetupId={tradeSetupId as Id<"trade_setups">}
       />
     </>
   );

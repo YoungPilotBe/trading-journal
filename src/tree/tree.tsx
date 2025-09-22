@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { InputField } from "./InputField";
 import { ToggleBadge } from "./ToggleBadge";
 import { strategyTree } from "./tree.constants";
@@ -14,7 +14,7 @@ import {
 } from "./tree.utils";
 
 // Complete tree state that includes both UI state and data
-interface TreeState {
+interface TreeState extends React.InputHTMLAttributes<HTMLDivElement> {
   expandedKeys: Set<string>; // Which branch nodes are expanded
   selectedNodes: Set<string>; // Which leaf nodes are selected
   tags: Record<string, unknown>; // JSON representation of selected tags
@@ -30,9 +30,11 @@ const Tree = ({
   initialTreeState,
   onTreeStateChange,
   viewOnly = false,
+  ...divProps
 }: Props) => {
   // Initialize tree state - either from provided state or create default
-  const [treeState, setTreeState] = useState<TreeState>(() => {
+  // Use useMemo to react to changes in initialTreeState
+  const treeState = useMemo(() => {
     if (initialTreeState) {
       return {
         ...initialTreeState,
@@ -45,17 +47,26 @@ const Tree = ({
       selectedNodes: new Set<string>(),
       tags: {},
     };
-  });
+  }, [initialTreeState]);
 
-  const treeDepth = useMemo(() => getTreeDepthArray(strategyTree) + 1, []); // +1 for input fields
+  // Use useState for internal state management
+  const [internalTreeState, setInternalTreeState] =
+    useState<TreeState>(treeState);
+
+  // Sync internal state when treeState changes
+  useEffect(() => {
+    setInternalTreeState(treeState);
+  }, [treeState]);
+
+  const treeDepth = useMemo(() => getTreeDepthArray(strategyTree), []); // +1 for input fields
   const gridRows = useMemo(
     () =>
       flattenTreeArrayToGrid(
         strategyTree,
-        treeState.expandedKeys,
-        treeState.selectedNodes
+        internalTreeState.expandedKeys,
+        internalTreeState.selectedNodes
       ),
-    [treeState.expandedKeys, treeState.selectedNodes]
+    [internalTreeState.expandedKeys, internalTreeState.selectedNodes]
   );
 
   // Update internal state and notify parent of changes
@@ -64,12 +75,12 @@ const Tree = ({
     newExpandedKeys?: Set<string>
   ) => {
     const updatedState: TreeState = {
-      expandedKeys: newExpandedKeys || treeState.expandedKeys,
+      expandedKeys: newExpandedKeys || internalTreeState.expandedKeys,
       selectedNodes: newSelectedNodes,
       tags: convertSelectionToJsonArray(strategyTree, newSelectedNodes),
     };
 
-    setTreeState(updatedState);
+    setInternalTreeState(updatedState);
     if (onTreeStateChange) onTreeStateChange(updatedState);
   };
 
@@ -81,8 +92,8 @@ const Tree = ({
   ) => {
     const result = toggleNodeArray(
       strategyTree,
-      treeState.selectedNodes,
-      treeState.expandedKeys,
+      internalTreeState.selectedNodes,
+      internalTreeState.expandedKeys,
       nodeKey,
       isBranch,
       hasAntiSelection
@@ -95,7 +106,7 @@ const Tree = ({
     key: string;
     values: Record<string, unknown>;
   }) => {
-    const newTags = { ...treeState.tags };
+    const newTags = { ...internalTreeState.tags };
 
     // Find the correct path to the node in the tree structure
     const nodePath = findNodePathArray(strategyTree, data.key);
@@ -103,114 +114,100 @@ const Tree = ({
     // Set the nested value using the utility function
     setNestedValue(newTags, nodePath, data.values, true);
 
-    setTreeState((prev) => ({ ...prev, tags: newTags }));
+    setInternalTreeState((prev) => ({ ...prev, tags: newTags }));
   };
 
   return (
-    <div className="space-y-4">
-      {/* Tree Grid */}
-      <div className="">
-        {gridRows.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            className={`grid gap-2`}
-            style={{
-              gridTemplateColumns: `repeat(${treeDepth}, 100px)`,
-            }}
-          >
-            {row.map((cell, colIndex) => (
-              <div
-                key={colIndex}
-                className="flex items-stretch w-[100px] py-0.5"
-              >
-                {cell && (
-                  <>
-                    {cell.inputField && cell.parentKey ? (
-                      <InputField
-                        config={cell.inputField}
-                        parentKey={cell.parentKey}
-                        fieldName={cell.nodeKey.replace("_input", "")}
-                        initialValue={(() => {
-                          // Extract existing value from tags
-                          const nodePath = findNodePathArray(
-                            strategyTree,
-                            cell.parentKey
-                          );
-                          const existingData = getNestedValue(
-                            treeState.tags,
-                            nodePath
-                          );
-                          return existingData?.value
-                            ? String(existingData.value)
-                            : "";
-                        })()}
-                        shouldFocus={treeState.selectedNodes.has(
+    <div {...divProps}>
+      {gridRows.map((row, rowIndex) => (
+        <div
+          key={rowIndex}
+          className={`grid gap-2`}
+          style={{
+            gridTemplateColumns: `repeat(${treeDepth}, 1fr)`,
+          }}
+        >
+          {row.map((cell, colIndex) => (
+            <div key={colIndex} className="flex items-stretch w-full py-0.5">
+              {cell && (
+                <>
+                  {cell.inputField && cell.parentKey ? (
+                    <InputField
+                      config={cell.inputField}
+                      parentKey={cell.parentKey}
+                      fieldName={cell.nodeKey.replace("_input", "")}
+                      initialValue={(() => {
+                        // Extract existing value from tags
+                        const nodePath = findNodePathArray(
+                          strategyTree,
                           cell.parentKey
-                        )}
-                        onSave={handleInputFieldSave}
-                        readOnly={viewOnly}
-                      />
-                    ) : cell.isLeaf ? (
-                      <ToggleBadge
-                        value={cell.isSelected || false}
-                        onChange={() => {
-                          const node = findNodeByKeyArray(
-                            strategyTree,
-                            cell.nodeKey
-                          );
-                          const hasAntiSelection = Boolean(node?.anti?.length);
-                          handleNodeToggle(
-                            cell.nodeKey,
-                            false,
-                            hasAntiSelection
-                          );
-                        }}
-                        label={cell.content}
-                        fieldName={cell.nodeKey}
-                        icon={cell.icon}
-                        iconClassName={cell.iconClassName}
-                        isDir={cell.isDir}
-                        readOnly={viewOnly}
-                      />
-                    ) : (
-                      <ToggleBadge
-                        value={(() => {
-                          const node = findNodeByKeyArray(
-                            strategyTree,
-                            cell.nodeKey
-                          );
-                          const hasAntiSelection = Boolean(node?.anti?.length);
-                          return hasAntiSelection
-                            ? cell.isSelected || false
-                            : cell.isExpanded || false;
-                        })()}
-                        onChange={() => {
-                          const node = findNodeByKeyArray(
-                            strategyTree,
-                            cell.nodeKey
-                          );
-                          const hasAntiSelection = Boolean(node?.anti?.length);
-                          handleNodeToggle(
-                            cell.nodeKey,
-                            true,
-                            hasAntiSelection
-                          );
-                        }}
-                        label={cell.content}
-                        fieldName={cell.nodeKey}
-                        icon={cell.icon}
-                        iconClassName={cell.iconClassName}
-                        isDir={cell.isDir}
-                        readOnly={viewOnly}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+                        );
+                        const existingData = getNestedValue(
+                          internalTreeState.tags,
+                          nodePath
+                        );
+                        return existingData?.value
+                          ? String(existingData.value)
+                          : "";
+                      })()}
+                      shouldFocus={internalTreeState.selectedNodes.has(
+                        cell.parentKey
+                      )}
+                      onSave={handleInputFieldSave}
+                      readOnly={viewOnly}
+                    />
+                  ) : cell.isLeaf ? (
+                    <ToggleBadge
+                      value={cell.isSelected || false}
+                      onChange={() => {
+                        const node = findNodeByKeyArray(
+                          strategyTree,
+                          cell.nodeKey
+                        );
+                        const hasAntiSelection = Boolean(node?.anti?.length);
+                        handleNodeToggle(cell.nodeKey, false, hasAntiSelection);
+                      }}
+                      label={cell.content}
+                      fieldName={cell.nodeKey}
+                      icon={cell.icon}
+                      iconClassName={cell.iconClassName}
+                      isDir={cell.isDir}
+                      readOnly={viewOnly}
+                    />
+                  ) : (
+                    <ToggleBadge
+                      value={(() => {
+                        const node = findNodeByKeyArray(
+                          strategyTree,
+                          cell.nodeKey
+                        );
+                        const hasAntiSelection = Boolean(node?.anti?.length);
+                        return hasAntiSelection
+                          ? cell.isSelected || false
+                          : cell.isExpanded || false;
+                      })()}
+                      onChange={() => {
+                        const node = findNodeByKeyArray(
+                          strategyTree,
+                          cell.nodeKey
+                        );
+                        const hasAntiSelection = Boolean(node?.anti?.length);
+                        handleNodeToggle(cell.nodeKey, true, hasAntiSelection);
+                      }}
+                      label={cell.content}
+                      fieldName={cell.nodeKey}
+                      icon={cell.icon}
+                      iconClassName={cell.iconClassName}
+                      isDir={cell.isDir}
+                      readOnly={viewOnly}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 };

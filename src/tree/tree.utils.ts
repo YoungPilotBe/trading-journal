@@ -408,7 +408,7 @@ function flattenTreeArrayToGrid(
   selectedNodes: Set<string> = new Set()
 ): GridCell[][] {
   const allRows: GridCell[][] = [];
-  const maxDepth = getTreeDepthArray(trees) + 1; // +1 to account for input fields
+  const maxDepth = getTreeDepthArray(trees); // +1 to account for input fields
 
   let currentRowIndex = 0;
 
