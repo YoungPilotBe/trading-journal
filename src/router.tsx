@@ -46,12 +46,7 @@ export function createRouter() {
   // Create appropriate history based on environment
   const history = (() => {
     // Check if we're running in Electron
-    const isElectron =
-      typeof window !== "undefined" &&
-      window.process &&
-      window.process.type === "renderer";
-
-    if (isElectron) {
+    if (import.meta.env.VITE_NODE_ENV === "production") {
       // Use hash history in Electron for better compatibility
       return createHashHistory();
     } else {
