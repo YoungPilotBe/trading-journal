@@ -212,7 +212,7 @@ export function TagsComparisonDialog({
                   </Button>
 
                   <span
-                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all  ${
                       statusOptions.find(
                         (option) => option.value === currentSnapshot?.status
                       )?.color ||
@@ -278,7 +278,7 @@ export function TagsComparisonDialog({
                   </Button>
                   <span className="text-muted-foreground">•</span>
                   <span
-                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all  ${
                       statusOptions.find(
                         (option) => option.value === targetSnapshot?.status
                       )?.color ||
