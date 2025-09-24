@@ -14,7 +14,8 @@ import { findNodeByKeyArray, findNodePathArray } from "@/tree/tree.utils";
 import { Link, useSearch } from "@tanstack/react-router";
 import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
-import { BarChart3, ChevronRight, ChevronRightIcon, X } from "lucide-react";
+import { BarChart3, ChevronRight, ChevronRightIcon } from "lucide-react";
+import { Separator } from "../ui/separator";
 
 interface TagsComparisonDialogProps {
   open: boolean;
@@ -118,14 +119,14 @@ export function TagsComparisonDialog({
     return (
       <div
         key={tagKey}
-        className={`flex items-center gap-1 p-3 rounded-lg border ${
+        className={`flex  gap-2 p-3 rounded-lg border ${
           isCommon
             ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300"
             : "border-muted bg-muted/20 text-muted-foreground"
         }`}
       >
         {/* Render the path with breadcrumb-style navigation */}
-        <div className="flex items-center gap-1 flex-wrap min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
           {path.map((node, index) => {
             const IconComponent = node.icon;
             const isLast = index === path.length - 1;
@@ -163,7 +164,7 @@ export function TagsComparisonDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[1000px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[1000px] h-[60vh] max-h-[85vh] overflow-y-auto flex flex-col justify-start">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -179,10 +180,12 @@ export function TagsComparisonDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <Separator className="mb-7" />
+
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* Current Snapshot Tags */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-3 text-sm">
                   <Button
@@ -212,7 +215,7 @@ export function TagsComparisonDialog({
                   </Button>
 
                   <span
-                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all  ${
+                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all ${
                       statusOptions.find(
                         (option) => option.value === currentSnapshot?.status
                       )?.color ||
@@ -230,7 +233,7 @@ export function TagsComparisonDialog({
                 </div>
               </div>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {/* Common tags first */}
                 {currentTags
                   .filter((tag) => commonTags.includes(tag))
@@ -248,9 +251,9 @@ export function TagsComparisonDialog({
             </div>
 
             {/* Target Snapshot Tags */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-sm">
+                <div className="flex items-center gap-3 text-sm">
                   <Button
                     variant="outline"
                     size="badge"
@@ -276,9 +279,9 @@ export function TagsComparisonDialog({
                       <ChevronRightIcon className="size-4 text-inherit" />
                     </Link>
                   </Button>
-                  <span className="text-muted-foreground">•</span>
+
                   <span
-                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all  ${
+                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all ${
                       statusOptions.find(
                         (option) => option.value === targetSnapshot?.status
                       )?.color ||
@@ -287,18 +290,16 @@ export function TagsComparisonDialog({
                   >
                     {targetSnapshot?.status || "unknown"}
                   </span>
-                  <span className="text-muted-foreground">•</span>
                   <span className="text-muted-foreground font-mono">
                     {targetTradeSetup?.asset || "N/A"}
                   </span>
-                  <span className="text-muted-foreground">•</span>
                   <span className="text-muted-foreground font-mono">
                     {targetTags.length} tags
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {/* Common tags first */}
                 {targetTags
                   .filter((tag) => commonTags.includes(tag))
@@ -314,17 +315,6 @@ export function TagsComparisonDialog({
                 )}
               </div>
             </div>
-          </div>
-
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="gap-2"
-            >
-              <X className="w-4 h-4" />
-              Close
-            </Button>
           </div>
         </div>
       </DialogContent>
