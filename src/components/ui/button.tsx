@@ -19,10 +19,10 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
         giant: "text-primary font-semibold bg-background border",
         badge:
           "cursor-default rounded-none text-xs font-medium bg-gradient-to-t from-background to-sidebar border-muted text-gray-100 shadow-sm hover:from-muted hover:to-accent transition-all duration-200 border-muted border",
+        link: "text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground transition-colors border-none shadow-none bg-transparent",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -31,6 +31,7 @@ const buttonVariants = cva(
         icon: "size-9",
         giant: "h-40",
         badge: "h-6 px-2 py-1 gap-2",
+        link: "h-auto px-3 py-2 gap-2",
       },
     },
     defaultVariants: {

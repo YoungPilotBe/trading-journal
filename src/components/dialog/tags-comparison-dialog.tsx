@@ -6,11 +6,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { statusOptions } from "@/config/constants";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
+import { useGetTradeSetupBySnapshotId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
 import { strategyTree } from "@/tree/tree.constants";
 import { findNodeByKeyArray, findNodePathArray } from "@/tree/tree.utils";
+import { Link, useSearch } from "@tanstack/react-router";
+import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
-import { BarChart3, ChevronRight, X } from "lucide-react";
+import { BarChart3, ChevronRight, ChevronRightIcon, X } from "lucide-react";
 
 interface TagsComparisonDialogProps {
   open: boolean;
@@ -27,12 +31,20 @@ export function TagsComparisonDialog({
   targetSnapshotId,
   similarityPercentage,
 }: TagsComparisonDialogProps) {
+  // Get current route search params to check if this matches the current trade setup
+  const routeSearch = useSearch({ from: "/(app)/dashboard/setup" });
   const { data: currentSnapshot } = useGetSnapshot({
     id: currentSnapshotId,
+  });
+  const { data: currentTradeSetup } = useGetTradeSetupBySnapshotId({
+    snapshotId: currentSnapshotId,
   });
 
   const { data: targetSnapshot } = useGetSnapshot({
     id: targetSnapshotId,
+  });
+  const { data: targetTradeSetup } = useGetTradeSetupBySnapshotId({
+    snapshotId: targetSnapshotId,
   });
 
   // Extract tag arrays from snapshots
@@ -168,33 +180,54 @@ export function TagsComparisonDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Similarity Score */}
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <div className="flex items-center justify-between">
-              <div className="font-medium text-sm">Tags Similarity Score</div>
-              <div className="flex items-center space-x-2">
-                <div className="w-24 bg-muted rounded-full h-2">
-                  <div
-                    className="bg-primary h-2 rounded-full"
-                    style={{ width: `${similarityPercentage * 100}%` }}
-                  />
-                </div>
-                <span className="text-sm font-mono font-medium">
-                  {Math.round(similarityPercentage * 100)}%
-                </span>
-              </div>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Current Snapshot Tags */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <h3 className="font-medium text-sm">Current Snapshot</h3>
-                <span className="text-xs text-muted-foreground font-mono">
-                  ({currentTags.length} tags)
-                </span>
+                <div className="flex items-center gap-3 text-sm">
+                  <Button
+                    variant="outline"
+                    size="badge"
+                    className={clsx(
+                      "text-[11px] justify-between hover:bg-accent hover:text-accent-foreground group-hover:[&:not(:has(.chevron-link:hover))]:bg-accent group-hover:[&:not(:has(.chevron-link:hover))]:text-accent-foreground group-[.chevron-hovered]:bg-transparent group-[.chevron-hovered]:text-inherit transition-colors gap-1",
+                      {
+                        "!bg-emerald-500/10 !border-emerald-500/50 !text-emerald-700 dark:!text-emerald-400 hover:!bg-emerald-500/20":
+                          routeSearch.tradeSetupId === currentTradeSetup?._id,
+                      }
+                    )}
+                  >
+                    {currentTradeSetup?.title}
+                    <Link
+                      to={"/dashboard/setup"}
+                      search={{
+                        tradeSetupId:
+                          currentTradeSetup?._id as Id<"trade_setups">,
+                        snapshotId: currentSnapshotId as Id<"snapshots">,
+                      }}
+                      className="rounded text-inherit transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ChevronRightIcon className="size-4 text-inherit" />
+                    </Link>
+                  </Button>
+
+                  <span
+                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                      statusOptions.find(
+                        (option) => option.value === currentSnapshot?.status
+                      )?.color ||
+                      "border-muted bg-muted/20 text-muted-foreground"
+                    }`}
+                  >
+                    {currentSnapshot?.status || "unknown"}
+                  </span>
+                  <span className="text-muted-foreground font-mono">
+                    {currentTradeSetup?.asset || "N/A"}
+                  </span>
+                  <span className="text-muted-foreground font-mono">
+                    {currentTags.length} tags
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -217,11 +250,52 @@ export function TagsComparisonDialog({
             {/* Target Snapshot Tags */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-purple-500" />
-                <h3 className="font-medium text-sm">Target Snapshot</h3>
-                <span className="text-xs text-muted-foreground font-mono">
-                  ({targetTags.length} tags)
-                </span>
+                <div className="flex items-center gap-1 text-sm">
+                  <Button
+                    variant="outline"
+                    size="badge"
+                    className={clsx(
+                      "text-[11px] justify-between hover:bg-accent hover:text-accent-foreground group-hover:[&:not(:has(.chevron-link:hover))]:bg-accent group-hover:[&:not(:has(.chevron-link:hover))]:text-accent-foreground group-[.chevron-hovered]:bg-transparent group-[.chevron-hovered]:text-inherit transition-colors gap-1",
+                      {
+                        "!bg-emerald-500/10 !border-emerald-500/50 !text-emerald-700 dark:!text-emerald-400 hover:!bg-emerald-500/20":
+                          routeSearch.tradeSetupId === targetTradeSetup?._id,
+                      }
+                    )}
+                  >
+                    {targetTradeSetup?.title}
+                    <Link
+                      to={"/dashboard/setup"}
+                      search={{
+                        tradeSetupId:
+                          targetTradeSetup?._id as Id<"trade_setups">,
+                        snapshotId: targetSnapshotId as Id<"snapshots">,
+                      }}
+                      className="rounded text-inherit transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ChevronRightIcon className="size-4 text-inherit" />
+                    </Link>
+                  </Button>
+                  <span className="text-muted-foreground">•</span>
+                  <span
+                    className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                      statusOptions.find(
+                        (option) => option.value === targetSnapshot?.status
+                      )?.color ||
+                      "border-muted bg-muted/20 text-muted-foreground"
+                    }`}
+                  >
+                    {targetSnapshot?.status || "unknown"}
+                  </span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground font-mono">
+                    {targetTradeSetup?.asset || "N/A"}
+                  </span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground font-mono">
+                    {targetTags.length} tags
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -239,28 +313,6 @@ export function TagsComparisonDialog({
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Summary Stats */}
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-            <div className="text-center">
-              <div className="text-lg font-mono font-semibold text-emerald-600">
-                {commonTags.length}
-              </div>
-              <div className="text-xs text-muted-foreground">Common</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-mono font-semibold text-blue-600">
-                {currentOnlyTags.length}
-              </div>
-              <div className="text-xs text-muted-foreground">Current Only</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-mono font-semibold text-purple-600">
-                {targetOnlyTags.length}
-              </div>
-              <div className="text-xs text-muted-foreground">Target Only</div>
             </div>
           </div>
 
