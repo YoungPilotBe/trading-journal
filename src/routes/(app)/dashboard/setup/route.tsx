@@ -1,4 +1,3 @@
-import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-dialog";
 import SimilarTradesTable from "@/components/similar-trades-table";
 import SnapshotHistory from "@/components/snapshot-history";
 import { SnapshotImage } from "@/components/snapshot-image";
@@ -20,9 +19,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { statusOptions } from "@/config/constants";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
+import { useDialog } from "@/contexts/dialog-context";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
-import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
@@ -41,7 +40,6 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
-import { useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -93,6 +91,8 @@ function RouteComponent() {
   const navigate = useNavigate();
   const { tradeSetupId, snapshotId, fullscreen } = Route.useSearch();
 
+  const { openDialog } = useDialog();
+
   const { data: tradeSetup, isLoading: isLoadingTradeSetup } = useGetTradeSetup(
     {
       id: tradeSetupId as Id<"trade_setups">,
@@ -105,12 +105,6 @@ function RouteComponent() {
 
   const { data: templates, isLoading: isLoadingTemplates } =
     useGetTradeTemplates({});
-
-  const { mutateAsync: deleteTradeSetup, isPending: isDeletingTradeSetup } =
-    useDeleteTradeSetup();
-
-  // Dialog state
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const {
     mutateAsync: updateTradeSetup,
@@ -170,19 +164,6 @@ function RouteComponent() {
 
   // Subscribe to form's dirty state to trigger re-renders
   const isDirty = useStore(form.store, (state) => state.isDirty);
-
-  // Delete handler
-  const handleDeleteTradeSetup = async () => {
-    try {
-      await deleteTradeSetup({
-        tradeSetupId: tradeSetupId as Id<"trade_setups">,
-      });
-      setShowDeleteDialog(false);
-      navigate({ to: "/dashboard" });
-    } catch (error) {
-      console.error("Failed to delete trade setup:", error);
-    }
-  };
 
   return (
     <>
@@ -248,7 +229,12 @@ function RouteComponent() {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive justify-between"
-                    onClick={() => setShowDeleteDialog(true)}
+                    onClick={() =>
+                      openDialog("DELETE_TRADE_SETUP", {
+                        tradeSetupId: tradeSetupId as Id<"trade_setups">,
+                        tradeSetupTitle: tradeSetup?.title || "",
+                      })
+                    }
                   >
                     <Trash2Icon className="text-inherit" />
                     Delete
@@ -576,21 +562,11 @@ function RouteComponent() {
             tradeSetupId={tradeSetupId as Id<"trade_setups">}
           />
         </div>
-
-        {/* Delete Confirmation Dialog */}
-        <DeleteTradeSetupDialog
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          tradeSetupId={tradeSetupId as Id<"trade_setups">}
-          tradeSetupTitle={tradeSetup?.title || "Trade Setup"}
-          onConfirm={handleDeleteTradeSetup}
-          isDeleting={isDeletingTradeSetup}
-        />
       </div>
       <SimilarTradesTable
         tradeSetupId={tradeSetupId as Id<"trade_setups">}
+        snapshotId={snapshotId as Id<"snapshots">}
         limit={4}
-        minSimilarityScore={0.4}
         currentStatus={snapshot?.status}
       />
     </>

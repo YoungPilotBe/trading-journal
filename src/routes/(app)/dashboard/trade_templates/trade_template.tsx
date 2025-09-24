@@ -24,10 +24,10 @@ import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
 // Include the included Inter font
 import AutoSavePortal from "@/components/portals/auto-save-portal";
+import { useDialog } from "@/contexts/dialog-context";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUploadDrawing } from "@/hooks/drawings/useUploadDrawing";
 import { useCreateTradeTemplate } from "@/hooks/trade_templates/create_trade_template";
-import { useDeleteTradeTemplate } from "@/hooks/trade_templates/delete_trade_template";
 import { useGetTradeTemplate } from "@/hooks/trade_templates/get_trade_template";
 import { useUpdateTradeTemplate } from "@/hooks/trade_templates/update_trade_template";
 import NavbarPortal from "@/portals/navbar_portal";
@@ -69,6 +69,8 @@ function RouteComponent() {
     id: templateId as Id<"trade_templates">,
   });
 
+  const { openDialog } = useDialog();
+
   const { mutateAsync: createTradeTemplate, isPending: isCreatingTemplate } =
     useCreateTradeTemplate({
       onSuccess: (id) => {
@@ -82,16 +84,6 @@ function RouteComponent() {
     useUpdateTradeTemplate();
   const { mutateAsync: uploadDrawing, isPending: isUploading } =
     useUploadDrawing();
-
-  const { mutateAsync: deleteTemplate, isPending: isDeleting } =
-    useDeleteTradeTemplate({
-      onSuccess: () => {
-        navigate({
-          to: "/dashboard/trade_templates",
-          from: "/dashboard/trade_templates",
-        });
-      },
-    });
 
   // Get drawing data if template has a drawing
   const { data: drawingData } = useGetDrawing({
@@ -120,16 +112,6 @@ function RouteComponent() {
       heading: "Template Title",
     },
   });
-
-  // const title = useDocumentTitle(existingTemplate?.document);
-
-  const handleDelete = async (e: React.MouseEvent) => {
-    if (!existingTemplate?._id) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    await deleteTemplate({ id: existingTemplate?._id });
-  };
 
   async function handleSave(drawingId?: Id<"drawings">) {
     if (!templateId) {
@@ -228,8 +210,13 @@ function RouteComponent() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
+                  onClick={() => {
+                    if (existingTemplate) {
+                      openDialog("DELETE_TRADE_TEMPLATE", {
+                        template: existingTemplate,
+                      });
+                    }
+                  }}
                   variant={"ghost"}
                 >
                   <TrashIcon className="w-4 h-4" />

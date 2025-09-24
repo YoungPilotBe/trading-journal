@@ -16,7 +16,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getAnalyticsConfig } from "@/config/analytics";
-import { useFindSimilarTradesWithOptions } from "@/hooks/analytics/use-find-similar-trades";
+import { useDialog } from "@/contexts/dialog-context";
+import {
+  useFindSimilarSnapshotsWithOptions,
+  useFindSimilarTradeSetupsWithOptions,
+} from "@/hooks/analytics/use-find-similar-trades";
 import { useGetSnapshotByStatus } from "@/hooks/analytics/use-get-snapshot-by-status";
 import { ConfigPreset, getConfigPreset } from "@/utils/analytics-config";
 import { Link } from "@tanstack/react-router";
@@ -37,6 +41,7 @@ import { DualSelector, dualSelectorVariants } from "./dual-selector";
 type SimilarTradeEntry = {
   tradeSetupId: Id<"trade_setups">;
   similarityScore: number;
+  snapshotId?: Id<"snapshots">; // ID of the comparison snapshot (when in snapshot mode)
   breakdown: {
     tagsPerStatusSimilarity: number;
     templateSimilarity: number;
@@ -48,26 +53,32 @@ type SimilarTradeEntry = {
   direction: "long" | "short";
   title: string;
   riskReward?: number;
+  // Additional fields for snapshot mode
+  snapshotStatus?: string;
+  snapshotCreatedAt?: number;
 };
 
 // Smart navigation component that finds the right snapshot
 const SmartTradeLink = ({
   tradeSetupId,
   currentStatus,
+  snapshotId,
   children,
 }: {
   tradeSetupId: Id<"trade_setups">;
   currentStatus?: string;
+  snapshotId?: Id<"snapshots">;
   children: React.ReactNode;
 }) => {
-  // Get the snapshot with matching status (or most recent if no match)
+  // Get the snapshot with matching status (or most recent if no match) - only if snapshotId not provided
   const { data: targetSnapshot } = useGetSnapshotByStatus(
     tradeSetupId,
     currentStatus || "idea",
-    { enabled: !!tradeSetupId && !!currentStatus }
+    { enabled: !!tradeSetupId && !!currentStatus && !snapshotId }
   );
 
-  const targetSnapshotId = targetSnapshot?._id || "";
+  // Use provided snapshotId or fall back to the found snapshot
+  const targetSnapshotId = snapshotId || targetSnapshot?._id || "";
 
   return (
     <Link
@@ -118,26 +129,24 @@ const TableRowSkeleton = () => (
 
 interface SimilarTradesTableProps {
   tradeSetupId: Id<"trade_setups">;
+  snapshotId: Id<"snapshots">;
   limit?: number;
-  minSimilarityScore?: number;
   currentStatus?: string;
 }
 
 const SimilarTradesTable = ({
   tradeSetupId,
   limit,
-  minSimilarityScore,
   currentStatus,
+  snapshotId,
 }: SimilarTradesTableProps) => {
+  const { openDialog } = useDialog();
+
   // State for configuration preset selection
   const [selectedPreset, setSelectedPreset] = useState<ConfigPreset>("default");
   const [selectedTarget, setSelectedTarget] = useState("trade_setups");
   // Get configuration with defaults (will be overridden by preset selection)
   const config = getAnalyticsConfig();
-  const finalLimit = limit ?? config.defaultLimit;
-  const finalMinSimilarityScore =
-    minSimilarityScore ?? config.defaultMinSimilarityScore;
-
   // State for sorting
   const [sorting, setSorting] = useState<SortingState>([
     { id: "similarityScore", desc: true },
@@ -147,17 +156,31 @@ const SimilarTradesTable = ({
   const presetConfig = getConfigPreset(selectedPreset);
 
   // Fetch similar trades data using the selected configuration
-  const { data: similarTrades, isLoading } = useFindSimilarTradesWithOptions(
-    tradeSetupId,
-    {
-      limit: finalLimit,
-      minSimilarityScore: finalMinSimilarityScore,
+  // Use different hooks based on the selected target
+  const { data: similarTradeSetups, isLoading: isLoadingTradeSetups } =
+    useFindSimilarTradeSetupsWithOptions(tradeSetupId, {
+      limit: limit ?? config.defaultLimit,
+      minSimilarityScore: config.defaultMinSimilarityScore,
       customWeights: presetConfig.similarityWeights,
-      // When snapshots is selected, filter by current snapshot status
-      filterBySnapshotStatus:
-        selectedTarget === "snapshots" ? currentStatus : undefined,
-    }
-  );
+      enabled: selectedTarget === "trade_setups",
+    });
+
+  const { data: similarSnapshots, isLoading: isLoadingSnapshots } =
+    useFindSimilarSnapshotsWithOptions(snapshotId, {
+      limit: limit ?? config.defaultLimit,
+      minSimilarityScore: config.defaultMinSimilarityScore,
+      customWeights: presetConfig.similarityWeights,
+      filterByStatus: currentStatus,
+      enabled: selectedTarget === "snapshots" && !!snapshotId,
+    });
+
+  // Combine the results based on the selected target
+  const similarTrades =
+    selectedTarget === "trade_setups" ? similarTradeSetups : similarSnapshots;
+  const isLoading =
+    selectedTarget === "trade_setups"
+      ? isLoadingTradeSetups
+      : isLoadingSnapshots;
 
   // Define columns
   const columns = useMemo(
@@ -269,11 +292,31 @@ const SimilarTradesTable = ({
         header: () => (
           <div className="flex items-center font-mono text-xs">Tags</div>
         ),
-        cell: ({ getValue }) => (
-          <span className="text-xs font-mono text-muted-foreground">
-            {Math.round(getValue() * 100)}%
-          </span>
-        ),
+        cell: ({ getValue, row }) => {
+          const similarityPercentage = getValue();
+          const targetSnapshotId = row.original.snapshotId;
+
+          return (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+
+                if (!snapshotId || !targetSnapshotId) return;
+
+                openDialog("TAGS_COMPARISON", {
+                  currentSnapshotId: snapshotId,
+                  targetSnapshotId,
+                  similarityPercentage,
+                });
+              }}
+              disabled={!targetSnapshotId || !snapshotId}
+              className="text-xs font-mono text-muted-foreground hover:text-primary hover:underline transition-colors disabled:cursor-not-allowed disabled:hover:no-underline disabled:hover:text-muted-foreground"
+            >
+              {Math.round(similarityPercentage * 100)}%
+            </button>
+          );
+        },
       }),
       columnHelper.accessor("breakdown.templateSimilarity", {
         header: () => (
@@ -296,7 +339,7 @@ const SimilarTradesTable = ({
         ),
       }),
     ],
-    []
+    [snapshotId, openDialog]
   );
 
   // Create table instance
@@ -422,6 +465,7 @@ const SimilarTradesTable = ({
                   key={row.id}
                   tradeSetupId={row.original.tradeSetupId}
                   currentStatus={currentStatus}
+                  snapshotId={row.original.snapshotId}
                 >
                   <TableRow data-state={row.getIsSelected() && "selected"}>
                     {row.getVisibleCells().map((cell) => (

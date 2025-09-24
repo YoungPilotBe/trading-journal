@@ -7,6 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useDeleteTradeTemplate } from "@/hooks/trade_templates/delete_trade_template";
+import { useNavigate } from "@tanstack/react-router";
 import { Doc } from "convex/_generated/dataModel";
 import { AlertTriangle } from "lucide-react";
 
@@ -14,19 +16,39 @@ interface DeleteTradeTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   template: Doc<"trade_templates">;
-  onConfirm: () => void;
-  isDeleting?: boolean;
+  onSuccess?: () => void; // Optional callback for when deletion succeeds
 }
 
 export function DeleteTradeTemplateDialog({
   open,
   onOpenChange,
   template,
-  onConfirm,
-  isDeleting = false,
+  onSuccess,
 }: DeleteTradeTemplateDialogProps) {
+  const navigate = useNavigate();
+  const { mutateAsync: deleteTemplate, isPending: isDeleting } =
+    useDeleteTradeTemplate({
+      onSuccess: () => {
+        navigate({
+          to: "/dashboard/trade_templates",
+          from: "/dashboard/trade_templates",
+        });
+      },
+    });
+
   const tradeSetupCount = template.tradeSetupIds?.length || 0;
   const hasDrawing = !!template.drawingId;
+
+  const handleDelete = async () => {
+    try {
+      await deleteTemplate({ id: template._id });
+      onOpenChange(false); // Close dialog on success
+      onSuccess?.(); // Call optional success callback
+    } catch (error) {
+      // Error handling could be added here (toast, etc.)
+      console.error("Failed to delete trade template:", error);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,7 +123,7 @@ export function DeleteTradeTemplateDialog({
           </Button>
           <Button
             variant="destructive"
-            onClick={onConfirm}
+            onClick={handleDelete}
             disabled={isDeleting}
           >
             {isDeleting ? "Deleting..." : "Delete Template"}

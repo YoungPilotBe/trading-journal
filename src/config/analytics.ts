@@ -46,7 +46,7 @@ export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfig = {
     template: 0.3, // 30% - Important: Same core strategy?
     asset: 0.2, // 20% - Context: Same market conditions?
   },
-  defaultMinSimilarityScore: 0.1, // 10% minimum similarity to show results
+  defaultMinSimilarityScore: 0.4, // 10% minimum similarity to show results
   defaultLimit: 10, // Show top 10 similar trades by default
   enabledFactors: {
     tagsPerStatus: true,
@@ -67,7 +67,7 @@ export const EXECUTION_FOCUSED_CONFIG: AnalyticsConfig = {
     template: 0.3, // 30% - Strategy matters
     asset: 0.0, // 0% - Asset doesn't matter
   },
-  defaultMinSimilarityScore: 0.15,
+  defaultMinSimilarityScore: 0,
   defaultLimit: 8,
   enabledFactors: {
     tagsPerStatus: true,

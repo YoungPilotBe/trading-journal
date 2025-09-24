@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useGetSnapshotByTradeSetupId } from "@/hooks/snapshots/use-get-snapshot-by-trade-setup";
+import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup";
+import { useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { AlertTriangle } from "lucide-react";
 
@@ -16,8 +18,7 @@ interface DeleteTradeSetupDialogProps {
   onOpenChange: (open: boolean) => void;
   tradeSetupId: Id<"trade_setups">;
   tradeSetupTitle: string;
-  onConfirm: () => void;
-  isDeleting?: boolean;
+  onSuccess?: () => void; // Optional callback for when deletion succeeds
 }
 
 export function DeleteTradeSetupDialog({
@@ -25,16 +26,38 @@ export function DeleteTradeSetupDialog({
   onOpenChange,
   tradeSetupId,
   tradeSetupTitle,
-  onConfirm,
-  isDeleting = false,
+  onSuccess,
 }: DeleteTradeSetupDialogProps) {
+  const navigate = useNavigate();
+
   const { data: snapshots } = useGetSnapshotByTradeSetupId({
     tradeSetupId,
     sortBy: "createdAt",
     sortOrder: "asc",
   });
 
+  const { mutateAsync: deleteTradeSetup, isPending: isDeleting } =
+    useDeleteTradeSetup({
+      onSuccess: () => {
+        navigate({
+          from: "/dashboard",
+          to: "/dashboard",
+        });
+      },
+    });
+
   const snapshotCount = snapshots?.length || 0;
+
+  const handleDelete = async () => {
+    try {
+      await deleteTradeSetup({ tradeSetupId });
+      onOpenChange(false); // Close dialog on success
+      onSuccess?.(); // Call optional success callback
+    } catch (error) {
+      // Error handling could be added here (toast, etc.)
+      console.error("Failed to delete trade setup:", error);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,7 +121,7 @@ export function DeleteTradeSetupDialog({
           </Button>
           <Button
             variant="destructive"
-            onClick={onConfirm}
+            onClick={handleDelete}
             disabled={isDeleting}
           >
             {isDeleting ? "Deleting..." : "Delete Trade Setup"}

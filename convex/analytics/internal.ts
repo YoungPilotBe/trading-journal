@@ -11,6 +11,7 @@ export type TradeSetupWithSnapshots = Doc<"trade_setups"> & {
 export type SimilarityScore = {
   tradeSetupId: Id<"trade_setups">;
   similarityScore: number;
+  snapshotId?: Id<"snapshots">; // ID of the comparison snapshot (matches tradeSetupId when filtering by status)
   breakdown: {
     tagsPerStatusSimilarity: number;
     templateSimilarity: number;
@@ -317,11 +318,18 @@ export function calculateSnapshotStatusSimilarity(
   }
 
   // Use the existing similarity calculation with filtered snapshots
-  return calculateTradeSetupSimilarity(
+  const similarity = calculateTradeSetupSimilarity(
     filteredTradeSetup1,
     filteredTradeSetup2,
     customWeights
   );
+
+  // Add the comparison snapshot ID (from the first filtered snapshot of tradeSetup2)
+  // This ensures snapshotId matches the tradeSetupId in the similarity result
+  return {
+    ...similarity,
+    snapshotId: filteredTradeSetup2.snapshots[0]._id,
+  };
 }
 
 /**

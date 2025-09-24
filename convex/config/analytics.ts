@@ -30,24 +30,55 @@ export interface AnalyticsConfig {
 }
 
 /**
- * Default Analytics Configuration
- *
- * Weights explanation:
- * - tagsPerStatus (0.5): Highest weight because execution patterns and trading decisions
- *   at different stages are the most important indicator of similarity
- * - template (0.3): Medium weight because strategy choice is important but can be
- *   adapted across different market conditions
- * - asset (0.2): Lowest weight because good strategies often work across multiple assets,
- *   but same-asset trades still have some correlation value
+ * Trade Setup Similarity Configuration
+ * Focus on strategy and asset similarity, less on specific execution details
+ */
+export const TRADE_SETUP_SIMILARITY_CONFIG: AnalyticsConfig = {
+  similarityWeights: {
+    tagsPerStatus: 0.2, // 20% - Less focus on specific execution details
+    template: 0.6, // 60% - Strategy is most important for trade setups
+    asset: 0.2, // 20% - Asset context matters
+  },
+  defaultMinSimilarityScore: 0.4,
+  defaultLimit: 10,
+  enabledFactors: {
+    tagsPerStatus: true,
+    template: true,
+    asset: true,
+  },
+};
+
+/**
+ * Snapshot Similarity Configuration
+ * Focus heavily on tags/execution patterns, less on strategy and asset
+ */
+export const SNAPSHOT_SIMILARITY_CONFIG: AnalyticsConfig = {
+  similarityWeights: {
+    tagsPerStatus: 0.8, // 80% - Heavy focus on execution patterns/tags
+    template: 0.1, // 10% - Strategy matters less for snapshot comparison
+    asset: 0.1, // 10% - Asset matters less for snapshot comparison
+  },
+  defaultMinSimilarityScore: 0.4,
+  defaultLimit: 10,
+  enabledFactors: {
+    tagsPerStatus: true,
+    template: true,
+    asset: true,
+  },
+};
+
+/**
+ * Default Analytics Configuration (backward compatibility)
+ * Balanced approach for general use
  */
 export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfig = {
   similarityWeights: {
-    tagsPerStatus: 0.5, // 50% - Most important: How similar are the trading decisions?
-    template: 0.3, // 30% - Important: Same core strategy?
-    asset: 0.2, // 20% - Context: Same market conditions?
+    tagsPerStatus: 0.5, // 50% - Balanced
+    template: 0.3, // 30% - Balanced
+    asset: 0.2, // 20% - Balanced
   },
-  defaultMinSimilarityScore: 0.1, // 10% minimum similarity to show results
-  defaultLimit: 10, // Show top 10 similar trades by default
+  defaultMinSimilarityScore: 0.1,
+  defaultLimit: 10,
   enabledFactors: {
     tagsPerStatus: true,
     template: true,

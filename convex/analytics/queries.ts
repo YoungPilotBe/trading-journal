@@ -1,8 +1,11 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAnalyticsConfig, SimilarityWeights } from "../config/analytics";
 import {
-  calculateSnapshotStatusSimilarity,
+  SimilarityWeights,
+  SNAPSHOT_SIMILARITY_CONFIG,
+  TRADE_SETUP_SIMILARITY_CONFIG,
+} from "../config/analytics";
+import {
   calculateTradeSetupSimilarity,
   extractTagsByStatus,
   fetchAllTradeSetupsWithSnapshots,
@@ -11,9 +14,10 @@ import {
 } from "./internal";
 
 /**
- * Find similar trade setups based on tags per status, templates, and assets
+ * Find similar trade setups based primarily on strategy and asset similarity
+ * This focuses on high-level trade setup characteristics rather than execution details
  */
-export const findSimilarTrades = query({
+export const findSimilarTradeSetups = query({
   args: {
     tradeSetupId: v.id("trade_setups"),
     limit: v.optional(v.number()),
@@ -25,7 +29,6 @@ export const findSimilarTrades = query({
         asset: v.number(),
       })
     ),
-    filterBySnapshotStatus: v.optional(v.string()),
   },
   handler: async (
     ctx,
@@ -38,13 +41,12 @@ export const findSimilarTrades = query({
       riskReward?: number;
     })[]
   > => {
-    const config = getAnalyticsConfig();
+    const config = TRADE_SETUP_SIMILARITY_CONFIG;
     const {
       tradeSetupId,
       limit = config.defaultLimit,
       minSimilarityScore = config.defaultMinSimilarityScore,
       customWeights,
-      filterBySnapshotStatus,
     } = args;
 
     try {
@@ -73,28 +75,15 @@ export const findSimilarTrades = query({
       })[] = [];
 
       for (const otherTradeSetup of allTradeSetups) {
-        let similarity;
-
-        // If filtering by snapshot status, use snapshot-specific similarity calculation
-        if (filterBySnapshotStatus) {
-          similarity = calculateSnapshotStatusSimilarity(
-            targetTradeSetup,
-            otherTradeSetup,
-            filterBySnapshotStatus,
-            customWeights as SimilarityWeights | undefined
-          );
-        } else {
-          // Use the standard trade setup similarity calculation
-          similarity = calculateTradeSetupSimilarity(
-            targetTradeSetup,
-            otherTradeSetup,
-            customWeights as SimilarityWeights | undefined
-          );
-        }
+        // Use the standard trade setup similarity calculation (no snapshot filtering)
+        const similarity = calculateTradeSetupSimilarity(
+          targetTradeSetup,
+          otherTradeSetup,
+          customWeights as SimilarityWeights | undefined
+        );
 
         // Only include results above the minimum similarity threshold
-        // and if similarity is not null (in case of snapshot filtering with no matching snapshots)
-        if (similarity && similarity.similarityScore >= minSimilarityScore) {
+        if (similarity.similarityScore >= minSimilarityScore) {
           similarities.push({
             ...similarity,
             asset: otherTradeSetup.asset,
@@ -110,7 +99,146 @@ export const findSimilarTrades = query({
         .sort((a, b) => b.similarityScore - a.similarityScore)
         .slice(0, limit);
     } catch (error) {
-      console.error("Error finding similar trades:", error);
+      console.error("Error finding similar trade setups:", error);
+      throw error;
+    }
+  },
+});
+
+/**
+ * Find similar snapshots based primarily on tag similarity
+ * This focuses on execution patterns and trading decisions rather than high-level strategy
+ */
+export const findSimilarSnapshots = query({
+  args: {
+    snapshotId: v.id("snapshots"),
+    limit: v.optional(v.number()),
+    minSimilarityScore: v.optional(v.number()),
+    customWeights: v.optional(
+      v.object({
+        tagsPerStatus: v.number(),
+        template: v.number(),
+        asset: v.number(),
+      })
+    ),
+    filterByStatus: v.optional(v.string()), // Filter snapshots by status
+    filterByAsset: v.optional(v.string()), // Filter snapshots by asset
+  },
+  handler: async (
+    ctx,
+    args
+  ): Promise<
+    (SimilarityScore & {
+      asset: string;
+      direction: "long" | "short";
+      title: string;
+      riskReward?: number;
+      snapshotStatus: string;
+      snapshotCreatedAt: number;
+    })[]
+  > => {
+    const config = SNAPSHOT_SIMILARITY_CONFIG;
+    const {
+      snapshotId,
+      limit = config.defaultLimit,
+      minSimilarityScore = config.defaultMinSimilarityScore,
+      customWeights,
+      filterByStatus,
+      filterByAsset,
+    } = args;
+
+    try {
+      // First, get the target snapshot and its trade setup
+      const targetSnapshot = await ctx.db.get(snapshotId);
+      if (!targetSnapshot) {
+        throw new Error("Target snapshot not found");
+      }
+
+      const targetTradeSetup = await ctx.db.get(targetSnapshot.tradeSetupId);
+      if (!targetTradeSetup) {
+        throw new Error("Target trade setup not found");
+      }
+
+      // Fetch all snapshots from the database (excluding the target)
+      let allSnapshots = await ctx.db
+        .query("snapshots")
+        .filter((q) => q.neq(q.field("_id"), snapshotId))
+        .collect();
+
+      // Apply filters
+      if (filterByStatus) {
+        allSnapshots = allSnapshots.filter(
+          (snapshot) => snapshot.status === filterByStatus
+        );
+      }
+
+      if (filterByAsset) {
+        // Filter by trade setup asset
+        const tradeSetupsByAsset = await ctx.db
+          .query("trade_setups")
+          .filter((q) => q.eq(q.field("asset"), filterByAsset))
+          .collect();
+
+        const tradeSetupIds = new Set(tradeSetupsByAsset.map((ts) => ts._id));
+        allSnapshots = allSnapshots.filter((snapshot) =>
+          tradeSetupIds.has(snapshot.tradeSetupId)
+        );
+      }
+
+      // Calculate similarities
+      const similarities: (SimilarityScore & {
+        asset: string;
+        direction: "long" | "short";
+        title: string;
+        riskReward?: number;
+        snapshotStatus: string;
+        snapshotCreatedAt: number;
+      })[] = [];
+
+      for (const otherSnapshot of allSnapshots) {
+        // Get the trade setup for this snapshot
+        const otherTradeSetup = await ctx.db.get(otherSnapshot.tradeSetupId);
+        if (!otherTradeSetup) continue;
+
+        // Create mock trade setups with single snapshots for similarity calculation
+        const targetTradeSetupWithSnapshot = {
+          ...targetTradeSetup,
+          snapshots: [targetSnapshot],
+        };
+
+        const otherTradeSetupWithSnapshot = {
+          ...otherTradeSetup,
+          snapshots: [otherSnapshot],
+        };
+
+        // Calculate similarity using the snapshot-focused config
+        const similarity = calculateTradeSetupSimilarity(
+          targetTradeSetupWithSnapshot,
+          otherTradeSetupWithSnapshot,
+          customWeights as SimilarityWeights | undefined
+        );
+
+        // Only include results above the minimum similarity threshold
+        if (similarity.similarityScore >= minSimilarityScore) {
+          similarities.push({
+            ...similarity,
+            snapshotId: otherSnapshot._id,
+            asset: otherTradeSetup.asset,
+            direction: otherTradeSetup.direction,
+            title: otherTradeSetup.title,
+            riskReward: otherTradeSetup.riskReward,
+            snapshotStatus: otherSnapshot.status,
+            snapshotCreatedAt: otherSnapshot._creationTime,
+          });
+        }
+      }
+
+      // Sort by similarity score (descending) and limit results
+      return similarities
+        .sort((a, b) => b.similarityScore - a.similarityScore)
+        .slice(0, limit);
+    } catch (error) {
+      console.error("Error finding similar snapshots:", error);
       throw error;
     }
   },
