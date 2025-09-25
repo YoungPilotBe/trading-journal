@@ -1,4 +1,3 @@
-import { DeleteTradeTemplateDialog } from "@/components/dialog/delete-trade-template-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -14,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDialog } from "@/contexts/dialog-context";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
-import { useDeleteTradeTemplate } from "@/hooks/trade_templates/delete_trade_template";
 import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Doc } from "convex/_generated/dataModel";
@@ -185,22 +184,13 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
   const { data: drawingData } = useGetDrawing({
     id: template.drawingId,
   });
-  const { mutateAsync: deleteTemplate, isPending: isDeleting } =
-    useDeleteTradeTemplate();
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDropdownOpen(false);
-    setShowDeleteDialog(true);
-  };
+  const { openDialog } = useDialog();
 
-  const handleDeleteConfirm = async () => {
-    await deleteTemplate({ id: template._id });
-    setShowDeleteDialog(false);
-  };
+  const handleDeleteClick = () =>
+    openDialog("DELETE_TRADE_TEMPLATE", { template });
 
   return (
     <Card className="relative bg-background border-2 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5 group overflow-hidden">
@@ -219,7 +209,6 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
           <DropdownMenuContent>
             <DropdownMenuItem
               onClick={handleDeleteClick}
-              disabled={isDeleting}
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               <TrashIcon className="w-4 h-4 mr-2" />
@@ -272,14 +261,6 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
           </div>
         </CardContent>
       </Link>
-
-      <DeleteTradeTemplateDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        template={template}
-        onConfirm={handleDeleteConfirm}
-        isDeleting={isDeleting}
-      />
     </Card>
   );
 }
