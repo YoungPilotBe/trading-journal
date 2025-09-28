@@ -51,7 +51,7 @@ type SimilarTradeEntry = {
   // Trade setup data included in the response
   asset: string;
   direction: "long" | "short";
-  title: string;
+  title: string | null;
   riskReward?: number;
   // Additional fields for snapshot mode
   snapshotStatus?: string;
@@ -489,10 +489,6 @@ const SimilarTradesTable = ({
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <p className="text-muted-foreground font-mono">
                       No similar trades found
-                    </p>
-                    <p className="text-sm text-muted-foreground font-mono">
-                      Try adjusting the similarity threshold or create more
-                      trade setups
                     </p>
                   </div>
                 </TableCell>

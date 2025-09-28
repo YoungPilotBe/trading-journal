@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { InputField } from "./InputField";
 import { ToggleBadge } from "./ToggleBadge";
 import { strategyTree } from "./tree.constants";
+import type { TreeNode } from "./tree.utils";
 import {
   convertSelectionToJsonArray,
   findNodeByKeyArray,
@@ -24,12 +25,14 @@ interface Props {
   initialTreeState: TreeState;
   onTreeStateChange?: (state: TreeState) => void;
   viewOnly?: boolean;
+  strategy?: TreeNode[]; // Optional strategy tree, defaults to strategyTree
 }
 
 const Tree = ({
   initialTreeState,
   onTreeStateChange,
   viewOnly = false,
+  strategy = strategyTree, // Default to the original strategyTree
   ...divProps
 }: Props) => {
   // Initialize tree state - either from provided state or create default
@@ -58,15 +61,15 @@ const Tree = ({
     setInternalTreeState(treeState);
   }, [treeState]);
 
-  const treeDepth = useMemo(() => getTreeDepthArray(strategyTree), []); // +1 for input fields
+  const treeDepth = useMemo(() => getTreeDepthArray(strategy), [strategy]); // +1 for input fields
   const gridRows = useMemo(
     () =>
       flattenTreeArrayToGrid(
-        strategyTree,
+        strategy,
         internalTreeState.expandedKeys,
         internalTreeState.selectedNodes
       ),
-    [internalTreeState.expandedKeys, internalTreeState.selectedNodes]
+    [strategy, internalTreeState.expandedKeys, internalTreeState.selectedNodes]
   );
 
   // Update internal state and notify parent of changes
@@ -77,7 +80,7 @@ const Tree = ({
     const updatedState: TreeState = {
       expandedKeys: newExpandedKeys || internalTreeState.expandedKeys,
       selectedNodes: newSelectedNodes,
-      tags: convertSelectionToJsonArray(strategyTree, newSelectedNodes),
+      tags: convertSelectionToJsonArray(strategy, newSelectedNodes),
     };
 
     setInternalTreeState(updatedState);
@@ -91,7 +94,7 @@ const Tree = ({
     hasAntiSelection: boolean
   ) => {
     const result = toggleNodeArray(
-      strategyTree,
+      strategy,
       internalTreeState.selectedNodes,
       internalTreeState.expandedKeys,
       nodeKey,
@@ -109,7 +112,7 @@ const Tree = ({
     const newTags = { ...internalTreeState.tags };
 
     // Find the correct path to the node in the tree structure
-    const nodePath = findNodePathArray(strategyTree, data.key);
+    const nodePath = findNodePathArray(strategy, data.key);
 
     // Set the nested value using the utility function
     setNestedValue(newTags, nodePath, data.values, true);
@@ -139,7 +142,7 @@ const Tree = ({
                       initialValue={(() => {
                         // Extract existing value from tags
                         const nodePath = findNodePathArray(
-                          strategyTree,
+                          strategy,
                           cell.parentKey
                         );
                         const existingData = getNestedValue(
@@ -160,10 +163,7 @@ const Tree = ({
                     <ToggleBadge
                       value={cell.isSelected || false}
                       onChange={() => {
-                        const node = findNodeByKeyArray(
-                          strategyTree,
-                          cell.nodeKey
-                        );
+                        const node = findNodeByKeyArray(strategy, cell.nodeKey);
                         const hasAntiSelection = Boolean(node?.anti?.length);
                         handleNodeToggle(cell.nodeKey, false, hasAntiSelection);
                       }}
@@ -177,20 +177,14 @@ const Tree = ({
                   ) : (
                     <ToggleBadge
                       value={(() => {
-                        const node = findNodeByKeyArray(
-                          strategyTree,
-                          cell.nodeKey
-                        );
+                        const node = findNodeByKeyArray(strategy, cell.nodeKey);
                         const hasAntiSelection = Boolean(node?.anti?.length);
                         return hasAntiSelection
                           ? cell.isSelected || false
                           : cell.isExpanded || false;
                       })()}
                       onChange={() => {
-                        const node = findNodeByKeyArray(
-                          strategyTree,
-                          cell.nodeKey
-                        );
+                        const node = findNodeByKeyArray(strategy, cell.nodeKey);
                         const hasAntiSelection = Boolean(node?.anti?.length);
                         handleNodeToggle(cell.nodeKey, true, hasAntiSelection);
                       }}

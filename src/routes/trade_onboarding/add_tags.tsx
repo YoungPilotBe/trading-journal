@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { EffectsProvider } from "@/tree/EffectsContext";
+import { generateStrategy } from "@/tree/strategies";
 import { Tree } from "@/tree/tree";
 import { createTreeStateFromSnapshot } from "@/tree/tree.utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -104,6 +105,7 @@ function RouteComponent() {
               initialTreeState={treeState}
               onTreeStateChange={handleTreeStateChange}
               viewOnly={viewOnly}
+              strategy={generateStrategy(snapshot!.status)}
             />
           </EffectsProvider>
         </div>
