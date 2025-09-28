@@ -38,7 +38,7 @@ export const findSimilarTradeSetups = query({
       asset: string;
       direction: "long" | "short";
       title: string;
-      riskReward?: number;
+      riskReward: number | null;
     })[]
   > => {
     const config = TRADE_SETUP_SIMILARITY_CONFIG;
@@ -71,7 +71,7 @@ export const findSimilarTradeSetups = query({
         asset: string;
         direction: "long" | "short";
         title: string;
-        riskReward?: number;
+        riskReward: number | null;
       })[] = [];
 
       for (const otherTradeSetup of allTradeSetups) {
@@ -132,7 +132,7 @@ export const findSimilarSnapshots = query({
       asset: string;
       direction: "long" | "short";
       title: string;
-      riskReward?: number;
+      riskReward: number | null;
       snapshotStatus: string;
       snapshotCreatedAt: number;
     })[]
@@ -190,7 +190,7 @@ export const findSimilarSnapshots = query({
         asset: string;
         direction: "long" | "short";
         title: string;
-        riskReward?: number;
+        riskReward: number | null;
         snapshotStatus: string;
         snapshotCreatedAt: number;
       })[] = [];

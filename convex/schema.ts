@@ -55,7 +55,7 @@ export default defineSchema({
     direction: v.union(v.literal("long"), v.literal("short")),
 
     // Risk management
-    riskReward: v.optional(v.number()), //Format = 2.3
+    riskReward: v.union(v.number(), v.null()),
 
     trade_template: v.optional(v.id("trade_templates")),
 

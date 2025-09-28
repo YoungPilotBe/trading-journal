@@ -128,7 +128,7 @@ function RouteComponent() {
       title: existingTradeSetup?.title || "",
       status: existingSnapshot?.status || ("idea" as const),
       direction: existingTradeSetup?.direction || ("long" as const),
-      riskReward: existingTradeSetup?.riskReward,
+      riskReward: existingTradeSetup?.riskReward || null,
       timeframes: existingTradeSetup?.timeframes || ["4h"],
     } as const,
 
@@ -402,9 +402,7 @@ function RouteComponent() {
                       value={field.state.value ?? ""}
                       onChange={(e) => {
                         const value = e.target.value;
-                        field.handleChange(
-                          value === "" ? undefined : Number(value)
-                        );
+                        field.handleChange(value === "" ? null : Number(value));
                       }}
                       disabled={fieldDisabledMap.riskReward}
                       className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"

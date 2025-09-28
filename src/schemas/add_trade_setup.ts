@@ -10,7 +10,9 @@ export const addTradeSetupSchema = z.object({
   status: z.enum(["idea", "watching", "executed", "closed", "reviewed"]),
   direction: z.enum(["long", "short"]),
   trade_template: z.custom<Id<"trade_templates">>(),
-  riskReward: z.number({ message: "Risk reward must be a number, e.g. 5.3" }),
+  riskReward: z.nullable(
+    z.number({ message: "Risk reward must be a number, e.g. 5.3" })
+  ),
   timeframes: z.array(
     z
       .string()

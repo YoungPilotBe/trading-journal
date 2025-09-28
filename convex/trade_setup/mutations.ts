@@ -12,7 +12,7 @@ export const updateTradeSetup = mutation({
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     status: v.optional(statusUnion),
     trade_template: v.optional(v.id("trade_templates")),
-    riskReward: v.optional(v.number()),
+    riskReward: v.optional(v.union(v.number(), v.null())),
     timeframes: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {

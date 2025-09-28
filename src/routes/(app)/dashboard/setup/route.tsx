@@ -130,7 +130,7 @@ function RouteComponent() {
       trade_template: tradeSetup?.trade_template || undefined,
       status: snapshot?.status || "idea",
       direction: tradeSetup?.direction || "long",
-      riskReward: tradeSetup?.riskReward || undefined,
+      riskReward: tradeSetup?.riskReward || null,
       timeframes: tradeSetup?.timeframes || ["4h"],
     },
 

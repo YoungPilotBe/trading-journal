@@ -14,7 +14,7 @@ export const createTradeSetupWithSnapshot = mutation({
       v.literal("closed"),
       v.literal("reviewed")
     ),
-    riskReward: v.optional(v.number()),
+    riskReward: v.union(v.number(), v.null()),
     timeframes: v.array(v.string()),
     imageId: v.id("tradingview_images"), // Link to the image that triggered this trade setup
   },
