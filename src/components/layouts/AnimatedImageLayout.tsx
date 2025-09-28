@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup";
 import { cn } from "@/lib/utils";
 import { type PageVariants } from "@/types/animations";
 import { useConvexMutation } from "@convex-dev/react-query";
@@ -79,6 +80,8 @@ export const AnimatedImageLayout = forwardRef<
 
     const targetStyle = getCurrentTarget();
 
+    const { mutateAsync: deleteTradeSetup } = useDeleteTradeSetup();
+
     // Navigation handlers
     const handleAddTradeClick = useCallback(() => {
       if (searchParams?.imageId) {
@@ -99,7 +102,13 @@ export const AnimatedImageLayout = forwardRef<
     }, [asset, navigate, searchParams.imageId]);
 
     const handleCancel = async () => {
-      await deleteImage({ id: imageId as Id<"tradingview_images"> });
+      if (searchParams.tradeSetupId) {
+        await deleteTradeSetup({
+          tradeSetupId: searchParams.tradeSetupId as Id<"trade_setups">,
+        });
+      } else {
+        await deleteImage({ id: imageId as Id<"tradingview_images"> });
+      }
       await navigate({ to: "/dashboard" });
     };
 

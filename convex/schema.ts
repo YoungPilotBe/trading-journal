@@ -104,4 +104,11 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_image_id", ["imageId"])
     .index("by_trade_setup_and_created_at", ["tradeSetupId", "createdAt"]),
+
+  base_titles: defineTable({
+    title: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_title", ["title"])
+    .index("by_created_at", ["createdAt"]),
 });

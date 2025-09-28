@@ -3,10 +3,12 @@ import { Id } from "convex/_generated/dataModel";
 import z from "zod";
 
 export const addTradeSetupSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(100, "Title must be less than 100 characters"),
+  title: z.nullable(
+    z
+      .string()
+      .min(1, "Title is required")
+      .max(100, "Title must be less than 100 characters")
+  ),
   status: z.enum(["idea", "watching", "executed", "closed", "reviewed"]),
   direction: z.enum(["long", "short"]),
   trade_template: z.custom<Id<"trade_templates">>(),

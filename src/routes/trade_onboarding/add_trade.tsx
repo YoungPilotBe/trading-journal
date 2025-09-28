@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { statusOptions } from "@/config/constants";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
+import { useGenerateSmartTitle } from "@/hooks/base_titles/use-generate-smart-title";
 import { useCreateSnapshot } from "@/hooks/snapshots/use-create-snapshot";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
@@ -69,6 +70,9 @@ function RouteComponent() {
       snapshotId: snapshotId as Id<"snapshots">,
     });
 
+  const { data: smartTitle, isPending: isPendingGeneratingSmartTitle } =
+    useGenerateSmartTitle({});
+
   const { data: existingSnapshot, isLoading: isLoadingSnapshot } =
     useGetSnapshot({ id: snapshotId as Id<"snapshots"> });
 
@@ -125,8 +129,13 @@ function RouteComponent() {
 
   // Initialize form with react-hook-form - now with proper default values
   const form = useForm({
+    validators: {
+      onChange: addTradeSetupSchema,
+    },
+    onSubmitInvalid: (data) => console.log(data),
+
     defaultValues: {
-      title: existingTradeSetup?.title || "",
+      title: existingTradeSetup?.title || null,
       status: existingSnapshot?.status || ("idea" as const),
       direction: existingTradeSetup?.direction || ("long" as const),
       riskReward: existingTradeSetup?.riskReward || null,
@@ -134,12 +143,6 @@ function RouteComponent() {
     } as const,
 
     onSubmit: async ({ value: formData }) => {
-      // Validate the form data using our schema
-      const validationResult = addTradeSetupSchema.safeParse(formData);
-      if (!validationResult.success) {
-        throw new Error("Form validation failed");
-      }
-
       if (existingTradeSetup) {
         if (attach) {
           return await createSnapshot({
@@ -150,13 +153,17 @@ function RouteComponent() {
         }
         return await updateTradeSetup({
           ...formData,
+          title: formData.title as string,
           id: existingTradeSetup._id,
           snapshotId: snapshotId as Id<"snapshots">,
         });
       } else {
+        if (!smartTitle) throw new Error("A title or smart title is required");
+
         // Create a new trade setup with the form data
         return await createTradeSetup({
           ...formData,
+          title: formData.title || (smartTitle.title as string),
           asset: data?.asset || "Unknown",
           imageId: imageId as Id<"tradingview_images">, // Link to the current image
         });
@@ -231,12 +238,14 @@ function RouteComponent() {
                   <input
                     id={field.name}
                     name={field.name}
-                    value={field.state.value}
+                    value={field.state.value ?? ""}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
-                    disabled={fieldDisabledMap.title}
+                    disabled={
+                      fieldDisabledMap.title || isPendingGeneratingSmartTitle
+                    }
                     className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="Phoenix"
+                    placeholder={smartTitle?.title}
                   />
                 </div>
               )}
