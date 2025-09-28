@@ -84,7 +84,7 @@ export const AnimatedImageLayout = forwardRef<
       if (searchParams?.imageId) {
         navigate({
           to: "/trade_onboarding/add_trade",
-          search: { imageId: searchParams.imageId },
+          search: { imageId: searchParams.imageId, onboarding: true },
         });
       }
     }, [navigate, searchParams]);
@@ -93,7 +93,7 @@ export const AnimatedImageLayout = forwardRef<
       if (searchParams?.imageId) {
         navigate({
           to: "/trade_onboarding/attach_trade",
-          search: { imageId: searchParams.imageId, asset },
+          search: { imageId: searchParams.imageId, asset, onboarding: true },
         });
       }
     }, [asset, navigate, searchParams.imageId]);
@@ -198,13 +198,15 @@ export const AnimatedImageLayout = forwardRef<
 
           {children}
         </div>
-        <Button
-          variant="ghost"
-          onClick={handleCancel}
-          className="absolute bottom-40 left-1/2 -translate-x-1/2 starting:opacity-0 starting:translate-y-5 transition-all opacity-100 delay-[1500] duration-500 text-muted-foreground font-mono font-normal tracking-wide"
-        >
-          Cancel
-        </Button>
+        {searchParams.onboarding && (
+          <Button
+            variant="ghost"
+            onClick={handleCancel}
+            className="absolute bottom-40 left-1/2 -translate-x-1/2 starting:opacity-0 starting:translate-y-5 transition-all opacity-100 delay-[1500] duration-500 text-muted-foreground font-mono font-normal tracking-wide"
+          >
+            Cancel
+          </Button>
+        )}
       </>
     );
   }

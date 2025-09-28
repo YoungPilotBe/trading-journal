@@ -20,6 +20,7 @@ import z from "zod";
 const searchSchema = z.object({
   tradeSetupId: z.string(),
   snapshotId: z.string(),
+  onboarding: z.optional(z.boolean()),
 });
 
 export const Route = createFileRoute("/trade_onboarding/add_template")({

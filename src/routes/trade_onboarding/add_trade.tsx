@@ -19,6 +19,7 @@ const searchSchema = z.object({
   imageId: z.string(),
   snapshotId: z.optional(z.string()),
   attach: z.optional(z.boolean()),
+  onboarding: z.optional(z.boolean()),
 });
 
 const directionOptions = [

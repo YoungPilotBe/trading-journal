@@ -9,6 +9,7 @@ import { ChevronLeft } from "lucide-react";
 import { z } from "zod";
 const searchSchema = z.object({
   imageId: z.string(),
+  onboarding: z.optional(z.boolean()),
 });
 
 export const Route = createFileRoute("/trade_onboarding")({

@@ -33,6 +33,7 @@ export const useAutoRedirect = () => {
         to: "/trade_onboarding",
         search: {
           imageId: redirectData.imageId,
+          onboarding: true,
         },
         // Add replace: true to avoid adding to history stack for better UX
         replace: true,

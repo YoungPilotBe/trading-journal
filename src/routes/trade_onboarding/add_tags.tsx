@@ -23,6 +23,7 @@ const searchSchema = z.object({
   snapshotId: z.string(),
   attach: z.optional(z.boolean()),
   viewOnly: z.optional(z.boolean()),
+  onboarding: z.optional(z.boolean()),
 });
 
 export const Route = createFileRoute("/trade_onboarding/add_tags")({
