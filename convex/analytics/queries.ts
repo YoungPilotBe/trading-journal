@@ -159,10 +159,15 @@ export const findSimilarSnapshots = query({
         throw new Error("Target trade setup not found");
       }
 
-      // Fetch all snapshots from the database (excluding the target)
+      // Fetch all snapshots from the database (excluding all snapshots from the same trade setup)
       let allSnapshots = await ctx.db
         .query("snapshots")
+        // Filter for not the same snapshot
         .filter((q) => q.neq(q.field("_id"), snapshotId))
+        // Filter for not the same trade setup
+        .filter((q) =>
+          q.neq(q.field("tradeSetupId"), targetSnapshot.tradeSetupId)
+        )
         .collect();
 
       // Apply filters

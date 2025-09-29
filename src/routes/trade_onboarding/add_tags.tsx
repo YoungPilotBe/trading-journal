@@ -31,7 +31,7 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
     deps: { tradeSetupId, snapshotId },
   }) => {
     // Prefetch both tradeSetup and snapshot data
-    const [tradeSetup, snapshot] = await Promise.all([
+    const [tradeSetup, snapshot, previousSnapshot] = await Promise.all([
       queryClient.ensureQueryData(
         convexQuery(api.trade_setup.queries.getTradeSetup, {
           id: tradeSetupId as Id<"trade_setups">,
@@ -42,11 +42,17 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
           id: snapshotId as Id<"snapshots">,
         })
       ),
+      queryClient.ensureQueryData(
+        convexQuery(api.snaphot.queries.getPreviousSnapshot, {
+          id: snapshotId as Id<"snapshots">,
+        })
+      ),
     ]);
 
     return {
       tradeSetup,
       snapshot,
+      previousSnapshot,
     };
   },
 });
@@ -92,10 +98,13 @@ function TreeContent({ viewOnly }: { viewOnly: boolean }) {
 
 function RouteComponent() {
   const { viewOnly = false } = Route.useSearch();
-  const { tradeSetup, snapshot } = Route.useLoaderData();
-
+  const { tradeSetup, snapshot, previousSnapshot } = Route.useLoaderData();
+  if (!snapshot || !tradeSetup || !previousSnapshot) return;
   // Create initial tree state from snapshot data
-  const initialTreeState = createTreeStateFromSnapshot(snapshot!);
+  const initialTreeState = createTreeStateFromSnapshot(
+    snapshot,
+    previousSnapshot
+  );
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -104,8 +113,8 @@ function RouteComponent() {
         <div className="flex flex-col items-start space-y-2 mt-2">
           <span className="text-white font-light font-mono">Tags</span>
           <TreeProvider
-            tradeSetup={{ ...tradeSetup, ...(snapshot?.tags || {}) }}
-            selectedTags={initialTreeState?.selectedNodes}
+            tradeSetup={tradeSetup}
+            selectedTags={initialTreeState.selectedNodes}
             initialTreeState={initialTreeState}
             strategy={generateStrategy(snapshot!.status)}
           >

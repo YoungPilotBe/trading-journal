@@ -630,7 +630,25 @@ function toggleNodeArray(
   }
 }
 
-function createTreeStateFromSnapshot(snapshot: Doc<"snapshots">) {
+function createTreeStateFromSnapshot(
+  snapshot: Doc<"snapshots">,
+  previousSnapshot: Doc<"snapshots">
+) {
+  // If no tags exist in current snapshot, use previous snapshot for tree state
+  if (!snapshot.tags || Object.keys(snapshot.tags).length === 0) {
+    if (previousSnapshot?.tags_config) {
+      return {
+        expandedKeys: new Set<string>(
+          previousSnapshot.tags_config.expandedKeys || ["strategy"]
+        ),
+        selectedNodes: new Set<string>(
+          previousSnapshot.tags_config.selectedNodes || []
+        ),
+        tags: previousSnapshot.tags || {},
+      };
+    }
+  }
+
   if (snapshot?.tags_config) {
     // Restore complete tree state from saved config
     return {
@@ -650,6 +668,26 @@ function createTreeStateFromSnapshot(snapshot: Doc<"snapshots">) {
   };
 }
 
+function mergeTagConfigs(
+  config1?: { expandedKeys?: string[]; selectedNodes?: string[] },
+  config2?: { expandedKeys?: string[]; selectedNodes?: string[] }
+): { expandedKeys: Set<string>; selectedNodes: Set<string> } {
+  const mergedExpandedKeys = new Set<string>([
+    ...(config1?.expandedKeys || []),
+    ...(config2?.expandedKeys || []),
+  ]);
+
+  const mergedSelectedNodes = new Set<string>([
+    ...(config1?.selectedNodes || []),
+    ...(config2?.selectedNodes || []),
+  ]);
+
+  return {
+    expandedKeys: mergedExpandedKeys,
+    selectedNodes: mergedSelectedNodes,
+  };
+}
+
 export {
   convertSelectionToJson,
   convertSelectionToJsonArray,
@@ -664,6 +702,7 @@ export {
   getTreeDepth,
   // Array wrapper functions
   getTreeDepthArray,
+  mergeTagConfigs,
   setNestedValue,
   toggleBranchExpansion,
   toggleBranchExpansionArray,

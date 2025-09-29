@@ -87,3 +87,28 @@ export const getMostRecentSnapshots = query({
     return mostRecentSnapshots;
   },
 });
+
+export const getPreviousSnapshot = query({
+  args: {
+    id: v.id("snapshots"),
+  },
+  handler: async (ctx, { id }) => {
+    // First get the current snapshot to find its tradeSetupId and creation time
+    const currentSnapshot = await ctx.db.get(id);
+    if (!currentSnapshot) {
+      return null;
+    }
+
+    // Find the previous snapshot in the same trade setup
+    return await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", currentSnapshot.tradeSetupId)
+      )
+      .filter((q) =>
+        q.lt(q.field("_creationTime"), currentSnapshot._creationTime)
+      )
+      .order("desc")
+      .first();
+  },
+});
