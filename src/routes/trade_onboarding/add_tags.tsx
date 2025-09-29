@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Timeframe } from "@/config/timeframe-order";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { TreeProvider, useTreeState } from "@/tree/TreeContext";
 import { generateStrategy } from "@/tree/strategies";
@@ -116,7 +117,10 @@ function RouteComponent() {
             tradeSetup={tradeSetup}
             selectedTags={initialTreeState.selectedNodes}
             initialTreeState={initialTreeState}
-            strategy={generateStrategy(snapshot!.status)}
+            strategy={generateStrategy(
+              snapshot!.status,
+              (tradeSetup?.timeframes || []) as Timeframe[]
+            )}
           >
             <TreeContent viewOnly={viewOnly} />
           </TreeProvider>

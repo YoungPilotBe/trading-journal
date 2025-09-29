@@ -1,7 +1,8 @@
+import type { Timeframe } from "../../config/timeframe-order";
 import type { TreeNode } from "../tree.utils";
 import { closedStrategyTree } from "./closed.constants";
 import { executedStrategyTree } from "./executed.constants";
-import { ideaStrategyTree } from "./idea.constants";
+import { createIdeaStrategyTree, ideaStrategyTree } from "./idea.constants";
 import { reviewedStrategyTree } from "./reviewed.constants";
 import { watchingStrategyTree } from "./watching.constants";
 
@@ -22,8 +23,17 @@ export const strategyTreeMap: Record<TradeStatus, TreeNode[]> = {
   reviewed: ideaStrategyTree,
 };
 
-// Helper function to get strategy tree by status
-export const generateStrategy = (status: TradeStatus): TreeNode[] => {
+// Helper function to get strategy tree by status with optional timeframes
+export const generateStrategy = (
+  status: TradeStatus,
+  availableTimeframes?: Timeframe[]
+): TreeNode[] => {
+  // For "idea" status, use the dynamic factory function if timeframes are provided
+  if (status === "idea" && availableTimeframes?.length) {
+    return createIdeaStrategyTree(availableTimeframes);
+  }
+
+  // Fall back to static tree for other statuses or when no timeframes provided
   return strategyTreeMap[status];
 };
 

@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   BarChart3,
+  Clock,
   Droplets,
   GitBranch,
   LogIn,
@@ -16,17 +17,72 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import type { Timeframe } from "../../config/timeframe-order";
 import {
-  createContradictingBranch,
   createDemandRangeChildren,
   createDiscountPremiumPricing,
   createSupplyDemandOBIMChildren,
   createSupplyRangeChildren,
   customPrice,
 } from "../tree.constants";
-import type { TreeNode } from "../tree.utils";
+import { createTimeframeChildren, type TreeNode } from "../tree.utils";
 
-export const ideaStrategyTree: TreeNode[] = [
+// Factory function to create timeframe-specific bullish/bearish options
+const createTimeframeBullishBearishChildren = (
+  prefix: string,
+  availableTimeframes: Timeframe[] = []
+): TreeNode[] => {
+  // Create bullish timeframe options
+  const bullishNode: TreeNode = {
+    key: `${prefix}_bullish`,
+    title: "Bullish",
+    icon: TrendingUp,
+    iconClassName: "text-emerald-500",
+    anti: [`${prefix}_bearish`],
+    children: availableTimeframes.map((timeframe) => ({
+      key: `${prefix}_bullish_${timeframe}`,
+      title: timeframe,
+      icon: Clock,
+      iconClassName: "text-emerald-500/70",
+      // Anti keys prevent selecting multiple timeframes for the same direction
+      anti: availableTimeframes
+        .filter((tf) => tf !== timeframe)
+        .flatMap((tf) => [
+          `${prefix}_bullish_${tf}`,
+          `${prefix}_bearish_${tf}`,
+        ]),
+    })),
+  };
+
+  // Create bearish timeframe options
+  const bearishNode: TreeNode = {
+    key: `${prefix}_bearish`,
+    title: "Bearish",
+    icon: TrendingDown,
+    iconClassName: "text-rose-500",
+    anti: [`${prefix}_bullish`],
+    children: availableTimeframes.map((timeframe) => ({
+      key: `${prefix}_bearish_${timeframe}`,
+      title: timeframe,
+      icon: Clock,
+      iconClassName: "text-rose-500/70",
+      // Anti keys prevent selecting multiple timeframes for the same direction
+      anti: availableTimeframes
+        .filter((tf) => tf !== timeframe)
+        .flatMap((tf) => [
+          `${prefix}_bullish_${tf}`,
+          `${prefix}_bearish_${tf}`,
+        ]),
+    })),
+  };
+
+  return [bullishNode, bearishNode];
+};
+
+// Factory function to create the complete strategy tree with dynamic timeframes
+export const createIdeaStrategyTree = (
+  availableTimeframes: Timeframe[] = []
+): TreeNode[] => [
   {
     key: "market_structure",
     title: "MS",
@@ -39,7 +95,31 @@ export const ideaStrategyTree: TreeNode[] = [
         icon: Activity,
         iconClassName: "",
         children: [
-          ...createContradictingBranch("swing", ["bullish", "bearish"]),
+          {
+            key: `swing_bullish`,
+            title: "Bullish",
+            icon: TrendingUp,
+            iconClassName: "text-emerald-500",
+            anti: [`swing_bearish`],
+            children: createTimeframeChildren(
+              `swing_bullish`,
+              availableTimeframes,
+              "text-emerald-500/70"
+            ),
+          },
+
+          {
+            key: `swing_bearish`,
+            title: "Bearish",
+            icon: TrendingDown,
+            iconClassName: "text-rose-500",
+            anti: [`swing_bullish`],
+            children: createTimeframeChildren(
+              `swing_bearish`,
+              availableTimeframes,
+              "text-rose-500/70"
+            ),
+          },
           {
             key: "swing_range",
             title: "Range",
@@ -53,7 +133,10 @@ export const ideaStrategyTree: TreeNode[] = [
         icon: GitBranch,
         iconClassName: "",
         children: [
-          ...createContradictingBranch("fractal", ["bullish", "bearish"]),
+          ...createTimeframeBullishBearishChildren(
+            "fractal",
+            availableTimeframes
+          ),
           {
             key: "fractal_range",
             title: "Range",
@@ -293,3 +376,6 @@ export const ideaStrategyTree: TreeNode[] = [
     ],
   },
 ];
+
+// Static tree for backward compatibility (uses empty timeframes array)
+export const ideaStrategyTree: TreeNode[] = createIdeaStrategyTree();

@@ -1,5 +1,6 @@
+import { Timeframe } from "@/config/timeframe-order";
 import { Doc } from "convex/_generated/dataModel";
-import { LucideIcon } from "lucide-react";
+import { Clock, LucideIcon } from "lucide-react";
 import { z } from "zod";
 
 // Custom value transformation function type
@@ -687,6 +688,27 @@ function mergeTagConfigs(
     selectedNodes: mergedSelectedNodes,
   };
 }
+// Create timeframe children for a given direction prefix
+export const createTimeframeChildren = (
+  directionPrefix: string,
+  availableTimeframes: Timeframe[] = [],
+  iconClassName?: string
+): TreeNode[] => {
+  return availableTimeframes.map((timeframe) => ({
+    key: `${directionPrefix}_${timeframe}`,
+    title: timeframe,
+    icon: Clock,
+    iconClassName: iconClassName || "text-muted-foreground",
+    // Anti keys prevent selecting multiple timeframes across all directions
+    anti: availableTimeframes
+      .filter((tf) => tf !== timeframe)
+      .flatMap((tf) => [
+        // Remove the direction suffix to get the base prefix (swing, fractal, etc.)
+        directionPrefix.replace(/_[^_]+$/, `_bullish_${tf}`),
+        directionPrefix.replace(/_[^_]+$/, `_bearish_${tf}`),
+      ]),
+  }));
+};
 
 export {
   convertSelectionToJson,
