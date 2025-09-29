@@ -16,10 +16,10 @@ export type TradeStatus =
 // Map of status to strategy trees
 export const strategyTreeMap: Record<TradeStatus, TreeNode[]> = {
   idea: ideaStrategyTree,
-  watching: watchingStrategyTree,
-  executed: executedStrategyTree,
-  closed: closedStrategyTree,
-  reviewed: reviewedStrategyTree,
+  watching: ideaStrategyTree,
+  executed: ideaStrategyTree,
+  closed: ideaStrategyTree,
+  reviewed: ideaStrategyTree,
 };
 
 // Helper function to get strategy tree by status

@@ -30,6 +30,7 @@ import type * as snaphot_services from "../snaphot/services.js";
 import type * as template_internal from "../template/internal.js";
 import type * as template_mutation from "../template/mutation.js";
 import type * as template_queries from "../template/queries.js";
+import type * as testing_internal from "../testing/internal.js";
 import type * as trade_setup_internal from "../trade_setup/internal.js";
 import type * as trade_setup_mutations from "../trade_setup/mutations.js";
 import type * as trade_setup_queries from "../trade_setup/queries.js";
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   "template/internal": typeof template_internal;
   "template/mutation": typeof template_mutation;
   "template/queries": typeof template_queries;
+  "testing/internal": typeof testing_internal;
   "trade_setup/internal": typeof trade_setup_internal;
   "trade_setup/mutations": typeof trade_setup_mutations;
   "trade_setup/queries": typeof trade_setup_queries;
