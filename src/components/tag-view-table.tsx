@@ -1,6 +1,6 @@
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
-import { EffectsProvider } from "@/tree/EffectsContext";
+import { TreeProvider } from "@/tree/TreeContext";
 import Tree from "@/tree/tree";
 import { createTreeStateFromSnapshot } from "@/tree/tree.utils";
 import { Id } from "convex/_generated/dataModel";
@@ -21,12 +21,13 @@ const TagViewTable = ({ snapshotId, tradeSetupId, ...treeProps }: Props) => {
   }, [snapshot]);
 
   return (
-    <EffectsProvider
+    <TreeProvider
       tradeSetup={{ ...tradeSetup, ...(snapshot?.tags || {}) }}
       selectedTags={treeState?.selectedNodes}
+      initialTreeState={treeState}
     >
-      <Tree initialTreeState={treeState} viewOnly {...treeProps} />
-    </EffectsProvider>
+      <Tree viewOnly {...treeProps} />
+    </TreeProvider>
   );
 };
 

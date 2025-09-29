@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useEffect } from "react";
 
 interface SnapshotImageProps {
   snapshotId: string;
@@ -24,6 +25,10 @@ export function SnapshotImage({
   const { data: image, isLoading: isLoadingImage } = useGetImageBySnapshot({
     snapshotId: snapshotId as Id<"snapshots">,
   });
+
+  useEffect(() => {
+    console.log({ snapshotId, tradeSetupId });
+  }, [snapshotId, tradeSetupId]);
 
   // Get all snapshots for this trade setup to enable navigation
   const { data: allSnapshots, isLoading: isLoadingAllSnapshots } =
@@ -65,7 +70,8 @@ export function SnapshotImage({
             onClick={() =>
               navigate({
                 to: "/dashboard/setup",
-                search: { tradeSetupId, snapshotId, fullscreen: true },
+                search: { tradeSetupId, snapshotId, image: "preview" },
+                replace: true,
               })
             }
             style={{ maxWidth: "100%", maxHeight: "100%" }}
@@ -76,7 +82,7 @@ export function SnapshotImage({
             <Link
               to="/dashboard/setup"
               search={{ tradeSetupId, snapshotId: previousSnapshot._id }}
-              preload="render"
+              replace
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
               onClick={(e) => e.stopPropagation()}
             >
@@ -140,7 +146,7 @@ export function SnapshotImage({
                 search={{
                   tradeSetupId,
                   snapshotId: previousSnapshot._id,
-                  fullscreen: true,
+                  image: "preview",
                 }}
                 preload="render"
                 className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all duration-200 z-10"
@@ -156,7 +162,7 @@ export function SnapshotImage({
                 search={{
                   tradeSetupId,
                   snapshotId: nextSnapshot._id,
-                  fullscreen: true,
+                  image: "preview",
                 }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all duration-200 z-10"
               >

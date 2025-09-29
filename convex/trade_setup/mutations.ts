@@ -8,7 +8,7 @@ export const updateTradeSetup = mutation({
   args: {
     id: v.id("trade_setups"),
     snapshotId: v.id("snapshots"),
-    title: v.union(v.string(), v.null()),
+    title: v.optional(v.union(v.string(), v.null())),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     status: v.optional(statusUnion),
     trade_template: v.optional(v.id("trade_templates")),

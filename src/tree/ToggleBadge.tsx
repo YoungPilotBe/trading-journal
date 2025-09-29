@@ -1,16 +1,14 @@
-import { useFieldEffect } from "@/tree/EffectsContext";
+import { useFieldEffect, useTreeToggle } from "@/tree/TreeContext";
+import { findNodeByKeyArray } from "@/tree/tree.utils";
 import { clsx } from "clsx";
 import { ChevronRight, LucideIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 import { TREE_ICON_BASE_CLASS } from "./tree.constants";
 
 interface SimplifiedToggleBadgeProps
   extends Omit<
     React.ButtonHTMLAttributes<HTMLButtonElement>,
-    "onChange" | "onClick" | "value"
+    "onChange" | "onClick"
   > {
-  value: boolean;
-  onChange: () => void;
   label: string;
   badgeStyle?: string;
   fieldName: string;
@@ -18,33 +16,39 @@ interface SimplifiedToggleBadgeProps
   iconClassName?: string;
   isDir?: boolean;
   readOnly?: boolean;
+  isBranch?: boolean;
 }
 
 export const ToggleBadge = ({
-  value,
-  onChange,
   label,
   badgeStyle = "border-muted text-muted-foreground",
   fieldName,
   icon,
   iconClassName = "",
   isDir = false,
+  isBranch = false,
   readOnly = false,
   ...buttonProps
 }: SimplifiedToggleBadgeProps) => {
-  const [isToggled, setIsToggled] = useState<boolean>(Boolean(value));
   const effect = useFieldEffect(fieldName);
+  const { toggleNode, strategy, treeState } = useTreeToggle();
 
-  useEffect(() => {
-    setIsToggled(Boolean(value));
-  }, [value]);
+  // Get current state from context
+  const node = findNodeByKeyArray(strategy, fieldName);
+  const hasAntiSelection = Boolean(node?.anti?.length);
+  const isSelected = treeState.selectedNodes.has(fieldName);
+  const isExpanded = treeState.expandedKeys.has(fieldName);
+
+  // Determine the actual toggle state based on node type
+  const isToggled = isBranch
+    ? hasAntiSelection
+      ? isSelected
+      : isExpanded
+    : isSelected;
 
   const handleToggle = () => {
     if (buttonProps.disabled || readOnly) return;
-
-    const newValue = !isToggled;
-    setIsToggled(newValue);
-    onChange();
+    toggleNode(fieldName, isBranch, hasAntiSelection);
   };
 
   // Render the Lucide icon if provided

@@ -3,7 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   createBrowserHistory,
-  createHashHistory,
+  createMemoryHistory,
   createRouter as createTanStackRouter,
 } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
@@ -45,12 +45,14 @@ export function createRouter() {
 
   // Create appropriate history based on environment
   const history = (() => {
-    // Check if we're running in Electron
+    // Check if we're running in Electron or production
     if (import.meta.env.VITE_NODE_ENV === "production") {
-      // Use hash history in Electron for better compatibility
-      return createHashHistory();
+      // Use hash history in production/Electron for better compatibility
+      console.log("Using memory history for production/Electron");
+      return createMemoryHistory();
     } else {
-      // Use browser history in regular browser environment
+      // Use browser history in development
+      console.log("Using browser history for development");
       return createBrowserHistory();
     }
   })();

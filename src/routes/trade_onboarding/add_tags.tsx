@@ -1,22 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
-import { EffectsProvider } from "@/tree/EffectsContext";
+import { TreeProvider, useTreeState } from "@/tree/TreeContext";
 import { generateStrategy } from "@/tree/strategies";
 import { Tree } from "@/tree/tree";
 import { createTreeStateFromSnapshot } from "@/tree/tree.utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
-import { useState } from "react";
 import { z } from "zod";
 import { api } from "../../../convex/_generated/api";
-
-// Complete tree state that includes both UI state and data
-interface TreeState {
-  expandedKeys: Set<string>; // Which branch nodes are expanded
-  selectedNodes: Set<string>; // Which leaf nodes are selected
-  tags: Record<string, unknown>; // JSON representation of selected tags
-}
 
 const searchSchema = z.object({
   tradeSetupId: z.string(),
@@ -59,21 +51,12 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
   },
 });
 
-function RouteComponent() {
-  const { snapshotId, viewOnly = false } = Route.useSearch();
-  const { tradeSetup, snapshot } = Route.useLoaderData();
+// Component that uses tree state from context
+function TreeContent({ viewOnly }: { viewOnly: boolean }) {
+  const { snapshotId } = Route.useSearch();
   const navigate = useNavigate();
   const { mutateAsync: updateSnapshot, isPending } = useUpdateSnapshot();
-
-  // Initialize tree state from snapshot data
-  const [treeState, setTreeState] = useState(() =>
-    createTreeStateFromSnapshot(snapshot!)
-  );
-
-  // Handle tree state changes from the Tree component
-  const handleTreeStateChange = (newState: TreeState) => {
-    setTreeState(newState);
-  };
+  const treeState = useTreeState();
 
   // Save both tags and complete tree state configuration
   const handleSubmit = async () => {
@@ -92,33 +75,43 @@ function RouteComponent() {
   };
 
   return (
+    <>
+      <Tree viewOnly={viewOnly} />
+      {!viewOnly && (
+        <Button
+          className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
+          onClick={handleSubmit}
+          disabled={isPending}
+        >
+          {isPending ? "Saving..." : "Update"}
+        </Button>
+      )}
+    </>
+  );
+}
+
+function RouteComponent() {
+  const { viewOnly = false } = Route.useSearch();
+  const { tradeSetup, snapshot } = Route.useLoaderData();
+
+  // Create initial tree state from snapshot data
+  const initialTreeState = createTreeStateFromSnapshot(snapshot!);
+
+  return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Right-side form panel - similar to add_trade layout */}
       <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto ">
         <div className="flex flex-col items-start space-y-2 mt-2">
           <span className="text-white font-light font-mono">Tags</span>
-          <EffectsProvider
+          <TreeProvider
             tradeSetup={{ ...tradeSetup, ...(snapshot?.tags || {}) }}
-            selectedTags={treeState?.selectedNodes}
+            selectedTags={initialTreeState?.selectedNodes}
+            initialTreeState={initialTreeState}
+            strategy={generateStrategy(snapshot!.status)}
           >
-            <Tree
-              initialTreeState={treeState}
-              onTreeStateChange={handleTreeStateChange}
-              viewOnly={viewOnly}
-              strategy={generateStrategy(snapshot!.status)}
-            />
-          </EffectsProvider>
+            <TreeContent viewOnly={viewOnly} />
+          </TreeProvider>
         </div>
-
-        {!viewOnly && (
-          <Button
-            className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
-            onClick={handleSubmit}
-            disabled={isPending}
-          >
-            {isPending ? "Saving..." : snapshot?.tags ? "Update" : "Proceed"}
-          </Button>
-        )}
       </div>
     </div>
   );

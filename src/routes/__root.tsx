@@ -6,13 +6,17 @@ import { DialogProvider } from "@/contexts/dialog-context";
 import globals from "@/globals.css?url";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import {
+  TanStackRouterDevtools,
+  TanStackRouterDevtoolsInProd,
+} from "@tanstack/react-router-devtools";
 
 const RootLayout = () => (
   <DialogProvider>
     <DialogManager />
     <Outlet />
     <TanStackRouterDevtools />
+    <TanStackRouterDevtoolsInProd />
   </DialogProvider>
 );
 

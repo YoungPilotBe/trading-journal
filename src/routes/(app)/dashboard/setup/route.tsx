@@ -45,7 +45,7 @@ import { z } from "zod";
 const searchSchema = z.object({
   tradeSetupId: z.string(),
   snapshotId: z.string(),
-  fullscreen: z.boolean().optional(),
+  image: z.optional(z.enum(["preview"])),
 });
 
 const directionOptions = [
@@ -89,7 +89,7 @@ export const Route = createFileRoute("/(app)/dashboard/setup")({
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const { tradeSetupId, snapshotId, fullscreen } = Route.useSearch();
+  const { tradeSetupId, snapshotId, image } = Route.useSearch();
 
   const { openDialog } = useDialog();
 
@@ -598,7 +598,7 @@ function RouteComponent() {
           <SnapshotImage
             snapshotId={snapshotId}
             tradeSetupId={tradeSetupId}
-            initialFullscreen={fullscreen ?? false}
+            initialFullscreen={image === "preview" || false}
             className="h-full"
           />
           <SnapshotHistory

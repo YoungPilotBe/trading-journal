@@ -1,13 +1,6 @@
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useGetSnapshotByTradeSetupId } from "@/hooks/snapshots/use-get-snapshot-by-trade-setup";
 import { useNavigate } from "@tanstack/react-router";
 import { Doc, Id } from "convex/_generated/dataModel";
-import { format } from "date-fns";
 import { useCallback, useMemo, useState } from "react";
 
 // Constants
@@ -215,62 +208,62 @@ function SnapshotDot({
   );
 }
 
-function SnapshotTooltipContent({
-  snapshot,
-  isCurrentSnapshot,
-  isLoading,
-}: {
-  snapshot: SnapshotWithPosition;
-  isCurrentSnapshot: boolean;
-  isLoading: boolean;
-}) {
-  const getStatusDotClassName = () => {
-    const baseClasses = "w-2 h-2 rounded-full";
+// function SnapshotTooltipContent({
+//   snapshot,
+//   isCurrentSnapshot,
+//   isLoading,
+// }: {
+//   snapshot: SnapshotWithPosition;
+//   isCurrentSnapshot: boolean;
+//   isLoading: boolean;
+// }) {
+//   const getStatusDotClassName = () => {
+//     const baseClasses = "w-2 h-2 rounded-full";
 
-    if (isCurrentSnapshot) return `${baseClasses} bg-green-400`;
-    if (isLoading) return `${baseClasses} bg-blue-400 animate-pulse`;
-    return `${baseClasses} bg-gray-400`;
-  };
+//     if (isCurrentSnapshot) return `${baseClasses} bg-green-400`;
+//     if (isLoading) return `${baseClasses} bg-blue-400 animate-pulse`;
+//     return `${baseClasses} bg-gray-400`;
+//   };
 
-  return (
-    <TooltipContent
-      side="top"
-      sideOffset={10}
-      className="bg-gradient-to-t from-background to-sidebar text-gray-100 border-muted rounded-none"
-    >
-      {/* Date line */}
-      <div className="flex items-center space-x-2 font-mono">
-        <div className={getStatusDotClassName()} />
-        <span className="text-[11px] tracking-wide">
-          {format(new Date(snapshot.createdAt), "MMM d, yyyy")}
-        </span>
-      </div>
+//   return (
+//     <TooltipContent
+//       side="top"
+//       sideOffset={10}
+//       className="bg-gradient-to-t from-background to-sidebar text-gray-100 border-muted rounded-none"
+//     >
+//       {/* Date line */}
+//       <div className="flex items-center space-x-2 font-mono">
+//         <div className={getStatusDotClassName()} />
+//         <span className="text-[11px] tracking-wide">
+//           {format(new Date(snapshot.createdAt), "MMM d, yyyy")}
+//         </span>
+//       </div>
 
-      {/* Time and status line */}
-      <div className="flex items-center space-x-2 font-mono mt-1">
-        <div className="w-2 h-2" /> {/* Spacer */}
-        <span className="text-[10px] text-gray-400">
-          {format(new Date(snapshot.createdAt), "HH:mm:ss")} •{" "}
-          <span className="capitalize">{snapshot.status}</span>
-        </span>
-      </div>
+//       {/* Time and status line */}
+//       <div className="flex items-center space-x-2 font-mono mt-1">
+//         <div className="w-2 h-2" /> {/* Spacer */}
+//         <span className="text-[10px] text-gray-400">
+//           {format(new Date(snapshot.createdAt), "HH:mm:ss")} •{" "}
+//           <span className="capitalize">{snapshot.status}</span>
+//         </span>
+//       </div>
 
-      {/* Status indicator line */}
-      {(isCurrentSnapshot || isLoading) && (
-        <div className="flex items-center space-x-2 font-mono mt-1">
-          <div className="w-2 h-2" /> {/* Spacer */}
-          <span
-            className={`text-[10px] ${
-              isCurrentSnapshot ? "text-green-400" : "text-blue-400"
-            }`}
-          >
-            {isCurrentSnapshot ? "Current" : "Loading..."}
-          </span>
-        </div>
-      )}
-    </TooltipContent>
-  );
-}
+//       {/* Status indicator line */}
+//       {(isCurrentSnapshot || isLoading) && (
+//         <div className="flex items-center space-x-2 font-mono mt-1">
+//           <div className="w-2 h-2" /> {/* Spacer */}
+//           <span
+//             className={`text-[10px] ${
+//               isCurrentSnapshot ? "text-green-400" : "text-blue-400"
+//             }`}
+//           >
+//             {isCurrentSnapshot ? "Current" : "Loading..."}
+//           </span>
+//         </div>
+//       )}
+//     </TooltipContent>
+//   );
+// }
 
 // Main Component
 const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
@@ -288,36 +281,36 @@ const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
   const sortedSnapshots = useSnapshotPositions(snapshots);
 
   return (
-    <TooltipProvider>
-      <div className="w-full h-12 relative px-4 shrink-0">
-        {/* Timeline line */}
-        <div className="absolute top-1/2 left-4 right-4 h-px bg-muted transform -translate-y-1/2 mask-x-from-95%" />
+    // <TooltipProvider>
+    <div className="w-full h-12 relative px-4 shrink-0">
+      {/* Timeline line */}
+      <div className="absolute top-1/2 left-4 right-4 h-px bg-muted transform -translate-y-1/2 mask-x-from-95%" />
 
-        {/* Snapshot dots */}
-        {sortedSnapshots.map((snapshot) => {
-          const isCurrentSnapshot = snapshot._id === snapshotId;
-          const isLoading = loadingSnapshotId === snapshot._id;
+      {/* Snapshot dots */}
+      {sortedSnapshots.map((snapshot) => {
+        const isCurrentSnapshot = snapshot._id === snapshotId;
+        const isLoading = loadingSnapshotId === snapshot._id;
 
-          return (
-            <Tooltip key={snapshot._id}>
-              <TooltipTrigger asChild>
-                <SnapshotDot
-                  snapshot={snapshot}
-                  isCurrentSnapshot={isCurrentSnapshot}
-                  isLoading={isLoading}
-                  onClick={() => handleSnapshotClick(snapshot._id)}
-                />
-              </TooltipTrigger>
-              <SnapshotTooltipContent
-                snapshot={snapshot}
-                isCurrentSnapshot={isCurrentSnapshot}
-                isLoading={isLoading}
-              />
-            </Tooltip>
-          );
-        })}
-      </div>
-    </TooltipProvider>
+        return (
+          // <Tooltip key={snapshot._id}>
+          //   <TooltipTrigger asChild>
+          <SnapshotDot
+            snapshot={snapshot}
+            isCurrentSnapshot={isCurrentSnapshot}
+            isLoading={isLoading}
+            onClick={() => handleSnapshotClick(snapshot._id)}
+          />
+          //   </TooltipTrigger>
+          //   <SnapshotTooltipContent
+          //     snapshot={snapshot}
+          //     isCurrentSnapshot={isCurrentSnapshot}
+          //     isLoading={isLoading}
+          //   />
+          // </Tooltip>
+        );
+      })}
+    </div>
+    // </TooltipProvider>
   );
 };
 

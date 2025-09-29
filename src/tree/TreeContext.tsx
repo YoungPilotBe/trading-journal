@@ -1,6 +1,13 @@
-import { conditionalEffectsConfig } from "@/tree/tree.constants";
+import { conditionalEffectsConfig, strategyTree } from "@/tree/tree.constants";
+import type { TreeNode } from "@/tree/tree.utils";
+import {
+  convertSelectionToJsonArray,
+  findNodePathArray,
+  setNestedValue,
+  toggleNodeArray,
+} from "@/tree/tree.utils";
 import { Doc } from "convex/_generated/dataModel";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 
 export type EffectType = "positive" | "negative";
 
@@ -8,10 +15,30 @@ type TradeSetupWithTagsAndSnapshotId = Doc<"trade_setups"> & {
   tags?: Record<string, unknown>;
 };
 
+// Tree state interface
+export interface TreeState {
+  expandedKeys: Set<string>; // Which branch nodes are expanded
+  selectedNodes: Set<string>; // Which leaf nodes are selected
+  tags: Record<string, unknown>; // JSON representation of selected tags
+}
+
 interface TreeContextType {
   tradeSetup: TradeSetupWithTagsAndSnapshotId;
   getFieldEffect: (fieldName: string) => EffectType | undefined;
   selectedTags: Set<string>;
+  // Tree state management
+  treeState: TreeState;
+  strategy: TreeNode[];
+  toggleNode: (
+    nodeKey: string,
+    isBranch: boolean,
+    hasAntiSelection: boolean
+  ) => void;
+  saveInputField: (data: {
+    key: string;
+    values: Record<string, unknown>;
+  }) => void;
+  updateTreeState: (newState: Partial<TreeState>) => void;
 }
 
 const TreeContext = createContext<TreeContextType | undefined>(undefined);
@@ -19,14 +46,94 @@ const TreeContext = createContext<TreeContextType | undefined>(undefined);
 interface TreeProviderProps {
   tradeSetup: TradeSetupWithTagsAndSnapshotId;
   selectedTags?: Set<string>;
+  initialTreeState?: TreeState;
+  strategy?: TreeNode[];
+  onTreeStateChange?: (state: TreeState) => void;
   children: React.ReactNode;
 }
 
 export const TreeProvider: React.FC<TreeProviderProps> = ({
   tradeSetup,
   selectedTags = new Set(),
+  initialTreeState,
+  strategy = strategyTree,
+  onTreeStateChange,
   children,
 }) => {
+  // Initialize tree state
+  const [treeState, setTreeState] = useState<TreeState>(() => {
+    if (initialTreeState) {
+      return initialTreeState;
+    }
+    return {
+      expandedKeys: new Set<string>(),
+      selectedNodes: new Set<string>(),
+      tags: {},
+    };
+  });
+
+  // Update tree state and notify parent
+  const updateTreeState = useCallback(
+    (newState: Partial<TreeState>) => {
+      const updatedState = { ...treeState, ...newState };
+      setTreeState(updatedState);
+      if (onTreeStateChange) {
+        onTreeStateChange(updatedState);
+      }
+    },
+    [treeState, onTreeStateChange]
+  );
+
+  // Toggle node handler
+  const toggleNode = useCallback(
+    (nodeKey: string, isBranch: boolean, hasAntiSelection: boolean) => {
+      const result = toggleNodeArray(
+        strategy,
+        treeState.selectedNodes,
+        treeState.expandedKeys,
+        nodeKey,
+        isBranch,
+        hasAntiSelection
+      );
+
+      const updatedState: TreeState = {
+        expandedKeys: result.expandedKeys,
+        selectedNodes: result.selectedNodes,
+        tags: convertSelectionToJsonArray(strategy, result.selectedNodes),
+      };
+
+      setTreeState(updatedState);
+      if (onTreeStateChange) {
+        onTreeStateChange(updatedState);
+      }
+    },
+    [
+      strategy,
+      treeState.selectedNodes,
+      treeState.expandedKeys,
+      onTreeStateChange,
+    ]
+  );
+
+  // Save input field handler
+  const saveInputField = useCallback(
+    (data: { key: string; values: Record<string, unknown> }) => {
+      const newTags = { ...treeState.tags };
+      const nodePath = findNodePathArray(strategy, data.key);
+      setNestedValue(newTags, nodePath, data.values, true);
+
+      const updatedState: TreeState = {
+        ...treeState,
+        tags: newTags,
+      };
+
+      setTreeState(updatedState);
+      if (onTreeStateChange) {
+        onTreeStateChange(updatedState);
+      }
+    },
+    [treeState, strategy, onTreeStateChange]
+  );
   const getFieldEffect = (fieldName: string): EffectType | undefined => {
     const isLongTrade = tradeSetup.direction === "long";
     const isShortTrade = tradeSetup.direction === "short";
@@ -98,6 +205,11 @@ export const TreeProvider: React.FC<TreeProviderProps> = ({
     tradeSetup,
     getFieldEffect,
     selectedTags,
+    treeState,
+    strategy,
+    toggleNode,
+    saveInputField,
+    updateTreeState,
   };
 
   return (
@@ -125,4 +237,45 @@ export const useSelectedTags = (): Set<string> => {
   }
 
   return context.selectedTags;
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useTreeState = (): TreeState => {
+  const context = useContext(TreeContext);
+
+  if (!context) {
+    throw new Error("useTreeState must be used within a TreeProvider");
+  }
+
+  return context.treeState;
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useTreeToggle = () => {
+  const context = useContext(TreeContext);
+
+  if (!context) {
+    throw new Error("useTreeToggle must be used within a TreeProvider");
+  }
+
+  return {
+    toggleNode: context.toggleNode,
+    strategy: context.strategy,
+    treeState: context.treeState,
+  };
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useTreeActions = () => {
+  const context = useContext(TreeContext);
+
+  if (!context) {
+    throw new Error("useTreeActions must be used within a TreeProvider");
+  }
+
+  return {
+    toggleNode: context.toggleNode,
+    saveInputField: context.saveInputField,
+    updateTreeState: context.updateTreeState,
+  };
 };
