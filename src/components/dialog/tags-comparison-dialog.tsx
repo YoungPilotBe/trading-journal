@@ -9,7 +9,7 @@ import {
 import { statusOptions } from "@/config/constants";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useGetTradeSetupBySnapshotId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
-import { strategyTree } from "@/tree/tree.constants";
+import { createIdeaStrategyTree } from "@/tree/strategies/idea.constants";
 import { findNodeByKeyArray, findNodePathArray } from "@/tree/tree.utils";
 import { Link, useSearch } from "@tanstack/react-router";
 import clsx from "clsx";
@@ -95,9 +95,9 @@ export function TagsComparisonDialog({
 
   // Get path information for a tag
   const getTagPathInfo = (tagKey: string) => {
-    const path = findNodePathArray(strategyTree, tagKey);
+    const path = findNodePathArray(createIdeaStrategyTree(), tagKey);
     const pathNodes = path.map((key) => {
-      const node = findNodeByKeyArray(strategyTree, key);
+      const node = findNodeByKeyArray(createIdeaStrategyTree(), key);
       return {
         key,
         icon: node?.icon || BarChart3,
