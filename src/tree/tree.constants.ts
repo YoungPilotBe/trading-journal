@@ -5,6 +5,10 @@ import {
   ArrowDown,
   ArrowUp,
   BarChart3,
+  ChevronDown,
+  ChevronUp,
+  ChevronsDown,
+  ChevronsUp,
   Droplets,
   GitBranch,
   LogIn,
@@ -100,23 +104,40 @@ export const conditionalEffectsConfig: ConditionalEffectRule[] = [
 
 export const createContradictingBranch = (
   prefix: string,
-  contras: [string, string],
-  children?: TreeNode[]
+  contras: (string | [string, TreeNode[]] | TreeNode)[]
 ): NonNullable<TreeNode["children"]> => {
-  return [
-    {
-      key: `${prefix}_${contras[0]}`,
-      title: `${capitalize(contras[0])}`,
-      anti: [`${prefix}_${contras[1]}`],
+  // Extract just the keys for anti-array generation
+  const contraKeys = contras.map((contra) => {
+    if (typeof contra === "string") return contra;
+    if (Array.isArray(contra)) return contra[0];
+    // For TreeNode objects, extract the key by removing the prefix
+    return contra.key.replace(`${prefix}_`, "");
+  });
+
+  return contras.map((contra, index) => {
+    // If it's already a complete TreeNode, use it but ensure anti array is set
+    if (typeof contra === "object" && !Array.isArray(contra)) {
+      return {
+        ...contra,
+        anti: contraKeys
+          .filter((_, i) => i !== index)
+          .map((otherKey) => `${prefix}_${otherKey}`),
+      };
+    }
+
+    // Handle string or [string, TreeNode[]] tuple
+    const [key, children] =
+      typeof contra === "string" ? [contra, undefined] : contra;
+
+    return {
+      key: `${prefix}_${key}`,
+      title: `${capitalize(key)}`,
+      anti: contraKeys
+        .filter((_, i) => i !== index)
+        .map((otherKey) => `${prefix}_${otherKey}`),
       children,
-    },
-    {
-      key: `${prefix}_${contras[1]}`,
-      title: `${capitalize(contras[1])}`,
-      anti: [`${prefix}_${contras[0]}`],
-      children,
-    },
-  ];
+    };
+  });
 };
 
 // Helper function to create Fixed Range Confluence children
@@ -135,6 +156,33 @@ export const createFixedRangeConfluenceChildren = (prefix: string) => [
   },
 ];
 
+export const createDiscountPremiumPricing = (prefix: string) =>
+  createContradictingBranch(prefix, [
+    {
+      key: `${prefix}_extreme_premium`,
+      title: "Extreme Premium",
+      icon: ChevronsUp,
+      iconClassName: "",
+    },
+    {
+      key: `${prefix}_premium`,
+      title: "Premium",
+      icon: ChevronUp,
+      iconClassName: "",
+    },
+    {
+      key: `${prefix}_discount`,
+      title: "Discount",
+      icon: ChevronDown,
+      iconClassName: "",
+    },
+    {
+      key: `${prefix}_extreme_discount`,
+      title: "Extreme Discount",
+      icon: ChevronsDown,
+      iconClassName: "",
+    },
+  ]);
 // Helper function to create liquidity children
 export const createLiquidityChildren = (prefix: string) => [
   {
@@ -285,14 +333,22 @@ export const strategyTree: TreeNode[] = [
         title: "Swing",
         icon: Activity,
         iconClassName: "",
-        children: createContradictingBranch("swing", ["bullish", "bearish"]),
+        children: createContradictingBranch("swing", [
+          "bullish",
+          "bearish",
+          "range",
+        ]),
       },
       {
         key: "fractal",
         title: "Fractal",
         icon: GitBranch,
         iconClassName: "",
-        children: createContradictingBranch("fractal", ["bullish", "bearish"]),
+        children: createContradictingBranch("fractal", [
+          "bullish",
+          "bearish",
+          "range",
+        ]),
       },
       {
         key: "optional_settings",

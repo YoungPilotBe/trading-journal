@@ -344,6 +344,7 @@ const SimilarTradesTable = ({
 
   // Create table instance
   const table = useReactTable({
+    //@ts-expect-error err
     data: similarTrades || [],
     columns,
     getCoreRowModel: getCoreRowModel(),

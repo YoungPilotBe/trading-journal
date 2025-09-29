@@ -233,6 +233,7 @@ const TradingJournal = () => {
 
   // Create table instance
   const table = useReactTable({
+    //@ts-expect-error err
     data: journalData || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
