@@ -132,8 +132,6 @@ function RouteComponent() {
     validators: {
       onChange: addTradeSetupSchema,
     },
-    onSubmitInvalid: (data) => console.log(data),
-
     defaultValues: {
       title: existingTradeSetup?.title || null,
       status: existingSnapshot?.status || ("idea" as const),

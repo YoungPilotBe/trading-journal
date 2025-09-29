@@ -632,7 +632,7 @@ function toggleNodeArray(
 
 function createTreeStateFromSnapshot(
   snapshot: Doc<"snapshots">,
-  previousSnapshot: Doc<"snapshots">
+  previousSnapshot?: Doc<"snapshots"> | null
 ) {
   // If no tags exist in current snapshot, use previous snapshot for tree state
   if (!snapshot.tags || Object.keys(snapshot.tags).length === 0) {

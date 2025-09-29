@@ -99,7 +99,7 @@ function TreeContent({ viewOnly }: { viewOnly: boolean }) {
 function RouteComponent() {
   const { viewOnly = false } = Route.useSearch();
   const { tradeSetup, snapshot, previousSnapshot } = Route.useLoaderData();
-  if (!snapshot || !tradeSetup || !previousSnapshot) return;
+  if (!snapshot || !tradeSetup) return;
   // Create initial tree state from snapshot data
   const initialTreeState = createTreeStateFromSnapshot(
     snapshot,
