@@ -710,6 +710,33 @@ export const createTimeframeChildren = (
   }));
 };
 
+/**
+ * Generic type for strategy factory functions that accept configuration
+ * and return a tree node array.
+ *
+ * @template TConfig - The configuration object type (must extend Record<string, unknown>)
+ *
+ * @example
+ * ```ts
+ * // Define your config type
+ * interface MyStrategyConfig {
+ *   availableTimeframes: Timeframe[];
+ *   showAdvanced: boolean;
+ *   customSettings: { ... };
+ * }
+ *
+ * // Use it in your factory
+ * const createMyStrategy: StrategyFactory<MyStrategyConfig> = (config) => {
+ *   // config is fully typed!
+ *   const { availableTimeframes, showAdvanced } = config;
+ *   return [...];
+ * }
+ * ```
+ */
+export type StrategyFactory<
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
+> = (config: TConfig) => TreeNode[];
+
 export {
   convertSelectionToJson,
   convertSelectionToJsonArray,

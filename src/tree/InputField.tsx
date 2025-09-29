@@ -118,11 +118,15 @@ export const InputField = ({
         {...inputProps}
         className={clsx(
           // Base styles matching ToggleBadge dimensions and appearance
-          "w-full h-fit px-1 py-0.5 rounded-sm text-xs font-thin border transition-all duration-200",
+          "w-full h-fit px-1 py-0.5 rounded-sm text-xs font-thin border duration-200",
           "text-center leading-tight font-mono",
           // Background and border styles
           "bg-gradient-to-t from-muted/20 to-muted/10 border-muted/50 text-foreground",
           "focus:bg-primary/10 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20",
+          // Active state (when input has value) - same as focused state
+          value.trim() &&
+            !error &&
+            "bg-primary/10 border-primary ring-1 ring-primary/20",
           // Error state
           error && "border-red-500 bg-red-50/50 text-red-700",
           // Disabled/readonly state

@@ -1,5 +1,53 @@
-import { conditionalEffectsConfig, strategyTree } from "@/tree/tree.constants";
-import type { TreeNode } from "@/tree/tree.utils";
+/**
+ * TreeContext - Context for managing tree state and dynamic strategy configuration
+ *
+ * This module provides a React Context-based solution for managing dynamic tree structures
+ * with support for injectable strategy configuration.
+ *
+ * Key Features:
+ * - TreeProvider: Unified provider that manages tree state, selections, and strategy config
+ * - Support for type-safe, dynamic strategy generation with custom config
+ * - No need for separate context providers - everything in one place
+ *
+ * Usage Pattern 1 - Using strategyFactory with config (Recommended):
+ *
+ * @example
+ * ```tsx
+ * import { TreeProvider } from './TreeContext'
+ * import { getStrategyFactory } from './strategies'
+ * import { IdeaStrategyConfig } from './strategies/idea.constants'
+ *
+ * function App() {
+ *   const config: IdeaStrategyConfig = {
+ *     availableTimeframes: ['1m', '5m', '15m'],
+ *   }
+ *
+ *   return (
+ *     <TreeProvider
+ *       tradeSetup={tradeSetup}
+ *       strategyFactory={getStrategyFactory('idea')}
+ *       strategyConfig={config}
+ *     >
+ *       <Tree />
+ *     </TreeProvider>
+ *   )
+ * }
+ * ```
+ *
+ * Usage Pattern 2 - Pre-generated strategy (backward compatible):
+ *
+ * @example
+ * ```tsx
+ * const strategy = createIdeaStrategyTree({ availableTimeframes: ['1m', '5m'] })
+ *
+ * <TreeProvider tradeSetup={tradeSetup} strategy={strategy}>
+ *   <Tree />
+ * </TreeProvider>
+ * ```
+ */
+import { ideaStrategyTree } from "@/tree/strategies/idea.constants";
+import { conditionalEffectsConfig } from "@/tree/tree.constants";
+import type { StrategyFactory, TreeNode } from "@/tree/tree.utils";
 import {
   convertSelectionToJsonArray,
   findNodePathArray,
@@ -7,7 +55,13 @@ import {
   toggleNodeArray,
 } from "@/tree/tree.utils";
 import { Doc } from "convex/_generated/dataModel";
-import React, { createContext, useCallback, useContext, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 export type EffectType = "positive" | "negative";
 
@@ -43,23 +97,37 @@ interface TreeContextType {
 
 const TreeContext = createContext<TreeContextType | undefined>(undefined);
 
-interface TreeProviderProps {
+interface TreeProviderProps<
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
+> {
   tradeSetup: TradeSetupWithTagsAndSnapshotId;
-  selectedTags?: Set<string>;
   initialTreeState?: TreeState;
   strategy?: TreeNode[];
+  strategyFactory?: StrategyFactory<TConfig>;
+  strategyConfig?: TConfig;
   onTreeStateChange?: (state: TreeState) => void;
   children: React.ReactNode;
 }
 
-export const TreeProvider: React.FC<TreeProviderProps> = ({
+export function TreeProvider<
+  TConfig extends Record<string, unknown> = Record<string, unknown>,
+>({
   tradeSetup,
-  selectedTags = new Set(),
   initialTreeState,
-  strategy = strategyTree,
+  strategy: strategyProp,
+  strategyFactory,
+  strategyConfig = {} as TConfig,
   onTreeStateChange,
   children,
-}) => {
+}: TreeProviderProps<TConfig>) {
+  // Generate strategy using factory and config if provided, otherwise use strategy prop
+  const strategy = useMemo(() => {
+    if (strategyFactory) {
+      return strategyFactory(strategyConfig);
+    }
+    return strategyProp || ideaStrategyTree;
+  }, [strategyFactory, strategyProp, strategyConfig]);
+
   // Initialize tree state
   const [treeState, setTreeState] = useState<TreeState>(() => {
     if (initialTreeState) {
@@ -144,7 +212,7 @@ export const TreeProvider: React.FC<TreeProviderProps> = ({
       for (const [conditionKey, conditionConfig] of Object.entries(
         rule.conditions
       )) {
-        if (selectedTags.has(conditionKey)) {
+        if (treeState.selectedNodes.has(conditionKey)) {
           // Check if this field is affected by this condition
           const conditionalEffect = conditionConfig.childEffects[fieldName];
           if (conditionalEffect !== undefined) {
@@ -204,7 +272,7 @@ export const TreeProvider: React.FC<TreeProviderProps> = ({
   const contextValue: TreeContextType = {
     tradeSetup,
     getFieldEffect,
-    selectedTags,
+    selectedTags: treeState.selectedNodes,
     treeState,
     strategy,
     toggleNode,
@@ -215,7 +283,7 @@ export const TreeProvider: React.FC<TreeProviderProps> = ({
   return (
     <TreeContext.Provider value={contextValue}>{children}</TreeContext.Provider>
   );
-};
+}
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useFieldEffect = (fieldName: string): EffectType | undefined => {

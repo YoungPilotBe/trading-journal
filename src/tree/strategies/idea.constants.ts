@@ -27,7 +27,21 @@ import {
   createSupplyRangeChildren,
   customPrice,
 } from "../tree.constants";
-import { createTimeframeChildren, type TreeNode } from "../tree.utils";
+import {
+  createTimeframeChildren,
+  type StrategyFactory,
+  type TreeNode,
+} from "../tree.utils";
+
+/**
+ * Configuration type for Idea Strategy
+ */
+export interface IdeaStrategyConfig extends Record<string, unknown> {
+  availableTimeframes?: Timeframe[];
+  // Add more config options here as needed
+  // showAdvancedOptions?: boolean;
+  // customSettings?: {...};
+}
 
 // Factory function to create timeframe-specific bullish/bearish options
 const createTimeframeBullishBearishChildren = (
@@ -118,258 +132,284 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
   },
 ];
 
-// Factory function to create the complete strategy tree with dynamic timeframes
-export const createIdeaStrategyTree = (
-  availableTimeframes: Timeframe[] = []
-): TreeNode[] => [
-  {
-    key: "market_structure",
-    title: "MS",
-    icon: BarChart3,
-    iconClassName: "",
-    children: [
-      {
-        key: "swing",
-        title: "Swing",
-        icon: Activity,
-        iconClassName: "",
-        children: [
-          {
-            key: `swing_bullish`,
-            title: "Bullish",
-            icon: TrendingUp,
-            iconClassName: "text-emerald-500",
-            anti: [`swing_bearish`],
-            children: createTimeframeChildren(
-              `swing_bullish`,
-              availableTimeframes,
-              "text-emerald-500/70"
+/**
+ * Factory function to create the complete strategy tree with dynamic configuration.
+ *
+ * This is a type-safe strategy factory that accepts configuration via context or directly.
+ *
+ * @param config - Configuration object containing availableTimeframes and other settings
+ * @returns TreeNode[] - The complete strategy tree
+ *
+ * @example
+ * // Direct usage with config object
+ * const strategy = createIdeaStrategyTree({
+ *   availableTimeframes: ['1m', '5m', '15m']
+ * })
+ *
+ * @example
+ * // Usage with TreeProvider strategyFactory
+ * <TreeProvider
+ *   strategyFactory={createIdeaStrategyTree}
+ *   strategyConfig={{ availableTimeframes: ['1m', '5m'] }}
+ * >
+ *   <Tree />
+ * </TreeProvider>
+ */
+export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
+  config = {}
+): TreeNode[] => {
+  const { availableTimeframes = [] } = config;
+
+  return [
+    {
+      key: "market_structure",
+      title: "MS",
+      icon: BarChart3,
+      iconClassName: "",
+      children: [
+        {
+          key: "swing",
+          title: "Swing",
+          icon: Activity,
+          iconClassName: "",
+          children: [
+            {
+              key: `swing_bullish`,
+              title: "Bullish",
+              icon: TrendingUp,
+              iconClassName: "text-emerald-500",
+              anti: [`swing_bearish`],
+              children: createTimeframeChildren(
+                `swing_bullish`,
+                availableTimeframes,
+                "text-emerald-500/70"
+              ),
+            },
+
+            {
+              key: `swing_bearish`,
+              title: "Bearish",
+              icon: TrendingDown,
+              iconClassName: "text-rose-500",
+              anti: [`swing_bullish`],
+              children: createTimeframeChildren(
+                `swing_bearish`,
+                availableTimeframes,
+                "text-rose-500/70"
+              ),
+            },
+            {
+              key: "swing_range",
+              title: "Range",
+              icon: MenuIcon,
+              iconClassName: "text-sky-500/70",
+              children: createDiscountPremiumPricing("swing_range"),
+            },
+            {
+              key: "swing_liquidity",
+              title: "Liquidity",
+              icon: Droplets,
+              iconClassName: "",
+              children: createLiquidityChildren("swing_liquidity"),
+            },
+          ],
+        },
+        {
+          key: "fractal",
+          title: "Fractal",
+          icon: GitBranch,
+          iconClassName: "",
+          children: [
+            ...createTimeframeBullishBearishChildren(
+              "fractal",
+              availableTimeframes
             ),
-          },
+            {
+              key: "fractal_range",
+              title: "Range",
+              icon: MenuIcon,
+              iconClassName: "text-sky-500/70",
+              children: createDiscountPremiumPricing("fractal_range"),
+            },
+            {
+              key: "fractal_liquidity",
+              title: "Liquidity",
+              icon: Droplets,
+              iconClassName: "",
+              children: createLiquidityChildren("fractal_liquidity"),
+            },
+          ],
+        },
 
-          {
-            key: `swing_bearish`,
-            title: "Bearish",
-            icon: TrendingDown,
-            iconClassName: "text-rose-500",
-            anti: [`swing_bullish`],
-            children: createTimeframeChildren(
-              `swing_bearish`,
-              availableTimeframes,
-              "text-rose-500/70"
-            ),
-          },
-          {
-            key: "swing_range",
-            title: "Range",
-            icon: MenuIcon,
-            iconClassName: "text-sky-500/70",
-            children: createDiscountPremiumPricing("swing_range"),
-          },
-          {
-            key: "swing_liquidity",
-            title: "Liquidity",
-            icon: Droplets,
-            iconClassName: "",
-            children: createLiquidityChildren("swing_liquidity"),
-          },
-        ],
-      },
-      {
-        key: "fractal",
-        title: "Fractal",
-        icon: GitBranch,
-        iconClassName: "",
-        children: [
-          ...createTimeframeBullishBearishChildren(
-            "fractal",
-            availableTimeframes
-          ),
-          {
-            key: "fractal_range",
-            title: "Range",
-            icon: MenuIcon,
-            iconClassName: "text-sky-500/70",
-            children: createDiscountPremiumPricing("fractal_range"),
-          },
-          {
-            key: "fractal_liquidity",
-            title: "Liquidity",
-            icon: Droplets,
-            iconClassName: "",
-            children: createLiquidityChildren("fractal_liquidity"),
-          },
-        ],
-      },
+        {
+          key: "optional_settings",
+          title: "_+_",
+          icon: Settings,
+          iconClassName: "",
+          isDir: true,
+          children: [
+            {
+              key: "protected_levels",
+              title: "Protected",
+              icon: Shield,
+              iconClassName: "",
+              children: [
+                {
+                  key: "protected_high",
+                  anti: ["protected_low"],
+                  title: "High",
+                  icon: ArrowUp,
+                  iconClassName: "",
+                  inputField: customPrice(),
+                },
+                {
+                  key: "protected_low",
+                  anti: ["protected_high"],
+                  title: "Low",
+                  icon: ArrowDown,
+                  iconClassName: "",
+                  inputField: customPrice(),
+                },
+              ],
+            },
+            {
+              key: "weak_levels",
+              title: "Weak",
+              icon: AlertTriangle,
+              iconClassName: "",
+              children: [
+                {
+                  key: "weak_high",
+                  anti: ["weak_low"],
+                  title: "High",
+                  icon: ArrowUp,
+                  iconClassName: "",
+                  inputField: customPrice(),
+                },
+                {
+                  key: "weak_low",
+                  anti: ["weak_high"],
+                  title: "Low",
+                  icon: ArrowDown,
+                  iconClassName: "",
+                  inputField: customPrice(),
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      key: "entry",
+      title: "Entry",
+      icon: LogIn,
+      iconClassName: "",
+      children: [
+        {
+          key: "entry_demand",
+          title: "Demand",
+          icon: TrendingUp,
+          iconClassName: "text-emerald-500",
+          anti: ["entry_supply"],
+          children: [
+            {
+              key: "entry_demand_range",
+              title: "Range",
+              icon: Square,
+              iconClassName: "",
+              children: createDemandRangeChildren("entry_demand"),
+            },
+            {
+              key: "entry_demand_obim",
+              title: "OBIM",
+              icon: Target,
+              iconClassName: "",
+              children: createSupplyDemandOBIMChildren("entry_demand"),
+            },
+          ],
+        },
+        {
+          key: "entry_supply",
+          title: "Supply",
+          icon: TrendingDown,
+          iconClassName: "text-rose-500",
+          anti: ["entry_demand"],
+          children: [
+            {
+              key: "entry_supply_range",
+              title: "Range",
+              icon: Square,
+              iconClassName: "",
+              children: createSupplyRangeChildren("entry_supply"),
+            },
+            {
+              key: "entry_supply_obim",
+              title: "OBIM",
+              icon: Target,
+              iconClassName: "",
+              children: createSupplyDemandOBIMChildren("entry_supply"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      key: "exit",
+      title: "Exit",
+      icon: LogOut,
+      iconClassName: "",
+      children: [
+        {
+          key: "exit_demand",
+          title: "Demand",
+          icon: TrendingUp,
+          iconClassName: "text-emerald-500",
+          anti: ["exit_supply"],
+          children: [
+            {
+              key: "exit_demand_range",
+              title: "Range",
+              icon: Square,
+              iconClassName: "",
+              children: createDemandRangeChildren("exit_demand"),
+            },
+            {
+              key: "exit_demand_obim",
+              title: "OBIM",
+              icon: Target,
+              iconClassName: "",
+              children: createSupplyDemandOBIMChildren("exit_demand"),
+            },
+          ],
+        },
+        {
+          key: "exit_supply",
+          title: "Supply",
+          icon: TrendingDown,
+          iconClassName: "text-rose-500",
+          anti: ["exit_demand"],
+          children: [
+            {
+              key: "exit_supply_range",
+              title: "Range",
+              icon: Square,
+              iconClassName: "",
+              children: createSupplyRangeChildren("exit_supply"),
+            },
+            {
+              key: "exit_supply_obim",
+              title: "OBIM",
+              icon: Target,
+              iconClassName: "",
+              children: createSupplyDemandOBIMChildren("exit_supply"),
+            },
+          ],
+        },
+      ],
+    },
+  ];
+};
 
-      {
-        key: "optional_settings",
-        title: "_+_",
-        icon: Settings,
-        iconClassName: "",
-        isDir: true,
-        children: [
-          {
-            key: "protected_levels",
-            title: "Protected",
-            icon: Shield,
-            iconClassName: "",
-            children: [
-              {
-                key: "protected_high",
-                anti: ["protected_low"],
-                title: "High",
-                icon: ArrowUp,
-                iconClassName: "",
-                inputField: customPrice(),
-              },
-              {
-                key: "protected_low",
-                anti: ["protected_high"],
-                title: "Low",
-                icon: ArrowDown,
-                iconClassName: "",
-                inputField: customPrice(),
-              },
-            ],
-          },
-          {
-            key: "weak_levels",
-            title: "Weak",
-            icon: AlertTriangle,
-            iconClassName: "",
-            children: [
-              {
-                key: "weak_high",
-                anti: ["weak_low"],
-                title: "High",
-                icon: ArrowUp,
-                iconClassName: "",
-                inputField: customPrice(),
-              },
-              {
-                key: "weak_low",
-                anti: ["weak_high"],
-                title: "Low",
-                icon: ArrowDown,
-                iconClassName: "",
-                inputField: customPrice(),
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    key: "entry",
-    title: "Entry",
-    icon: LogIn,
-    iconClassName: "",
-    children: [
-      {
-        key: "entry_demand",
-        title: "Demand",
-        icon: TrendingUp,
-        iconClassName: "text-emerald-500",
-        anti: ["entry_supply"],
-        children: [
-          {
-            key: "entry_demand_range",
-            title: "Range",
-            icon: Square,
-            iconClassName: "",
-            children: createDemandRangeChildren("entry_demand"),
-          },
-          {
-            key: "entry_demand_obim",
-            title: "OBIM",
-            icon: Target,
-            iconClassName: "",
-            children: createSupplyDemandOBIMChildren("entry_demand"),
-          },
-        ],
-      },
-      {
-        key: "entry_supply",
-        title: "Supply",
-        icon: TrendingDown,
-        iconClassName: "text-rose-500",
-        anti: ["entry_demand"],
-        children: [
-          {
-            key: "entry_supply_range",
-            title: "Range",
-            icon: Square,
-            iconClassName: "",
-            children: createSupplyRangeChildren("entry_supply"),
-          },
-          {
-            key: "entry_supply_obim",
-            title: "OBIM",
-            icon: Target,
-            iconClassName: "",
-            children: createSupplyDemandOBIMChildren("entry_supply"),
-          },
-        ],
-      },
-    ],
-  },
-  {
-    key: "exit",
-    title: "Exit",
-    icon: LogOut,
-    iconClassName: "",
-    children: [
-      {
-        key: "exit_demand",
-        title: "Demand",
-        icon: TrendingUp,
-        iconClassName: "text-emerald-500",
-        anti: ["exit_supply"],
-        children: [
-          {
-            key: "exit_demand_range",
-            title: "Range",
-            icon: Square,
-            iconClassName: "",
-            children: createDemandRangeChildren("exit_demand"),
-          },
-          {
-            key: "exit_demand_obim",
-            title: "OBIM",
-            icon: Target,
-            iconClassName: "",
-            children: createSupplyDemandOBIMChildren("exit_demand"),
-          },
-        ],
-      },
-      {
-        key: "exit_supply",
-        title: "Supply",
-        icon: TrendingDown,
-        iconClassName: "text-rose-500",
-        anti: ["exit_demand"],
-        children: [
-          {
-            key: "exit_supply_range",
-            title: "Range",
-            icon: Square,
-            iconClassName: "",
-            children: createSupplyRangeChildren("exit_supply"),
-          },
-          {
-            key: "exit_supply_obim",
-            title: "OBIM",
-            icon: Target,
-            iconClassName: "",
-            children: createSupplyDemandOBIMChildren("exit_supply"),
-          },
-        ],
-      },
-    ],
-  },
-];
-
-// Static tree for backward compatibility (uses empty timeframes array)
-export const ideaStrategyTree: TreeNode[] = createIdeaStrategyTree();
+// Static tree for backward compatibility (uses empty config)
+export const ideaStrategyTree: TreeNode[] = createIdeaStrategyTree({});

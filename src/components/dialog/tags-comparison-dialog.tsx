@@ -95,9 +95,9 @@ export function TagsComparisonDialog({
 
   // Get path information for a tag
   const getTagPathInfo = (tagKey: string) => {
-    const path = findNodePathArray(createIdeaStrategyTree(), tagKey);
+    const path = findNodePathArray(createIdeaStrategyTree({}), tagKey);
     const pathNodes = path.map((key) => {
-      const node = findNodeByKeyArray(createIdeaStrategyTree(), key);
+      const node = findNodeByKeyArray(createIdeaStrategyTree({}), key);
       return {
         key,
         icon: node?.icon || BarChart3,

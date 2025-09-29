@@ -1,3 +1,49 @@
+/**
+ * Tree Component
+ *
+ * Renders a dynamic tree structure with support for branches, leaves, and input fields.
+ * Supports type-safe configuration injection via TreeProvider.
+ *
+ * Usage with strategyFactory and config:
+ *
+ * @example
+ * ```tsx
+ * import { TreeProvider } from './TreeContext'
+ * import { getStrategyFactory } from './strategies'
+ * import { Tree } from './tree'
+ *
+ * function MyComponent() {
+ *   const config = {
+ *     availableTimeframes: ['1m', '5m', '15m'],
+ *   }
+ *
+ *   return (
+ *     <TreeProvider
+ *       tradeSetup={tradeSetup}
+ *       strategyFactory={getStrategyFactory('idea')}
+ *       strategyConfig={config}
+ *     >
+ *       <Tree />
+ *     </TreeProvider>
+ *   )
+ * }
+ * ```
+ *
+ * Alternative usage with pre-generated strategy:
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const strategy = createIdeaStrategyTree({ availableTimeframes: ['1m'] })
+ *
+ *   return (
+ *     <TreeProvider tradeSetup={tradeSetup} strategy={strategy}>
+ *       <Tree />
+ *     </TreeProvider>
+ *   )
+ * }
+ * ```
+ */
 import { useMemo } from "react";
 import { InputField } from "./InputField";
 import { ToggleBadge } from "./ToggleBadge";

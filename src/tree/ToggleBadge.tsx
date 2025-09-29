@@ -69,8 +69,8 @@ export const ToggleBadge = ({
       className={clsx(
         // Base styles matching button badge variant - fixed dimensions
         isDir
-          ? "ml-auto w-fit h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border transition-all duration-200 flex items-center justify-end flex-shrink-0"
-          : "w-full h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border transition-all duration-200 flex items-center justify-center flex-shrink-0",
+          ? "ml-auto w-fit h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border duration-200 flex items-center justify-end flex-shrink-0"
+          : "w-full h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border duration-200 flex items-center justify-center flex-shrink-0",
         // Text handling
         !isDir && "text-center line-clamp-2 leading-tight",
         // State-based styles

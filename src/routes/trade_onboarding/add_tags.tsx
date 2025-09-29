@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Timeframe } from "@/config/timeframe-order";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { TreeProvider, useTreeState } from "@/tree/TreeContext";
-import { generateStrategy } from "@/tree/strategies";
+import { getStrategyFactory } from "@/tree/strategies";
+import { IdeaStrategyConfig } from "@/tree/strategies/idea.constants";
 import { Tree } from "@/tree/tree";
 import { createTreeStateFromSnapshot } from "@/tree/tree.utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -101,11 +102,20 @@ function RouteComponent() {
   const { viewOnly = false } = Route.useSearch();
   const { tradeSetup, snapshot, previousSnapshot } = Route.useLoaderData();
   if (!snapshot || !tradeSetup) return;
+
   // Create initial tree state from snapshot data
   const initialTreeState = createTreeStateFromSnapshot(
     snapshot,
     previousSnapshot
   );
+
+  // Get strategy factory based on trade status
+  const strategyFactory = getStrategyFactory(snapshot.status);
+
+  // Create strategy config with timeframes
+  const strategyConfig: IdeaStrategyConfig = {
+    availableTimeframes: (tradeSetup?.timeframes || []) as Timeframe[],
+  };
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -115,12 +125,9 @@ function RouteComponent() {
           <span className="text-white font-light font-mono">Tags</span>
           <TreeProvider
             tradeSetup={tradeSetup}
-            selectedTags={initialTreeState.selectedNodes}
             initialTreeState={initialTreeState}
-            strategy={generateStrategy(
-              snapshot!.status,
-              (tradeSetup?.timeframes || []) as Timeframe[]
-            )}
+            strategyFactory={strategyFactory}
+            strategyConfig={strategyConfig}
           >
             <TreeContent viewOnly={viewOnly} />
           </TreeProvider>
