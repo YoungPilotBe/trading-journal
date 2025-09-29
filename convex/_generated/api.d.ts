@@ -23,6 +23,7 @@ import type * as constants_unions from "../constants/unions.js";
 import type * as drawings from "../drawings.js";
 import type * as orchestration_internal from "../orchestration/internal.js";
 import type * as orchestration_mutations from "../orchestration/mutations.js";
+import type * as snaphot_internal from "../snaphot/internal.js";
 import type * as snaphot_mutation from "../snaphot/mutation.js";
 import type * as snaphot_queries from "../snaphot/queries.js";
 import type * as snaphot_services from "../snaphot/services.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   drawings: typeof drawings;
   "orchestration/internal": typeof orchestration_internal;
   "orchestration/mutations": typeof orchestration_mutations;
+  "snaphot/internal": typeof snaphot_internal;
   "snaphot/mutation": typeof snaphot_mutation;
   "snaphot/queries": typeof snaphot_queries;
   "snaphot/services": typeof snaphot_services;

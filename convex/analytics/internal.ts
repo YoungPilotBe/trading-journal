@@ -100,8 +100,8 @@ export function calculateTagSetSimilarity(
   tags2: string[]
 ): number {
   if (tags1.length === 0 && tags2.length === 0) {
-    console.log(`    Both tag sets empty -> returning 1.0`);
-    return 1.0;
+    console.log(`    Both tag sets empty -> returning 0.0`);
+    return 0.0;
   }
   if (tags1.length === 0 || tags2.length === 0) {
     console.log(`    One tag set empty -> returning 0.0`);

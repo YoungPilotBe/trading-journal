@@ -120,13 +120,18 @@ function RouteComponent() {
 
   const isLoading = isLoadingTradeSetup || isLoadingSnapshot;
 
+  // Track original status to detect changes and check for existing tags
+  const originalStatus = snapshot?.status;
+  const hasExistingTags =
+    snapshot?.tags && Object.keys(snapshot.tags).length > 0;
+
   // Initialize form with existing trade setup data
   const form = useForm({
     validators: {
       onChange: addTradeSetupSchema,
     },
     defaultValues: {
-      title: tradeSetup?.title || "",
+      title: tradeSetup?.title || null,
       trade_template: tradeSetup?.trade_template || undefined,
       status: snapshot?.status || "idea",
       direction: tradeSetup?.direction || "long",
@@ -164,6 +169,30 @@ function RouteComponent() {
 
   // Subscribe to form's dirty state to trigger re-renders
   const isDirty = useStore(form.store, (state) => state.isDirty);
+
+  // Handle status change with confirmation if tags exist
+  const handleStatusChange = (
+    newStatus: "idea" | "watching" | "executed" | "closed" | "reviewed"
+  ) => {
+    // If status is changing and there are existing tags, show confirmation
+    if (newStatus !== originalStatus && hasExistingTags) {
+      openDialog("STATUS_CHANGE_CONFIRMATION", {
+        currentStatus: originalStatus || "idea",
+        newStatus,
+        onRevert: () => {
+          // Reset status to original value - force re-render by updating field
+          form.setFieldValue("status", originalStatus || "idea");
+        },
+        onContinue: () => {
+          // Proceed with status change
+          form.setFieldValue("status", newStatus);
+        },
+      });
+    } else {
+      // No tags or no status change, proceed normally
+      form.setFieldValue("status", newStatus);
+    }
+  };
 
   return (
     <>
@@ -292,7 +321,7 @@ function RouteComponent() {
                       <input
                         id={field.name}
                         name={field.name}
-                        value={field.state.value}
+                        value={field.state.value ?? ""}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                         className="text-emerald-500 placeholder:text-emerald-500/60 border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0"
@@ -460,16 +489,31 @@ function RouteComponent() {
                       <div className="flex flex-row gap-1.5">
                         {statusOptions.map((option) => {
                           const isSelected = field.state.value === option.value;
+                          const isOriginalStatus =
+                            originalStatus === option.value;
+                          const isStatusChanged =
+                            field.state.value !== originalStatus;
+
+                          // Enhanced styling for original status when user has changed to different status
+                          const getButtonClassName = () => {
+                            if (isSelected) {
+                              return option.color;
+                            }
+
+                            if (isOriginalStatus && isStatusChanged) {
+                              // Light up the original status border with hatched pattern when user has changed to different status
+                              return "opacity-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_1px,rgba(255,255,255,0.1)_2px,rgba(255,255,255,0.1)_4px)]";
+                            }
+
+                            return "border-muted text-muted-foreground hover:border-muted-foreground/50";
+                          };
+
                           return (
                             <button
                               key={option.value}
                               type="button"
-                              onClick={() => field.handleChange(option.value)}
-                              className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
-                                isSelected
-                                  ? option.color
-                                  : "border-muted text-muted-foreground hover:border-muted-foreground/50"
-                              }`}
+                              onClick={() => handleStatusChange(option.value)}
+                              className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${getButtonClassName()}`}
                             >
                               {option.label}
                             </button>
