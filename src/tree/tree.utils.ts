@@ -24,6 +24,7 @@ export type TreeNode = {
   icon?: LucideIcon; // Lucide React icon component
   iconClassName?: string; // CSS classes for the icon
   isDir?: boolean; // Whether this node should be rendered as a directory
+  description?: string;
   inputField?: InputFieldConfig; // Configuration for input field
 };
 
@@ -55,6 +56,7 @@ export type GridCell = {
   isDir?: boolean;
   inputField?: InputFieldConfig;
   parentKey?: string; // Key of the parent node (for input fields)
+  description?: string; // Description to show in tooltip
 };
 
 function flattenTreeToGrid(
@@ -94,6 +96,7 @@ function flattenTreeToGrid(
       isDir:
         node.isDir || node.title.includes("_+_") || node.key.includes("_+_"),
       parentKey,
+      description: node.description,
     };
 
     let currentRowIndex = rowIndex;

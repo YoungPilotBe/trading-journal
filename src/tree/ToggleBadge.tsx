@@ -1,3 +1,8 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useFieldEffect, useTreeToggle } from "@/tree/TreeContext";
 import { findNodeByKeyArray } from "@/tree/tree.utils";
 import { clsx } from "clsx";
@@ -17,6 +22,7 @@ interface SimplifiedToggleBadgeProps
   isDir?: boolean;
   readOnly?: boolean;
   isBranch?: boolean;
+  description?: string;
 }
 
 export const ToggleBadge = ({
@@ -28,6 +34,7 @@ export const ToggleBadge = ({
   isDir = false,
   isBranch = false,
   readOnly = false,
+  description,
   ...buttonProps
 }: SimplifiedToggleBadgeProps) => {
   const effect = useFieldEffect(fieldName);
@@ -61,7 +68,7 @@ export const ToggleBadge = ({
     );
   };
 
-  return (
+  const buttonElement = (
     <button
       type="button"
       onClick={handleToggle}
@@ -113,4 +120,20 @@ export const ToggleBadge = ({
       )}
     </button>
   );
+
+  // If there's a description, wrap with tooltip
+  if (description) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{buttonElement}</TooltipTrigger>
+        <TooltipContent side="right" className="max-w-xs">
+          <p className="text-xs font-mono text-muted-foreground leading-relaxed">
+            {description}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return buttonElement;
 };

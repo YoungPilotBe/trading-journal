@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   BarChart3,
+  CircleDot,
   Clock,
   Droplets,
   GitBranch,
@@ -18,6 +19,8 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
+  Triangle,
+  Waves,
 } from "lucide-react";
 import type { Timeframe } from "../../config/timeframe-order";
 import {
@@ -120,6 +123,60 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
         icon: Spline,
         iconClassName: "rotate-180 text-emerald-500",
         anti: [`${prefix}_liquidity_curve_above`],
+        children: [
+          {
+            key: `${prefix}_return_rounded`,
+            title: "Rounded",
+            icon: CircleDot,
+            iconClassName: "text-emerald-500",
+            description:
+              "Liquidity is being left behind under the curve which may cause a quick sweep down, proving the supply zone successful",
+            anti: [
+              `${prefix}_return_corrective`,
+              `${prefix}_return_sweep`,
+              `${prefix}_return_v_shape`,
+            ],
+          },
+          {
+            key: `${prefix}_return_corrective`,
+            title: "Corrective",
+            icon: TrendingDown,
+            iconClassName: "text-emerald-400",
+            description:
+              "Liquidity is being left behind under the trendline which may cause a quick sweep down, proving the supply zone successful",
+            anti: [
+              `${prefix}_return_rounded`,
+              `${prefix}_return_sweep`,
+              `${prefix}_return_v_shape`,
+            ],
+          },
+          {
+            key: `${prefix}_return_sweep`,
+            title: "Sweep",
+            icon: Waves,
+            iconClassName: "text-amber-500",
+            description:
+              "Liquidity is being taken on the way up, meaning that smart money may be engineering their positions. This could cause the supply zone to fail.",
+            anti: [
+              `${prefix}_return_rounded`,
+              `${prefix}_return_corrective`,
+              `${prefix}_return_v_shape`,
+            ],
+          },
+          {
+            key: `${prefix}_return_v_shape`,
+            title: "V-Shape",
+            icon: Triangle,
+            iconClassName: "text-rose-500",
+            description:
+              "Aggressive return after the pivot was created, usually causes the supply/demand zone to fail",
+            anti: [
+              `${prefix}_return_rounded`,
+              `${prefix}_return_corrective`,
+              `${prefix}_return_sweep`,
+            ],
+          },
+        ],
       },
       {
         key: `${prefix}_liquidity_curve_above`,
@@ -127,6 +184,60 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
         icon: Spline,
         iconClassName: "rotate-90 text-rose-500",
         anti: [`${prefix}_liquidity_curve_below`],
+        children: [
+          {
+            key: `${prefix}_return_rounded`,
+            title: "Rounded",
+            icon: CircleDot,
+            iconClassName: "text-emerald-500",
+            description:
+              "Liquidity is being left behind above the curve which may cause a quick sweep up, proving the demand zone successful",
+            anti: [
+              `${prefix}_return_corrective`,
+              `${prefix}_return_sweep`,
+              `${prefix}_return_v_shape`,
+            ],
+          },
+          {
+            key: `${prefix}_return_corrective`,
+            title: "Corrective",
+            icon: TrendingUp,
+            iconClassName: "text-emerald-400",
+            description:
+              "Liquidity is being left behind above the trendline which may cause a quick sweep up, proving the demand zone successful",
+            anti: [
+              `${prefix}_return_rounded`,
+              `${prefix}_return_sweep`,
+              `${prefix}_return_v_shape`,
+            ],
+          },
+          {
+            key: `${prefix}_return_sweep`,
+            title: "Sweep",
+            icon: Waves,
+            iconClassName: "text-amber-500",
+            description:
+              "Liquidity is being taken on the way down, meaning that smart money may be engineering their positions. This could cause the demand zone to fail.",
+            anti: [
+              `${prefix}_return_rounded`,
+              `${prefix}_return_corrective`,
+              `${prefix}_return_v_shape`,
+            ],
+          },
+          {
+            key: `${prefix}_return_v_shape`,
+            title: "V-Shape",
+            icon: Triangle,
+            iconClassName: "text-rose-500",
+            description:
+              "Aggressive return after the pivot was created, usually causes the supply/demand zone to fail",
+            anti: [
+              `${prefix}_return_rounded`,
+              `${prefix}_return_corrective`,
+              `${prefix}_return_sweep`,
+            ],
+          },
+        ],
       },
     ],
   },
