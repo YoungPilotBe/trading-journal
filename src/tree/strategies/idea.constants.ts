@@ -8,7 +8,6 @@ import {
   GitBranch,
   LogIn,
   LogOut,
-  Mountain,
   Settings,
   Shield,
   Spline,
@@ -127,14 +126,10 @@ export const ideaStrategyTree: TreeNode[] = [
               {
                 key: "wicking_tops",
                 title: "Wicking Tops",
-                icon: Mountain,
-                iconClassName: "scale-x-[-1]",
               },
               {
                 key: "wicking_bottoms",
                 title: "Wicking Bottoms",
-                icon: Mountain,
-                iconClassName: "rotate-180",
               },
               {
                 key: "liquidity_curve",
@@ -142,18 +137,44 @@ export const ideaStrategyTree: TreeNode[] = [
                 iconClassName: "",
                 children: [
                   {
-                    key: "liquidity_curve_up",
-                    title: "Up",
-                    icon: Spline,
-                    iconClassName: "rotate-180 text-emerald-500",
-                    anti: ["liquidity_curve_down"],
+                    key: "liquidity_above",
+                    title: "Above",
+                    children: [
+                      {
+                        key: "liquidity_curve_up_above",
+                        title: "Up",
+                        icon: Spline,
+                        iconClassName: "rotate-180 text-emerald-500",
+                        anti: ["liquidity_curve_down_above"],
+                      },
+                      {
+                        key: "liquidity_curve_down_above",
+                        title: "Down",
+                        icon: Spline,
+                        iconClassName: "rotate-90 text-rose-500",
+                        anti: ["liquidity_curve_up_above"],
+                      },
+                    ],
                   },
                   {
-                    key: "liquidity_curve_down",
-                    title: "Down",
-                    icon: Spline,
-                    iconClassName: "rotate-90 text-rose-500",
-                    anti: ["liquidity_curve_up"],
+                    key: "liquidity_below",
+                    title: "Below",
+                    children: [
+                      {
+                        key: "liquidity_curve_up_below",
+                        title: "Up",
+                        icon: Spline,
+                        iconClassName: "rotate-180 text-emerald-500",
+                        anti: ["liquidity_curve_down_below"],
+                      },
+                      {
+                        key: "liquidity_curve_down_below",
+                        title: "Down",
+                        icon: Spline,
+                        iconClassName: "rotate-90 text-rose-500",
+                        anti: ["liquidity_curve_up_below"],
+                      },
+                    ],
                   },
                 ],
               },
