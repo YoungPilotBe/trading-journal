@@ -127,7 +127,7 @@ const Tree = ({
           key={rowIndex}
           className={`grid gap-2`}
           style={{
-            gridTemplateColumns: `repeat(${treeDepth}, 1fr)`,
+            gridTemplateColumns: `repeat(${treeDepth}, minmax(50px, 100px))`,
           }}
         >
           {row.map((cell, colIndex) => (

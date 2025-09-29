@@ -20,6 +20,7 @@ import {
 import {
   createContradictingBranch,
   createDemandRangeChildren,
+  createDiscountPremiumPricing,
   createSupplyDemandOBIMChildren,
   createSupplyRangeChildren,
   customPrice,
@@ -38,15 +39,30 @@ export const ideaStrategyTree: TreeNode[] = [
         title: "Swing",
         icon: Activity,
         iconClassName: "",
-        children: createContradictingBranch("swing", ["bullish", "bearish"]),
+        children: [
+          ...createContradictingBranch("swing", ["bullish", "bearish"]),
+          {
+            key: "swing_range",
+            title: "Range",
+            children: createDiscountPremiumPricing("swing_range"),
+          },
+        ],
       },
       {
         key: "fractal",
         title: "Fractal",
         icon: GitBranch,
         iconClassName: "",
-        children: createContradictingBranch("fractal", ["bullish", "bearish"]),
+        children: [
+          ...createContradictingBranch("fractal", ["bullish", "bearish"]),
+          {
+            key: "fractal_range",
+            title: "Range",
+            children: createDiscountPremiumPricing("fractal_range"),
+          },
+        ],
       },
+
       {
         key: "optional_settings",
         title: "_+_",

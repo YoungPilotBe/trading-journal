@@ -92,10 +92,10 @@ export const ToggleBadge = ({
         <ChevronRight className={clsx(TREE_ICON_BASE_CLASS)} />
       ) : (
         // Normal badge style
-        <span className="flex flex-row items-center justify-between gap-1 font-mono">
-          <div className="flex flex-row items-center gap-1">
+        <span className="flex flex-row items-center justify-between gap-1 font-mono min-w-0">
+          <div className="flex flex-row items-center gap-1 min-w-0 flex-1">
             {renderIcon()}
-            {label}
+            <span className="truncate">{label}</span>
           </div>
           {effect && (
             <div
