@@ -234,11 +234,8 @@ const TradingJournal = () => {
   // Create table instance
   // TODO Fix this
   const table = useReactTable({
-    data: (journalData || []).map((entry) => ({
-      ...entry,
-      // Convert null riskReward to undefined to match JournalEntry type
-      riskReward: entry.riskReward === null ? undefined : entry.riskReward,
-    })),
+    //@ts-expect-error err
+    data: journalData || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),

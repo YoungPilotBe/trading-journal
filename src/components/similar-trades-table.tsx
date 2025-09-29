@@ -344,11 +344,8 @@ const SimilarTradesTable = ({
 
   // Create table instance
   const table = useReactTable({
-    data: (similarTrades || []).map((entry) => ({
-      ...entry,
-      // Convert null riskReward to undefined to match JournalEntry type
-      riskReward: entry.riskReward === null ? undefined : entry.riskReward,
-    })),
+    //@ts-expect-error err
+    data: similarTrades || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
