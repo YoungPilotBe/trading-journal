@@ -83,7 +83,7 @@ function TreeContent({ viewOnly }: { viewOnly: boolean }) {
 
   return (
     <>
-      <Tree viewOnly={viewOnly} />
+      <Tree viewOnly={viewOnly} className="overflow-y-auto flex-1" />
       {!viewOnly && (
         <Button
           className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
@@ -111,7 +111,7 @@ function RouteComponent() {
     <div className="absolute inset-0 pointer-events-none">
       {/* Right-side form panel - similar to add_trade layout */}
       <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto ">
-        <div className="flex flex-col items-start space-y-2 mt-2">
+        <div className="flex flex-col items-start space-y-2 mt-2 h-full">
           <span className="text-white font-light font-mono">Tags</span>
           <TreeProvider
             tradeSetup={tradeSetup}

@@ -9,6 +9,8 @@ import {
   GitBranch,
   LogIn,
   LogOut,
+  MenuIcon,
+  Mountain,
   Settings,
   Shield,
   Spline,
@@ -79,6 +81,43 @@ const createTimeframeBullishBearishChildren = (
   return [bullishNode, bearishNode];
 };
 
+// Helper function to create liquidity options for swing/fractal
+const createLiquidityChildren = (prefix: string): TreeNode[] => [
+  {
+    key: `${prefix}_wicking_tops`,
+    title: "Wicking Tops",
+    icon: Mountain,
+    iconClassName: "scale-x-[-1]",
+  },
+  {
+    key: `${prefix}_wicking_bottoms`,
+    title: "Wicking Bottoms",
+    icon: Mountain,
+    iconClassName: "rotate-180",
+  },
+  {
+    key: `${prefix}_liquidity_curve`,
+    title: "Curve",
+    iconClassName: "",
+    children: [
+      {
+        key: `${prefix}_liquidity_curve_below`,
+        title: "Below",
+        icon: Spline,
+        iconClassName: "rotate-180 text-emerald-500",
+        anti: [`${prefix}_liquidity_curve_above`],
+      },
+      {
+        key: `${prefix}_liquidity_curve_above`,
+        title: "Above",
+        icon: Spline,
+        iconClassName: "rotate-90 text-rose-500",
+        anti: [`${prefix}_liquidity_curve_below`],
+      },
+    ],
+  },
+];
+
 // Factory function to create the complete strategy tree with dynamic timeframes
 export const createIdeaStrategyTree = (
   availableTimeframes: Timeframe[] = []
@@ -123,7 +162,16 @@ export const createIdeaStrategyTree = (
           {
             key: "swing_range",
             title: "Range",
+            icon: MenuIcon,
+            iconClassName: "text-sky-500/70",
             children: createDiscountPremiumPricing("swing_range"),
+          },
+          {
+            key: "swing_liquidity",
+            title: "Liquidity",
+            icon: Droplets,
+            iconClassName: "",
+            children: createLiquidityChildren("swing_liquidity"),
           },
         ],
       },
@@ -140,7 +188,16 @@ export const createIdeaStrategyTree = (
           {
             key: "fractal_range",
             title: "Range",
+            icon: MenuIcon,
+            iconClassName: "text-sky-500/70",
             children: createDiscountPremiumPricing("fractal_range"),
+          },
+          {
+            key: "fractal_liquidity",
+            title: "Liquidity",
+            icon: Droplets,
+            iconClassName: "",
+            children: createLiquidityChildren("fractal_liquidity"),
           },
         ],
       },
@@ -197,69 +254,6 @@ export const createIdeaStrategyTree = (
                 icon: ArrowDown,
                 iconClassName: "",
                 inputField: customPrice(),
-              },
-            ],
-          },
-          {
-            key: "market_structure_liquidity",
-            title: "Liquidity",
-            icon: Droplets,
-            iconClassName: "",
-            children: [
-              {
-                key: "wicking_tops",
-                title: "Wicking Tops",
-              },
-              {
-                key: "wicking_bottoms",
-                title: "Wicking Bottoms",
-              },
-              {
-                key: "liquidity_curve",
-                title: "Curve",
-                iconClassName: "",
-                children: [
-                  {
-                    key: "liquidity_above",
-                    title: "Above",
-                    children: [
-                      {
-                        key: "liquidity_curve_up_above",
-                        title: "Up",
-                        icon: Spline,
-                        iconClassName: "rotate-180 text-emerald-500",
-                        anti: ["liquidity_curve_down_above"],
-                      },
-                      {
-                        key: "liquidity_curve_down_above",
-                        title: "Down",
-                        icon: Spline,
-                        iconClassName: "rotate-90 text-rose-500",
-                        anti: ["liquidity_curve_up_above"],
-                      },
-                    ],
-                  },
-                  {
-                    key: "liquidity_below",
-                    title: "Below",
-                    children: [
-                      {
-                        key: "liquidity_curve_up_below",
-                        title: "Up",
-                        icon: Spline,
-                        iconClassName: "rotate-180 text-emerald-500",
-                        anti: ["liquidity_curve_down_below"],
-                      },
-                      {
-                        key: "liquidity_curve_down_below",
-                        title: "Down",
-                        icon: Spline,
-                        iconClassName: "rotate-90 text-rose-500",
-                        anti: ["liquidity_curve_up_below"],
-                      },
-                    ],
-                  },
-                ],
               },
             ],
           },
