@@ -1,3 +1,8 @@
+import bearishOBIMImg from "@/assets/bearish_order_block_imbalance.png";
+import bearishOBIM25Img from "@/assets/bearish_order_block_imbalance_25_percent.png";
+import bullishOBIMImg from "@/assets/bullish_order_block_imbalance.png";
+import bullishOBIM25Img from "@/assets/bullish_order_block_imbalance_25_percent.png";
+import extremumDPImg from "@/assets/extremum_decision_point.png";
 import { capitalize } from "lodash";
 import { ChevronDown, ChevronUp, ChevronsDown, ChevronsUp } from "lucide-react";
 import { z } from "zod";
@@ -174,52 +179,68 @@ export const createLiquidityChildren = (prefix: string) => [
 ];
 
 // Helper function to create OBIM children for Supply/Demand
-export const createSupplyDemandOBIMChildren = (prefix: string) => [
-  {
-    key: `${prefix}_obim_extension`,
-    title: "Extension",
-    children: [
-      {
-        key: `${prefix}_obim_extension_fvg`,
-        title: "FVG",
-      },
-      {
-        key: `${prefix}_obim_extension_25_percent`,
-        title: "25%",
-      },
-    ],
-  },
-  {
-    key: `${prefix}_obim_inducement`,
-    title: "Inducement",
-  },
-  {
-    key: `${prefix}_obim_pivot`,
-    title: "Pivot",
-    children: [
-      {
-        key: `${prefix}_obim_pivot_ep`,
-        title: "EP",
-      },
-      {
-        key: `${prefix}_obim_pivot_dp`,
-        title: "DP",
-      },
-    ],
-  },
-  {
-    key: `${prefix}_obim_fixed_range_confluence`,
-    title: "Fixed Range Confluence",
-    children: createFixedRangeConfluenceChildren(
-      `${prefix}_obim_fixed_range_confluence`
-    ),
-  },
-  {
-    key: `${prefix}_obim_liquidity`,
-    title: "Liquidity",
-    children: createLiquidityChildren(`${prefix}_obim`),
-  },
-];
+export const createSupplyDemandOBIMChildren = (prefix: string) => {
+  const isSupply = prefix.includes("supply");
+  const isDemand = prefix.includes("demand");
+
+  return [
+    {
+      key: `${prefix}_obim_extension`,
+      title: "Extension",
+      children: [
+        {
+          key: `${prefix}_obim_extension_fvg`,
+          title: "FVG",
+          imageUrl: isSupply
+            ? bearishOBIMImg
+            : isDemand
+              ? bullishOBIMImg
+              : undefined,
+        },
+        {
+          key: `${prefix}_obim_extension_25_percent`,
+          title: "25%",
+          imageUrl: isSupply
+            ? bearishOBIM25Img
+            : isDemand
+              ? bullishOBIM25Img
+              : undefined,
+        },
+      ],
+    },
+    {
+      key: `${prefix}_obim_inducement`,
+      title: "Inducement",
+    },
+    {
+      key: `${prefix}_obim_pivot`,
+      title: "Pivot",
+      children: [
+        {
+          key: `${prefix}_obim_pivot_ep`,
+          title: "EP",
+        },
+        {
+          key: `${prefix}_obim_pivot_dp`,
+          title: "DP",
+          imageUrl: extremumDPImg,
+        },
+      ],
+    },
+    {
+      key: `${prefix}_obim_fixed_range_confluence`,
+      title: "Fixed Range Confluence",
+      children: createFixedRangeConfluenceChildren(
+        `${prefix}_obim_fixed_range_confluence`
+      ),
+    },
+    {
+      key: `${prefix}_obim_liquidity`,
+      title: "Liquidity",
+      children: createLiquidityChildren(`${prefix}_obim`),
+    },
+  ];
+};
 
 // Helper function to create Range children for Demand
 export const createDemandRangeChildren = (prefix: string) =>

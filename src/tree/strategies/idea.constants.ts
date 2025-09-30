@@ -1,3 +1,11 @@
+import bearishSupplyZoneImg from "@/assets/bearish_supply_zone.png";
+import bullishDemandZoneImg from "@/assets/bullish_demand_zone.png";
+import correctiveReturnImg from "@/assets/corrective_return.png";
+import liquiditySweepReturnImg from "@/assets/liquidity_sweep_return.png";
+import rangeDemandZoneImg from "@/assets/range_demand_zone.png";
+import rangeSupplyZoneImg from "@/assets/range_supply_zone.png";
+import roundedReturnImg from "@/assets/rounded_return.png";
+import vShapeReturnImg from "@/assets/v_shape_return.png";
 import {
   Activity,
   AlertTriangle,
@@ -131,6 +139,7 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
             iconClassName: "text-emerald-500",
             description:
               "Liquidity is being left behind under the curve which may cause a quick sweep down, proving the supply zone successful",
+            imageUrl: roundedReturnImg,
             anti: [
               `${prefix}_return_corrective`,
               `${prefix}_return_sweep`,
@@ -144,6 +153,7 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
             iconClassName: "text-emerald-400",
             description:
               "Liquidity is being left behind under the trendline which may cause a quick sweep down, proving the supply zone successful",
+            imageUrl: correctiveReturnImg,
             anti: [
               `${prefix}_return_rounded`,
               `${prefix}_return_sweep`,
@@ -157,6 +167,7 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
             iconClassName: "text-amber-500",
             description:
               "Liquidity is being taken on the way up, meaning that smart money may be engineering their positions. This could cause the supply zone to fail.",
+            imageUrl: liquiditySweepReturnImg,
             anti: [
               `${prefix}_return_rounded`,
               `${prefix}_return_corrective`,
@@ -170,6 +181,7 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
             iconClassName: "text-rose-500",
             description:
               "Aggressive return after the pivot was created, usually causes the supply/demand zone to fail",
+            imageUrl: vShapeReturnImg,
             anti: [
               `${prefix}_return_rounded`,
               `${prefix}_return_corrective`,
@@ -192,6 +204,8 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
             iconClassName: "text-emerald-500",
             description:
               "Liquidity is being left behind above the curve which may cause a quick sweep up, proving the demand zone successful",
+            imageUrl: roundedReturnImg,
+            imageClassName: "rotate-180 -scale-x-100",
             anti: [
               `${prefix}_return_corrective`,
               `${prefix}_return_sweep`,
@@ -203,8 +217,10 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
             title: "Corrective",
             icon: TrendingUp,
             iconClassName: "text-emerald-400",
+            imageClassName: "rotate-180 -scale-x-100",
             description:
               "Liquidity is being left behind above the trendline which may cause a quick sweep up, proving the demand zone successful",
+            imageUrl: correctiveReturnImg,
             anti: [
               `${prefix}_return_rounded`,
               `${prefix}_return_sweep`,
@@ -216,8 +232,10 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
             title: "Sweep",
             icon: Waves,
             iconClassName: "text-amber-500",
+            imageClassName: "rotate-180 -scale-x-100",
             description:
               "Liquidity is being taken on the way down, meaning that smart money may be engineering their positions. This could cause the demand zone to fail.",
+            imageUrl: liquiditySweepReturnImg,
             anti: [
               `${prefix}_return_rounded`,
               `${prefix}_return_corrective`,
@@ -231,6 +249,8 @@ const createLiquidityChildren = (prefix: string): TreeNode[] => [
             iconClassName: "text-rose-500",
             description:
               "Aggressive return after the pivot was created, usually causes the supply/demand zone to fail",
+            imageClassName: "rotate-180 -scale-x-100",
+            imageUrl: vShapeReturnImg,
             anti: [
               `${prefix}_return_rounded`,
               `${prefix}_return_corrective`,
@@ -429,6 +449,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               title: "Range",
               icon: Square,
               iconClassName: "",
+              imageUrl: rangeDemandZoneImg,
               children: createDemandRangeChildren("entry_demand"),
             },
             {
@@ -436,6 +457,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               title: "OBIM",
               icon: Target,
               iconClassName: "",
+              imageUrl: bullishDemandZoneImg,
               children: createSupplyDemandOBIMChildren("entry_demand"),
             },
           ],
@@ -452,6 +474,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               title: "Range",
               icon: Square,
               iconClassName: "",
+              imageUrl: rangeSupplyZoneImg,
               children: createSupplyRangeChildren("entry_supply"),
             },
             {
@@ -459,6 +482,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               title: "OBIM",
               icon: Target,
               iconClassName: "",
+              imageUrl: bearishSupplyZoneImg,
               children: createSupplyDemandOBIMChildren("entry_supply"),
             },
           ],
@@ -483,6 +507,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               title: "Range",
               icon: Square,
               iconClassName: "",
+              imageUrl: rangeDemandZoneImg,
               children: createDemandRangeChildren("exit_demand"),
             },
             {
@@ -490,6 +515,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               title: "OBIM",
               icon: Target,
               iconClassName: "",
+              imageUrl: bullishDemandZoneImg,
               children: createSupplyDemandOBIMChildren("exit_demand"),
             },
           ],
@@ -506,6 +532,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               title: "Range",
               icon: Square,
               iconClassName: "",
+              imageUrl: rangeSupplyZoneImg,
               children: createSupplyRangeChildren("exit_supply"),
             },
             {
@@ -513,6 +540,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               title: "OBIM",
               icon: Target,
               iconClassName: "",
+              imageUrl: bearishSupplyZoneImg,
               children: createSupplyDemandOBIMChildren("exit_supply"),
             },
           ],

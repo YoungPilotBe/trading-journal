@@ -6,7 +6,7 @@ import {
 import { useFieldEffect, useTreeToggle } from "@/tree/TreeContext";
 import { findNodeByKeyArray } from "@/tree/tree.utils";
 import { clsx } from "clsx";
-import { ChevronRight, LucideIcon } from "lucide-react";
+import { ChevronRight, LucideIcon, Settings } from "lucide-react";
 import { TREE_ICON_BASE_CLASS } from "./tree.constants";
 
 interface SimplifiedToggleBadgeProps
@@ -23,6 +23,8 @@ interface SimplifiedToggleBadgeProps
   readOnly?: boolean;
   isBranch?: boolean;
   description?: string;
+  imageUrl?: string;
+  imageClassName?: string;
 }
 
 export const ToggleBadge = ({
@@ -35,6 +37,8 @@ export const ToggleBadge = ({
   isBranch = false,
   readOnly = false,
   description,
+  imageUrl,
+  imageClassName = "",
   ...buttonProps
 }: SimplifiedToggleBadgeProps) => {
   const effect = useFieldEffect(fieldName);
@@ -100,7 +104,10 @@ export const ToggleBadge = ({
     >
       {isDir ? (
         // Directory style - just arrow on the right
-        <ChevronRight className={clsx(TREE_ICON_BASE_CLASS)} />
+        <>
+          <Settings className={clsx(TREE_ICON_BASE_CLASS)} />
+          <ChevronRight className={clsx(TREE_ICON_BASE_CLASS)} />
+        </>
       ) : (
         // Normal badge style
         <span className="flex flex-row items-center justify-between gap-1 font-mono min-w-0">
@@ -121,15 +128,40 @@ export const ToggleBadge = ({
     </button>
   );
 
-  // If there's a description, wrap with tooltip
-  if (description) {
+  // If there's a description or image, wrap with tooltip
+  if (description || imageUrl) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>{buttonElement}</TooltipTrigger>
-        <TooltipContent side="right" className="max-w-xs">
-          <p className="text-xs font-mono text-muted-foreground leading-relaxed">
-            {description}
-          </p>
+        <TooltipContent
+          side="right"
+          className="max-w-sm w-80 p-0 overflow-hidden border-2"
+          sideOffset={5}
+        >
+          <div className="flex flex-col">
+            {/* Image Section */}
+            {imageUrl && (
+              <div className="relative h-48 w-full bg-muted/20">
+                <img
+                  src={imageUrl}
+                  alt={label}
+                  className={clsx(
+                    "object-contain absolute inset-0 w-full h-full p-2",
+                    imageClassName
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Description Section */}
+            {description && (
+              <div className="p-3">
+                <p className="text-xs font-mono text-muted-foreground leading-relaxed">
+                  {description}
+                </p>
+              </div>
+            )}
+          </div>
         </TooltipContent>
       </Tooltip>
     );

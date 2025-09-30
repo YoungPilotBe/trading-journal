@@ -129,6 +129,8 @@ const Tree = ({ viewOnly = false, ...divProps }: Props) => {
                         isBranch={false}
                         readOnly={viewOnly}
                         description={cell.description}
+                        imageUrl={cell.imageUrl}
+                        imageClassName={cell.imageClassName}
                       />
                     ) : (
                       <ToggleBadge
@@ -140,6 +142,8 @@ const Tree = ({ viewOnly = false, ...divProps }: Props) => {
                         isBranch={true}
                         readOnly={viewOnly}
                         description={cell.description}
+                        imageUrl={cell.imageUrl}
+                        imageClassName={cell.imageClassName}
                       />
                     )}
                   </>

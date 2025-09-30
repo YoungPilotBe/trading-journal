@@ -25,6 +25,8 @@ export type TreeNode = {
   iconClassName?: string; // CSS classes for the icon
   isDir?: boolean; // Whether this node should be rendered as a directory
   description?: string;
+  imageUrl?: string; // Path to image file (for Electron app)
+  imageClassName?: string; // CSS classes for the image
   inputField?: InputFieldConfig; // Configuration for input field
 };
 
@@ -57,6 +59,8 @@ export type GridCell = {
   inputField?: InputFieldConfig;
   parentKey?: string; // Key of the parent node (for input fields)
   description?: string; // Description to show in tooltip
+  imageUrl?: string; // Path to image file (for Electron app)
+  imageClassName?: string; // CSS classes for the image
 };
 
 function flattenTreeToGrid(
@@ -97,6 +101,8 @@ function flattenTreeToGrid(
         node.isDir || node.title.includes("_+_") || node.key.includes("_+_"),
       parentKey,
       description: node.description,
+      imageUrl: node.imageUrl,
+      imageClassName: node.imageClassName,
     };
 
     let currentRowIndex = rowIndex;
