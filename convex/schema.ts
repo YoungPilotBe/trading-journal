@@ -63,6 +63,11 @@ export default defineSchema({
     // Timeframes being watched
     timeframes: v.array(v.string()),
 
+    // Win/loss
+    result: v.optional(
+      v.union(v.literal("win"), v.literal("loss"), v.literal("breakeven"))
+    ),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),

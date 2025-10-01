@@ -1,3 +1,4 @@
+import ResultBadge from "@/components/result-badge";
 import SimilarTradesTable from "@/components/similar-trades-table";
 import SnapshotHistory from "@/components/snapshot-history";
 import { SnapshotImage } from "@/components/snapshot-image";
@@ -245,8 +246,9 @@ function RouteComponent() {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>
+                    <BreadcrumbPage className="flex items-center gap-2">
                       {tradeSetup?.title || "Trade Setup"}
+                      <ResultBadge result={tradeSetup?.result} />
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
@@ -321,6 +323,15 @@ function RouteComponent() {
                     format(new Date(tradeSetup._creationTime), "MMM dd, HH:mm")}
                 </span>
               </div>
+
+              {tradeSetup?.result && (
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground font-mono text-sm">
+                    Result
+                  </span>
+                  <ResultBadge result={tradeSetup.result} />
+                </div>
+              )}
             </div>
 
             {/* Form */}

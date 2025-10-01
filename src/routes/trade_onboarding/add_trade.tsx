@@ -10,21 +10,15 @@ import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup"
 import { useGetTradeSetupBySnapshotId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
-import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
+import { addTradeSetupSchema, resultSchema } from "@/schemas/add_trade_setup";
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const searchSchema = z.object({
-  imageId: z.string(),
-  snapshotId: z.optional(z.string()),
-  attach: z.optional(z.boolean()),
-  onboarding: z.optional(z.boolean()),
-});
+import z from "zod";
 
 const directionOptions = [
   {
@@ -39,6 +33,24 @@ const directionOptions = [
   },
 ] as const;
 
+const resultOptions = [
+  {
+    value: "win",
+    label: "Win",
+    color: "border-emerald-400/70 bg-emerald-500/5 text-emerald-300/80",
+  },
+  {
+    value: "loss",
+    label: "Loss",
+    color: "border-red-400/70 bg-red-500/5 text-red-300/80",
+  },
+  {
+    value: "breakeven",
+    label: "Breakeven",
+    color: "border-yellow-400/70 bg-yellow-500/5 text-yellow-300/80",
+  },
+] as const;
+
 // Helper function to sort timeframes according to timeframeOrder
 const sortTimeframes = (timeframes: string[]) => {
   return [...timeframes].sort((a, b) => {
@@ -47,6 +59,14 @@ const sortTimeframes = (timeframes: string[]) => {
     return indexA - indexB;
   });
 };
+
+const searchSchema = z.object({
+  tradeSetupId: z.optional(z.string()),
+  snapshotId: z.optional(z.string()),
+  image: z.optional(z.enum(["preview"])),
+  attach: z.optional(z.boolean()),
+  onboarding: z.optional(z.boolean()),
+});
 
 export const Route = createFileRoute("/trade_onboarding/add_trade")({
   component: RouteComponent,
@@ -138,9 +158,16 @@ function RouteComponent() {
   // Initialize form with react-hook-form - now with proper default values
   const form = useForm({
     validators: {
-      onChange: addTradeSetupSchema,
-      onSubmit: ({ value }) => {
-        // Check if selected status is disabled
+      onChange: ({ value }) => {
+        console.log("Validating", value);
+
+        // First validate with the schema
+        const schemaResult = addTradeSetupSchema.safeParse(value);
+        if (!schemaResult.success) {
+          return schemaResult.error.issues[0]?.message || "Validation error";
+        }
+
+        // Then validate status-specific business rules
         const selectedStatusOption = statusOptions.find(
           (option) => option.value === value.status
         );
@@ -154,10 +181,10 @@ function RouteComponent() {
           };
 
           if (selectedStatusOption.disabled(context)) {
-            toast.error("Selected status is not allowed at this time");
             return "Selected status is not allowed at this time";
           }
         }
+
         return undefined;
       },
     },
@@ -167,15 +194,32 @@ function RouteComponent() {
       direction: existingTradeSetup?.direction || ("long" as const),
       riskReward: existingTradeSetup?.riskReward || null,
       timeframes: existingTradeSetup?.timeframes || ["4h"],
+      result: existingTradeSetup?.result,
     } as const,
 
     onSubmit: async ({ value: formData }) => {
+      // Check for validation errors and show toast
+      const errors = form.state.errors;
+      if (errors.length > 0) {
+        const errorMessages = errors
+          .map((error) => {
+            if (typeof error === "string") return error;
+            if (error && typeof error === "object" && "message" in error)
+              return error;
+            return String(error);
+          })
+          .join(", ");
+        toast.error(`Validation error: ${errorMessages}`);
+        return;
+      }
+
       if (existingTradeSetup) {
         if (attach) {
           return await createSnapshot({
             tradeSetupId: existingTradeSetup._id,
             imageId: imageId as Id<"tradingview_images">,
             status: formData.status,
+            result: formData.result,
           });
         }
         return await updateTradeSetup({
@@ -211,7 +255,7 @@ function RouteComponent() {
     direction: attach,
     riskReward: attach,
     timeframes: attach,
-    status: false, // Status is always enabled
+    status: false,
   };
 
   return (
@@ -318,7 +362,9 @@ function RouteComponent() {
                 children={(field) => (
                   <StatusOptions
                     selected={field.state.value}
-                    onClick={field.handleChange}
+                    onClick={(newStatus) => {
+                      field.handleChange(newStatus);
+                    }}
                     disabled={fieldDisabledMap.status}
                     context={{
                       isNew: !existingTradeSetup?._id,
@@ -332,6 +378,59 @@ function RouteComponent() {
               />
             </div>
 
+            {/* Result Field - Only show when status is "closed" */}
+            {/* Conditional Result Field */}
+            <form.Subscribe selector={(state) => state.values.status}>
+              {(status) =>
+                (status === "closed" || existingTradeSetup?.result) && (
+                  <form.Field
+                    validators={{
+                      onChange: resultSchema,
+                    }}
+                    name="result"
+                    defaultValue={existingTradeSetup?.result}
+                  >
+                    {(field) => (
+                      <div className="flex justify-between items-center h-9">
+                        <span
+                          className={clsx(
+                            "text-xs text-muted",
+                            field.state.meta.errors.length && "text-red-500"
+                          )}
+                        >
+                          Result
+                        </span>
+                        <div className="flex flex-row gap-1">
+                          {resultOptions.map((option) => {
+                            console.log(field.state.value);
+                            const isSelected =
+                              field.state.value === option.value;
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                disabled={
+                                  existingTradeSetup?.result &&
+                                  existingTradeSetup.result !== option.value
+                                }
+                                onClick={() => field.handleChange(option.value)}
+                                className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${
+                                  isSelected
+                                    ? option.color
+                                    : "border-muted text-muted-foreground hover:border-muted-foreground/50"
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </form.Field>
+                )
+              }
+            </form.Subscribe>
             {/* Timeframes */}
             <div className="flex justify-between items-center h-9">
               <span className="text-xs text-muted">Timeframes</span>
@@ -437,13 +536,6 @@ function RouteComponent() {
                       className="text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                       placeholder="3.2"
                     />
-                    {field.state.meta.errors.length > 0 && (
-                      <div className="flex justify-end">
-                        <span className="text-red-400 text-xs">
-                          {JSON.stringify(field.state.meta.errors)}
-                        </span>
-                      </div>
-                    )}
                   </>
                 )}
               />

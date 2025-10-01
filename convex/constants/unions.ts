@@ -15,3 +15,9 @@ export const sortBy = v.optional(
 export const sortOrder = v.optional(
   v.union(v.literal("asc"), v.literal("desc"))
 );
+
+export const resultUnion = v.union(
+  v.literal("win"),
+  v.literal("loss"),
+  v.literal("breakeven")
+);

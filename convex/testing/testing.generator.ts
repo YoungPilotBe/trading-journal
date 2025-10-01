@@ -46,6 +46,11 @@ export class Generator {
     const direction = this.faker.helpers.arrayElement(TRADE_DIRECTIONS);
     const template = this.faker.helpers.arrayElement(STRATEGY_TEMPLATES);
     const timeframes = this.faker.helpers.arrayElements(TIMEFRAMES, 3);
+    const result = this.faker.helpers.arrayElement([
+      "win",
+      "loss",
+      "breakeven",
+    ]);
     const riskReward = this.faker.number.float({
       min: 0.4,
       max: 10.0,
@@ -72,6 +77,7 @@ export class Generator {
       riskReward,
       snapshots,
       timeframes,
+      result,
     };
   }
 }

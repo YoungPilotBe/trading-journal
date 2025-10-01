@@ -18,6 +18,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { PlusIcon, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import ResultBadge from "./result-badge";
 import { LoadingSkeleton } from "./ui/loading-skeleton";
 const TradeSetupHeader = () => {
   const [selectedAsset, setSelectedAsset] = useState<string>("all");
@@ -226,9 +227,12 @@ const TradeSetupCard = ({
               <h3 className="font-semibold text-base leading-tight truncate">
                 {setup.asset}
               </h3>
-              <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate">
-                {setup.title}
-              </p>
+              <div className="flex flex-row gap-2">
+                <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate">
+                  {setup.title}
+                </p>
+                <ResultBadge size={"small"} result={setup.result} />
+              </div>
             </div>
             <Badge
               variant={setup.direction === "long" ? "default" : "destructive"}

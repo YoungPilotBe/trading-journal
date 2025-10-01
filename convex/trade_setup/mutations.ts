@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
-import { statusUnion } from "../constants/unions";
+import { resultUnion, statusUnion } from "../constants/unions";
 
 // Update an existing trade setup
 export const updateTradeSetup = mutation({
@@ -13,6 +13,7 @@ export const updateTradeSetup = mutation({
     status: v.optional(statusUnion),
     trade_template: v.optional(v.id("trade_templates")),
     riskReward: v.optional(v.union(v.number(), v.null())),
+    result: v.optional(resultUnion),
     timeframes: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
