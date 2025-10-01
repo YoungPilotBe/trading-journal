@@ -7,6 +7,7 @@ import { capitalize } from "lodash";
 import { ChevronDown, ChevronUp, ChevronsDown, ChevronsUp } from "lucide-react";
 import { z } from "zod";
 import type { TreeNode } from "./tree.utils";
+import { createTimeframeNode } from "./tree.utils";
 
 // Base icon className for all tree icons
 export const TREE_ICON_BASE_CLASS = "w-3 h-3 flex-shrink-0";
@@ -242,6 +243,24 @@ export const createSupplyDemandOBIMChildren = (prefix: string) => {
   ];
 };
 
+// Helper function to create OBIM children with timeframe layer
+export const createOBIMWithTimeframes = (
+  prefix: string,
+  availableTimeframes: string[] = []
+) => {
+  if (availableTimeframes.length === 0) {
+    // Fallback to direct children if no timeframes provided
+    return createSupplyDemandOBIMChildren(prefix);
+  }
+
+  return createTimeframeNode({
+    prefix: `${prefix}_obim`,
+    availableTimeframes,
+    createChildren: (timeframePrefix) =>
+      createSupplyDemandOBIMChildren(timeframePrefix),
+  });
+};
+
 // Helper function to create Range children for Demand
 export const createDemandRangeChildren = (prefix: string) =>
   [
@@ -267,6 +286,24 @@ export const createDemandRangeChildren = (prefix: string) =>
     },
   ] satisfies TreeNode[];
 
+// Helper function to create Range children with timeframe layer
+export const createRangeWithTimeframes = (
+  prefix: string,
+  availableTimeframes: string[] = []
+) => {
+  if (availableTimeframes.length === 0) {
+    // Fallback to direct children if no timeframes provided
+    return createDemandRangeChildren(prefix);
+  }
+
+  return createTimeframeNode({
+    prefix: `${prefix}_range`,
+    availableTimeframes,
+    createChildren: (timeframePrefix) =>
+      createDemandRangeChildren(timeframePrefix),
+  });
+};
+
 // Helper function to create Range children for Supply
 export const createSupplyRangeChildren = (prefix: string) => [
   {
@@ -290,6 +327,24 @@ export const createSupplyRangeChildren = (prefix: string) => [
     ),
   },
 ];
+
+// Helper function to create Supply Range children with timeframe layer
+export const createSupplyRangeWithTimeframes = (
+  prefix: string,
+  availableTimeframes: string[] = []
+) => {
+  if (availableTimeframes.length === 0) {
+    // Fallback to direct children if no timeframes provided
+    return createSupplyRangeChildren(prefix);
+  }
+
+  return createTimeframeNode({
+    prefix: `${prefix}_range`,
+    availableTimeframes,
+    createChildren: (timeframePrefix) =>
+      createSupplyRangeChildren(timeframePrefix),
+  });
+};
 
 export const customPrice = () => {
   return {

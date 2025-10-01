@@ -697,6 +697,91 @@ function mergeTagConfigs(
     selectedNodes: mergedSelectedNodes,
   };
 }
+// Configuration interface for creating timeframe nodes
+export interface TimeframeNodeConfig {
+  // Base prefix for the timeframe nodes
+  prefix: string;
+  // Available timeframes to create nodes for
+  availableTimeframes: string[];
+  // Function to create children for each timeframe
+  createChildren: (timeframePrefix: string) => TreeNode[];
+  // Function to generate anti keys for timeframe conflicts
+  generateAntiKeys?: (timeframe: string, allTimeframes: string[]) => string[];
+  // Icon for timeframe nodes (defaults to Clock)
+  icon?: any;
+  // Icon className for timeframe nodes
+  iconClassName?: string;
+  // Whether to prevent multiple timeframe selection (defaults to true)
+  preventMultipleSelection?: boolean;
+}
+
+/**
+ * Generic function to create timeframe nodes with customizable children and anti-key logic
+ *
+ * @param config - Configuration object for timeframe node creation
+ * @returns Array of TreeNode objects representing timeframes
+ *
+ * @example
+ * ```ts
+ * // Basic usage for range timeframes
+ * const rangeTimeframes = createTimeframeNode({
+ *   prefix: "demand_range",
+ *   availableTimeframes: ["1m", "5m", "15m"],
+ *   createChildren: (tfPrefix) => createDemandRangeChildren(tfPrefix),
+ * });
+ *
+ * // Advanced usage with custom anti-key logic
+ * const obimTimeframes = createTimeframeNode({
+ *   prefix: "demand_obim",
+ *   availableTimeframes: ["1m", "5m", "15m"],
+ *   createChildren: (tfPrefix) => createSupplyDemandOBIMChildren(tfPrefix),
+ *   generateAntiKeys: (timeframe, allTimeframes) =>
+ *     allTimeframes.filter(tf => tf !== timeframe).map(tf => `demand_obim_${tf}`),
+ *   icon: Clock,
+ *   iconClassName: "text-blue-500",
+ * });
+ * ```
+ */
+export const createTimeframeNode = (
+  config: TimeframeNodeConfig
+): TreeNode[] => {
+  const {
+    prefix,
+    availableTimeframes,
+    createChildren,
+    generateAntiKeys,
+    icon = Clock,
+    iconClassName = "text-muted-foreground",
+    preventMultipleSelection = true,
+  } = config;
+
+  if (availableTimeframes.length === 0) {
+    return [];
+  }
+
+  return availableTimeframes.map((timeframe) => {
+    const timeframePrefix = `${prefix}_${timeframe}`;
+
+    // Generate anti keys - use custom function if provided, otherwise use default logic
+    const antiKeys = preventMultipleSelection
+      ? generateAntiKeys
+        ? generateAntiKeys(timeframe, availableTimeframes)
+        : availableTimeframes
+            .filter((tf) => tf !== timeframe)
+            .map((tf) => `${prefix}_${tf}`)
+      : [];
+
+    return {
+      key: timeframePrefix,
+      title: timeframe,
+      icon,
+      iconClassName,
+      children: createChildren(timeframePrefix),
+      anti: antiKeys,
+    };
+  });
+};
+
 // Create timeframe children for a given direction prefix
 export const createTimeframeChildren = (
   directionPrefix: string,

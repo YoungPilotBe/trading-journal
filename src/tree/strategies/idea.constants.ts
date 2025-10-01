@@ -16,8 +16,6 @@ import {
   Clock,
   Droplets,
   GitBranch,
-  LogIn,
-  LogOut,
   MenuIcon,
   Mountain,
   Settings,
@@ -32,14 +30,14 @@ import {
 } from "lucide-react";
 import type { Timeframe } from "../../config/timeframe-order";
 import {
-  createDemandRangeChildren,
   createDiscountPremiumPricing,
-  createSupplyDemandOBIMChildren,
-  createSupplyRangeChildren,
+  createOBIMWithTimeframes,
+  createRangeWithTimeframes,
+  createSupplyRangeWithTimeframes,
   customPrice,
 } from "../tree.constants";
 import {
-  createTimeframeChildren,
+  createTimeframeNode,
   type StrategyFactory,
   type TreeNode,
 } from "../tree.utils";
@@ -55,56 +53,6 @@ export interface IdeaStrategyConfig extends Record<string, unknown> {
 }
 
 // Factory function to create timeframe-specific bullish/bearish options
-const createTimeframeBullishBearishChildren = (
-  prefix: string,
-  availableTimeframes: Timeframe[] = []
-): TreeNode[] => {
-  // Create bullish timeframe options
-  const bullishNode: TreeNode = {
-    key: `${prefix}_bullish`,
-    title: "Bullish",
-    icon: TrendingUp,
-    iconClassName: "text-emerald-500",
-    anti: [`${prefix}_bearish`],
-    children: availableTimeframes.map((timeframe) => ({
-      key: `${prefix}_bullish_${timeframe}`,
-      title: timeframe,
-      icon: Clock,
-      iconClassName: "text-emerald-500/70",
-      // Anti keys prevent selecting multiple timeframes for the same direction
-      anti: availableTimeframes
-        .filter((tf) => tf !== timeframe)
-        .flatMap((tf) => [
-          `${prefix}_bullish_${tf}`,
-          `${prefix}_bearish_${tf}`,
-        ]),
-    })),
-  };
-
-  // Create bearish timeframe options
-  const bearishNode: TreeNode = {
-    key: `${prefix}_bearish`,
-    title: "Bearish",
-    icon: TrendingDown,
-    iconClassName: "text-rose-500",
-    anti: [`${prefix}_bullish`],
-    children: availableTimeframes.map((timeframe) => ({
-      key: `${prefix}_bearish_${timeframe}`,
-      title: timeframe,
-      icon: Clock,
-      iconClassName: "text-rose-500/70",
-      // Anti keys prevent selecting multiple timeframes for the same direction
-      anti: availableTimeframes
-        .filter((tf) => tf !== timeframe)
-        .flatMap((tf) => [
-          `${prefix}_bullish_${tf}`,
-          `${prefix}_bearish_${tf}`,
-        ]),
-    })),
-  };
-
-  return [bullishNode, bearishNode];
-};
 
 // Helper function to create liquidity options for swing/fractal
 const createLiquidityChildren = (prefix: string): TreeNode[] => [
@@ -303,73 +251,96 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
           title: "Swing",
           icon: Activity,
           iconClassName: "",
-          children: [
-            {
-              key: `swing_bullish`,
-              title: "Bullish",
-              icon: TrendingUp,
-              iconClassName: "text-emerald-500",
-              anti: [`swing_bearish`],
-              children: createTimeframeChildren(
-                `swing_bullish`,
-                availableTimeframes,
-                "text-emerald-500/70"
-              ),
-            },
-
-            {
-              key: `swing_bearish`,
-              title: "Bearish",
-              icon: TrendingDown,
-              iconClassName: "text-rose-500",
-              anti: [`swing_bullish`],
-              children: createTimeframeChildren(
-                `swing_bearish`,
-                availableTimeframes,
-                "text-rose-500/70"
-              ),
-            },
-            {
-              key: "swing_range",
-              title: "Range",
-              icon: MenuIcon,
-              iconClassName: "text-sky-500/70",
-              children: createDiscountPremiumPricing("swing_range"),
-            },
-            {
-              key: "swing_liquidity",
-              title: "Liquidity",
-              icon: Droplets,
-              iconClassName: "",
-              children: createLiquidityChildren("swing_liquidity"),
-            },
-          ],
+          children: createTimeframeNode({
+            prefix: "swing",
+            availableTimeframes: availableTimeframes.map((tf) => tf.toString()),
+            createChildren: (timeframePrefix) => [
+              {
+                key: `${timeframePrefix}_bullish`,
+                title: "Bullish",
+                icon: TrendingUp,
+                iconClassName: "text-emerald-500",
+                anti: [`${timeframePrefix}_bearish`],
+                children: [], // No children for bullish/bearish in this case
+              },
+              {
+                key: `${timeframePrefix}_bearish`,
+                title: "Bearish",
+                icon: TrendingDown,
+                iconClassName: "text-rose-500",
+                anti: [`${timeframePrefix}_bullish`],
+                children: [], // No children for bullish/bearish in this case
+              },
+              {
+                key: `${timeframePrefix}_range`,
+                title: "Range",
+                icon: MenuIcon,
+                iconClassName: "text-sky-500/70",
+                children: createDiscountPremiumPricing(
+                  `${timeframePrefix}_range`
+                ),
+              },
+              {
+                key: `${timeframePrefix}_liquidity`,
+                title: "Liquidity",
+                icon: Droplets,
+                iconClassName: "",
+                children: createLiquidityChildren(
+                  `${timeframePrefix}_liquidity`
+                ),
+              },
+            ],
+            icon: Clock,
+            iconClassName: "text-muted-foreground",
+          }),
         },
         {
           key: "fractal",
           title: "Fractal",
           icon: GitBranch,
           iconClassName: "",
-          children: [
-            ...createTimeframeBullishBearishChildren(
-              "fractal",
-              availableTimeframes
-            ),
-            {
-              key: "fractal_range",
-              title: "Range",
-              icon: MenuIcon,
-              iconClassName: "text-sky-500/70",
-              children: createDiscountPremiumPricing("fractal_range"),
-            },
-            {
-              key: "fractal_liquidity",
-              title: "Liquidity",
-              icon: Droplets,
-              iconClassName: "",
-              children: createLiquidityChildren("fractal_liquidity"),
-            },
-          ],
+          children: createTimeframeNode({
+            prefix: "fractal",
+            availableTimeframes: availableTimeframes.map((tf) => tf.toString()),
+            createChildren: (timeframePrefix) => [
+              {
+                key: `${timeframePrefix}_bullish`,
+                title: "Bullish",
+                icon: TrendingUp,
+                iconClassName: "text-emerald-500",
+                anti: [`${timeframePrefix}_bearish`],
+                children: [], // No children for bullish/bearish in this case
+              },
+              {
+                key: `${timeframePrefix}_bearish`,
+                title: "Bearish",
+                icon: TrendingDown,
+                iconClassName: "text-rose-500",
+                anti: [`${timeframePrefix}_bullish`],
+                children: [], // No children for bullish/bearish in this case
+              },
+              {
+                key: `${timeframePrefix}_range`,
+                title: "Range",
+                icon: MenuIcon,
+                iconClassName: "text-sky-500/70",
+                children: createDiscountPremiumPricing(
+                  `${timeframePrefix}_range`
+                ),
+              },
+              {
+                key: `${timeframePrefix}_liquidity`,
+                title: "Liquidity",
+                icon: Droplets,
+                iconClassName: "",
+                children: createLiquidityChildren(
+                  `${timeframePrefix}_liquidity`
+                ),
+              },
+            ],
+            icon: Clock,
+            iconClassName: "text-muted-foreground",
+          }),
         },
 
         {
@@ -432,118 +403,53 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
       ],
     },
     {
-      key: "entry",
-      title: "Entry",
-      icon: LogIn,
-      iconClassName: "",
+      key: "demand",
+      title: "Demand",
+      icon: TrendingUp,
+      iconClassName: "text-emerald-500",
       children: [
         {
-          key: "entry_demand",
-          title: "Demand",
-          icon: TrendingUp,
-          iconClassName: "text-emerald-500",
-          anti: ["entry_supply"],
-          children: [
-            {
-              key: "entry_demand_range",
-              title: "Range",
-              icon: Square,
-              iconClassName: "",
-              imageUrl: rangeDemandZoneImg,
-              children: createDemandRangeChildren("entry_demand"),
-            },
-            {
-              key: "entry_demand_obim",
-              title: "OBIM",
-              icon: Target,
-              iconClassName: "",
-              imageUrl: bullishDemandZoneImg,
-              children: createSupplyDemandOBIMChildren("entry_demand"),
-            },
-          ],
+          key: "demand_range",
+          title: "Range",
+          icon: Square,
+          iconClassName: "",
+          imageUrl: rangeDemandZoneImg,
+          children: createRangeWithTimeframes("demand", availableTimeframes),
         },
         {
-          key: "entry_supply",
-          title: "Supply",
-          icon: TrendingDown,
-          iconClassName: "text-rose-500",
-          anti: ["entry_demand"],
-          children: [
-            {
-              key: "entry_supply_range",
-              title: "Range",
-              icon: Square,
-              iconClassName: "",
-              imageUrl: rangeSupplyZoneImg,
-              children: createSupplyRangeChildren("entry_supply"),
-            },
-            {
-              key: "entry_supply_obim",
-              title: "OBIM",
-              icon: Target,
-              iconClassName: "",
-              imageUrl: bearishSupplyZoneImg,
-              children: createSupplyDemandOBIMChildren("entry_supply"),
-            },
-          ],
+          key: "demand_obim",
+          title: "OBIM",
+          icon: Target,
+          iconClassName: "",
+          imageUrl: bullishDemandZoneImg,
+          children: createOBIMWithTimeframes("demand", availableTimeframes),
         },
       ],
     },
     {
-      key: "exit",
-      title: "Exit",
-      icon: LogOut,
-      iconClassName: "",
+      key: "supply",
+      title: "Supply",
+      icon: TrendingDown,
+      iconClassName: "text-rose-500",
       children: [
         {
-          key: "exit_demand",
-          title: "Demand",
-          icon: TrendingUp,
-          iconClassName: "text-emerald-500",
-          anti: ["exit_supply"],
-          children: [
-            {
-              key: "exit_demand_range",
-              title: "Range",
-              icon: Square,
-              iconClassName: "",
-              imageUrl: rangeDemandZoneImg,
-              children: createDemandRangeChildren("exit_demand"),
-            },
-            {
-              key: "exit_demand_obim",
-              title: "OBIM",
-              icon: Target,
-              iconClassName: "",
-              imageUrl: bullishDemandZoneImg,
-              children: createSupplyDemandOBIMChildren("exit_demand"),
-            },
-          ],
+          key: "supply_range",
+          title: "Range",
+          icon: Square,
+          iconClassName: "",
+          imageUrl: rangeSupplyZoneImg,
+          children: createSupplyRangeWithTimeframes(
+            "supply",
+            availableTimeframes
+          ),
         },
         {
-          key: "exit_supply",
-          title: "Supply",
-          icon: TrendingDown,
-          iconClassName: "text-rose-500",
-          anti: ["exit_demand"],
-          children: [
-            {
-              key: "exit_supply_range",
-              title: "Range",
-              icon: Square,
-              iconClassName: "",
-              imageUrl: rangeSupplyZoneImg,
-              children: createSupplyRangeChildren("exit_supply"),
-            },
-            {
-              key: "exit_supply_obim",
-              title: "OBIM",
-              icon: Target,
-              iconClassName: "",
-              imageUrl: bearishSupplyZoneImg,
-              children: createSupplyDemandOBIMChildren("exit_supply"),
-            },
-          ],
+          key: "supply_obim",
+          title: "OBIM",
+          icon: Target,
+          iconClassName: "",
+          imageUrl: bearishSupplyZoneImg,
+          children: createOBIMWithTimeframes("supply", availableTimeframes),
         },
       ],
     },
