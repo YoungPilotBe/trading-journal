@@ -2,6 +2,7 @@
 /// <reference types="vite/client" />
 // other imports...
 import { DialogManager } from "@/components/dialog-manager";
+import { Toaster } from "@/components/ui/sonner";
 import { DialogProvider } from "@/contexts/dialog-context";
 import globals from "@/globals.css?url";
 import { QueryClient } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ const RootLayout = () => (
   <DialogProvider>
     <DialogManager />
     <Outlet />
+    <Toaster />
     <TanStackRouterDevtools />
     <TanStackRouterDevtoolsInProd />
   </DialogProvider>

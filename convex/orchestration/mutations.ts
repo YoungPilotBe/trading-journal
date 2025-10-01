@@ -1,19 +1,14 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
+import { statusUnion } from "../constants/unions";
 
 export const createTradeSetupWithSnapshot = mutation({
   args: {
     title: v.string(),
     asset: v.string(),
     direction: v.union(v.literal("long"), v.literal("short")),
-    status: v.union(
-      v.literal("idea"),
-      v.literal("watching"),
-      v.literal("executed"),
-      v.literal("closed"),
-      v.literal("reviewed")
-    ),
+    status: statusUnion,
     riskReward: v.union(v.number(), v.null()),
     timeframes: v.array(v.string()),
     imageId: v.id("tradingview_images"), // Link to the image that triggered this trade setup

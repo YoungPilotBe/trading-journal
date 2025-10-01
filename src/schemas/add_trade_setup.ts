@@ -9,7 +9,14 @@ export const addTradeSetupSchema = z.object({
       .min(1, "Title is required")
       .max(100, "Title must be less than 100 characters")
   ),
-  status: z.enum(["idea", "watching", "executed", "closed", "reviewed"]),
+  status: z.enum([
+    "idea",
+    "watching",
+    "executed",
+    "closed",
+    "reviewed",
+    "canceled",
+  ]),
   direction: z.enum(["long", "short"]),
   trade_template: z.custom<Id<"trade_templates">>(),
   riskReward: z.nullable(

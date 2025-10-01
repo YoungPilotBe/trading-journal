@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { statusUnion } from "./constants/unions";
 
 export default defineSchema({
   tradingview_images: defineTable({
@@ -77,13 +78,7 @@ export default defineSchema({
     tradeSetupId: v.id("trade_setups"),
 
     // Trade status at the time of this snapshot
-    status: v.union(
-      v.literal("idea"),
-      v.literal("watching"),
-      v.literal("executed"),
-      v.literal("closed"),
-      v.literal("reviewed")
-    ),
+    status: statusUnion,
 
     tags: v.optional(v.any()),
 

@@ -1,3 +1,4 @@
+import { Doc } from "convex/_generated/dataModel";
 import type { Timeframe } from "../../config/timeframe-order";
 import type { StrategyFactory, TreeNode } from "../tree.utils";
 import { closedStrategyTree } from "./closed.constants";
@@ -10,21 +11,14 @@ import {
 import { reviewedStrategyTree } from "./reviewed.constants";
 import { watchingStrategyTree } from "./watching.constants";
 
-// Status types from the schema
-export type TradeStatus =
-  | "idea"
-  | "watching"
-  | "executed"
-  | "closed"
-  | "reviewed";
-
 // Map of status to strategy trees
-export const strategyTreeMap: Record<TradeStatus, TreeNode[]> = {
+export const strategyTreeMap: Record<Doc<"snapshots">["status"], TreeNode[]> = {
   idea: ideaStrategyTree,
   watching: ideaStrategyTree,
   executed: ideaStrategyTree,
   closed: ideaStrategyTree,
   reviewed: ideaStrategyTree,
+  canceled: ideaStrategyTree,
 };
 
 /**
@@ -34,15 +28,16 @@ export const strategyTreeMap: Record<TradeStatus, TreeNode[]> = {
  * @param status - The trade status (currently unused, reserved for future use)
  */
 export const getStrategyFactory = (
-  status: TradeStatus
+  status: Doc<"snapshots">["status"]
 ): StrategyFactory<IdeaStrategyConfig> => {
   // Validate status is a known type
-  const validStatuses: TradeStatus[] = [
+  const validStatuses: Doc<"snapshots">["status"][] = [
     "idea",
     "watching",
     "executed",
     "closed",
     "reviewed",
+    "canceled",
   ];
   if (!validStatuses.includes(status)) {
     console.warn(
@@ -70,7 +65,7 @@ export const getStrategyFactory = (
  * ```
  */
 export const generateStrategy = (
-  status: TradeStatus,
+  status: Doc<"snapshots">["status"],
   availableTimeframes?: Timeframe[]
 ): TreeNode[] => {
   // For "idea" status, use the dynamic factory function if timeframes are provided

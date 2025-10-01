@@ -112,3 +112,26 @@ export const getPreviousSnapshot = query({
       .first();
   },
 });
+
+export const getPreviousStatuses = query({
+  args: {
+    tradeSetupId: v.optional(v.id("trade_setups")),
+  },
+  handler: async (ctx, { tradeSetupId }) => {
+    if (!tradeSetupId) {
+      return [];
+    }
+
+    // Get all snapshots for this trade setup, ordered by creation time
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", tradeSetupId)
+      )
+      .order("asc")
+      .collect();
+
+    // Extract statuses from snapshots
+    return snapshots.map((snapshot) => snapshot.status);
+  },
+});

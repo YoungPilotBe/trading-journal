@@ -1,8 +1,10 @@
+import StatusOptions from "@/components/status-options";
 import { Button } from "@/components/ui/button";
 import { statusOptions } from "@/config/constants";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
 import { useGenerateSmartTitle } from "@/hooks/base_titles/use-generate-smart-title";
 import { useCreateSnapshot } from "@/hooks/snapshots/use-create-snapshot";
+import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
 import { useGetTradeSetupBySnapshotId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
@@ -14,6 +16,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -76,6 +79,11 @@ function RouteComponent() {
   const { data: existingSnapshot, isLoading: isLoadingSnapshot } =
     useGetSnapshot({ id: snapshotId as Id<"snapshots"> });
 
+  // Get previous statuses for chronological validation
+  const { data: previousStatuses = [] } = useGetPreviousStatuses({
+    tradeSetupId: existingTradeSetup?._id,
+  });
+
   const { mutateAsync: createTradeSetup, isPending: isPendingSubmit } =
     useCreateTradeSetup({
       onSuccess: ({ tradeSetupId, snapshotId }) => {
@@ -131,6 +139,27 @@ function RouteComponent() {
   const form = useForm({
     validators: {
       onChange: addTradeSetupSchema,
+      onSubmit: ({ value }) => {
+        // Check if selected status is disabled
+        const selectedStatusOption = statusOptions.find(
+          (option) => option.value === value.status
+        );
+        if (selectedStatusOption?.disabled) {
+          const context = {
+            isNew: !existingTradeSetup?._id,
+            currentStatus: existingSnapshot?.status,
+            hasExecutedTrade: previousStatuses.includes("executed"),
+            previousStatuses: previousStatuses,
+            tradeSetupId: existingTradeSetup?._id,
+          };
+
+          if (selectedStatusOption.disabled(context)) {
+            toast.error("Selected status is not allowed at this time");
+            return "Selected status is not allowed at this time";
+          }
+        }
+        return undefined;
+      },
     },
     defaultValues: {
       title: existingTradeSetup?.title || null,
@@ -287,26 +316,18 @@ function RouteComponent() {
               <form.Field
                 name="status"
                 children={(field) => (
-                  <div className="flex flex-row gap-1.5">
-                    {statusOptions.map((option) => {
-                      const isSelected = field.state.value === option.value;
-                      return (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => field.handleChange(option.value)}
-                          disabled={fieldDisabledMap.status}
-                          className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                            isSelected
-                              ? option.color
-                              : "border-muted text-muted-foreground hover:border-muted-foreground/50"
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <StatusOptions
+                    selected={field.state.value}
+                    onClick={field.handleChange}
+                    disabled={fieldDisabledMap.status}
+                    context={{
+                      isNew: !existingTradeSetup?._id,
+                      currentStatus: existingSnapshot?.status, // Use previous snapshot status instead of form value
+                      hasExecutedTrade: previousStatuses.includes("executed"),
+                      previousStatuses: previousStatuses,
+                      tradeSetupId: existingTradeSetup?._id,
+                    }}
+                  />
                 )}
               />
             </div>

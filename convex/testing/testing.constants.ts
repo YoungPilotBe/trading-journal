@@ -1,3 +1,5 @@
+import { Doc } from "../_generated/dataModel";
+
 export const TRADING_ASSETS = [
   "BTCUSDT",
   "ETHUSDT",
@@ -93,12 +95,13 @@ export const TIMEFRAMES = [
   "M",
 ];
 
-export const TRADE_STATUSES = [
+export const TRADE_STATUSES: Doc<"snapshots">["status"][] = [
   "idea",
   "watching",
   "executed",
   "closed",
   "reviewed",
+  "canceled",
 ] as const;
 export const TRADE_DIRECTIONS = ["long", "short"] as const;
 

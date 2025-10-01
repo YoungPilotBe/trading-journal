@@ -1,6 +1,7 @@
 import SimilarTradesTable from "@/components/similar-trades-table";
 import SnapshotHistory from "@/components/snapshot-history";
 import { SnapshotImage } from "@/components/snapshot-image";
+import StatusOptions from "@/components/status-options";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,6 +21,7 @@ import {
 import { statusOptions } from "@/config/constants";
 import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
+import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
@@ -29,7 +31,7 @@ import { preloadSetupRouteData } from "@/lib/query-options";
 import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
 import { useForm, useStore } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Id } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import {
   Archive,
@@ -40,6 +42,7 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -106,6 +109,11 @@ function RouteComponent() {
   const { data: templates, isLoading: isLoadingTemplates } =
     useGetTradeTemplates({});
 
+  // Get previous statuses for chronological validation
+  const { data: previousStatuses = [] } = useGetPreviousStatuses({
+    tradeSetupId: tradeSetupId as Id<"trade_setups">,
+  });
+
   const {
     mutateAsync: updateTradeSetup,
     isPending: isPendingTradeSetupUpdate,
@@ -129,6 +137,29 @@ function RouteComponent() {
   const form = useForm({
     validators: {
       onChange: addTradeSetupSchema,
+      onSubmit: ({ value }) => {
+        // Check if selected status is disabled
+        const selectedStatusOption = statusOptions.find(
+          (option) => option.value === value.status
+        );
+        if (selectedStatusOption?.disabled) {
+          const context = {
+            isNew: !tradeSetupId,
+            currentStatus: snapshot?.status,
+            hasExecutedTrade: previousStatuses.includes("executed"),
+            previousStatuses: previousStatuses,
+            tradeSetupId: tradeSetupId as Id<"trade_setups">,
+          };
+
+          if (selectedStatusOption.disabled(context)) {
+            toast.error(
+              "Selected status is not allowed keep in mind the chronological order"
+            );
+            return "Selected status is not allowed keep in mind the chronological order";
+          }
+        }
+        return undefined;
+      },
     },
     defaultValues: {
       title: tradeSetup?.title || null,
@@ -171,9 +202,7 @@ function RouteComponent() {
   const isDirty = useStore(form.store, (state) => state.isDirty);
 
   // Handle status change with confirmation if tags exist
-  const handleStatusChange = (
-    newStatus: "idea" | "watching" | "executed" | "closed" | "reviewed"
-  ) => {
+  const handleStatusChange = (newStatus: Doc<"snapshots">["status"]) => {
     // If status is changing and there are existing tags, show confirmation
     if (newStatus !== originalStatus && hasExistingTags) {
       openDialog("STATUS_CHANGE_CONFIRMATION", {
@@ -198,7 +227,7 @@ function RouteComponent() {
     <>
       <div className="flex gap-8 p-6 h-[400px]">
         {/* Left side - General Information (Fixed width) */}
-        <div className="flex-shrink-0 w-fit min-w-110 @container">
+        <div className="flex-shrink-0 w-fit min-w-150 @container">
           <div className="relative space-y-6">
             {/* Breadcrumbs */}
             <div className="mb-6 flex items-center justify-between">
@@ -486,40 +515,20 @@ function RouteComponent() {
                   <form.Field
                     name="status"
                     children={(field) => (
-                      <div className="flex flex-row gap-1.5">
-                        {statusOptions.map((option) => {
-                          const isSelected = field.state.value === option.value;
-                          const isOriginalStatus =
-                            originalStatus === option.value;
-                          const isStatusChanged =
-                            field.state.value !== originalStatus;
-
-                          // Enhanced styling for original status when user has changed to different status
-                          const getButtonClassName = () => {
-                            if (isSelected) {
-                              return option.color;
-                            }
-
-                            if (isOriginalStatus && isStatusChanged) {
-                              // Light up the original status border with hatched pattern when user has changed to different status
-                              return "opacity-50 bg-[repeating-linear-gradient(45deg,transparent,transparent_1px,rgba(255,255,255,0.1)_2px,rgba(255,255,255,0.1)_4px)]";
-                            }
-
-                            return "border-muted text-muted-foreground hover:border-muted-foreground/50";
-                          };
-
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => handleStatusChange(option.value)}
-                              className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${getButtonClassName()}`}
-                            >
-                              {option.label}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <StatusOptions
+                        selected={field.state.value}
+                        originalStatus={snapshot?.status} // Optional: pass this to enable change tracking
+                        onClick={handleStatusChange}
+                        disabled={isLoading}
+                        context={{
+                          isNew: !tradeSetupId,
+                          currentStatus: snapshot?.status, // Use current snapshot status for chronological validation
+                          hasExecutedTrade:
+                            previousStatuses.includes("executed"),
+                          previousStatuses: previousStatuses,
+                          tradeSetupId: tradeSetupId as Id<"trade_setups">,
+                        }}
+                      />
                     )}
                   />
                 </div>
@@ -578,15 +587,23 @@ function RouteComponent() {
                 </div>
 
                 {isDirty && (
-                  <Button
-                    type="submit"
-                    className="absolute bottom-0 translate-y-full right-0 duration-500 ease-out font-mono tracking-wide leading-3"
-                    disabled={isPending || form.state.isSubmitting}
-                  >
-                    {isPending || form.state.isSubmitting
-                      ? "Updating..."
-                      : "Update"}
-                  </Button>
+                  <div className="absolute bottom-0 translate-y-full right-0 flex flex-row gap-1">
+                    <Button
+                      className="duration-500 ease-out font-mono tracking-wide leading-3"
+                      onClick={() => form.reset()}
+                    >
+                      X
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="duration-500 ease-out font-mono tracking-wide leading-3"
+                      disabled={isPending || form.state.isSubmitting}
+                    >
+                      {isPending || form.state.isSubmitting
+                        ? "Updating..."
+                        : "Update"}
+                    </Button>
+                  </div>
                 )}
               </fieldset>
             </form>

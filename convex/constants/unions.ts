@@ -5,7 +5,8 @@ export const statusUnion = v.union(
   v.literal("watching"),
   v.literal("executed"),
   v.literal("closed"),
-  v.literal("reviewed")
+  v.literal("reviewed"),
+  v.literal("canceled")
 );
 
 export const sortBy = v.optional(
