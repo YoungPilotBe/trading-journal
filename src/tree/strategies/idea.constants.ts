@@ -34,6 +34,7 @@ import {
   createOBIMWithTimeframes,
   createRangeWithTimeframes,
   createSupplyRangeWithTimeframes,
+  createWyckoffWithTimeframes,
   customPrice,
 } from "../tree.constants";
 import {
@@ -424,6 +425,17 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
           imageUrl: bullishDemandZoneImg,
           children: createOBIMWithTimeframes("demand", availableTimeframes),
         },
+        {
+          key: "demand_wyckoff",
+          title: "Wyckoff",
+          icon: Target,
+          iconClassName: "",
+          // imageUrl: bullishDemandZoneImg,
+          children: createWyckoffWithTimeframes(
+            "demand",
+            availableTimeframes.map((tf) => tf.toString())
+          ),
+        },
       ],
     },
     {
@@ -450,6 +462,17 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
           iconClassName: "",
           imageUrl: bearishSupplyZoneImg,
           children: createOBIMWithTimeframes("supply", availableTimeframes),
+        },
+        {
+          key: "supply_wyckoff",
+          title: "Wyckoff",
+          icon: Target,
+          iconClassName: "",
+          // imageUrl: bullishDemandZoneImg,
+          children: createWyckoffWithTimeframes(
+            "supply",
+            availableTimeframes.map((tf) => tf.toString())
+          ),
         },
       ],
     },

@@ -4,7 +4,17 @@ import bullishOBIMImg from "@/assets/bullish_order_block_imbalance.png";
 import bullishOBIM25Img from "@/assets/bullish_order_block_imbalance_25_percent.png";
 import extremumDPImg from "@/assets/extremum_decision_point.png";
 import { capitalize } from "lodash";
-import { ChevronDown, ChevronUp, ChevronsDown, ChevronsUp } from "lucide-react";
+import {
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  ChevronsDown,
+  ChevronsUp,
+  Clock,
+  Target,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { z } from "zod";
 import type { TreeNode } from "./tree.utils";
 import { createTimeframeNode } from "./tree.utils";
@@ -167,6 +177,92 @@ export const createDiscountPremiumPricing = (prefix: string) =>
       iconClassName: "",
     },
   ]);
+
+// Helper function to create Wyckoff children
+export const createWyckoffChildren = (prefix: string): TreeNode[] => [
+  {
+    key: `${prefix}_accumulation`,
+    title: "Accumulation",
+    icon: TrendingUp,
+    iconClassName: "text-emerald-500",
+    anti: [`${prefix}_distribution`],
+    children: [
+      {
+        key: `${prefix}_accumulation_model_1`,
+        title: "Model 1",
+        icon: Target,
+        iconClassName: "text-emerald-500/70",
+        anti: [`${prefix}_accumulation_model_2`],
+        children: [
+          {
+            key: `${prefix}_accumulation_model_1_confirmations`,
+            title: "Confirmations",
+            icon: CheckCircle,
+            iconClassName: "text-emerald-500/50",
+            children: [], // No children for confirmations in this case
+          },
+        ],
+      },
+      {
+        key: `${prefix}_accumulation_model_2`,
+        title: "Model 2",
+        icon: Target,
+        iconClassName: "text-emerald-500/70",
+        anti: [`${prefix}_accumulation_model_1`],
+        children: [
+          {
+            key: `${prefix}_accumulation_model_2_confirmations`,
+            title: "Confirmations",
+            icon: CheckCircle,
+            iconClassName: "text-emerald-500/50",
+            children: [], // No children for confirmations in this case
+          },
+        ],
+      },
+    ],
+  },
+  {
+    key: `${prefix}_distribution`,
+    title: "Distribution",
+    icon: TrendingDown,
+    iconClassName: "text-rose-500",
+    anti: [`${prefix}_accumulation`],
+    children: [
+      {
+        key: `${prefix}_distribution_model_1`,
+        title: "Model 1",
+        icon: Target,
+        iconClassName: "text-rose-500/70",
+        anti: [`${prefix}_distribution_model_2`],
+        children: [
+          {
+            key: `${prefix}_distribution_model_1_confirmations`,
+            title: "Confirmations",
+            icon: CheckCircle,
+            iconClassName: "text-rose-500/50",
+            children: [], // No children for confirmations in this case
+          },
+        ],
+      },
+      {
+        key: `${prefix}_distribution_model_2`,
+        title: "Model 2",
+        icon: Target,
+        iconClassName: "text-rose-500/70",
+        anti: [`${prefix}_distribution_model_1`],
+        children: [
+          {
+            key: `${prefix}_distribution_model_2_confirmations`,
+            title: "Confirmations",
+            icon: CheckCircle,
+            iconClassName: "text-rose-500/50",
+            children: [], // No children for confirmations in this case
+          },
+        ],
+      },
+    ],
+  },
+];
 // Helper function to create liquidity children
 export const createLiquidityChildren = (prefix: string) => [
   {
@@ -258,6 +354,25 @@ export const createOBIMWithTimeframes = (
     availableTimeframes,
     createChildren: (timeframePrefix) =>
       createSupplyDemandOBIMChildren(timeframePrefix),
+  });
+};
+
+// Helper function to create Wyckoff children with timeframe layer
+export const createWyckoffWithTimeframes = (
+  prefix: string,
+  availableTimeframes: string[] = []
+) => {
+  if (availableTimeframes.length === 0) {
+    // Fallback to direct children if no timeframes provided
+    return createWyckoffChildren(prefix);
+  }
+
+  return createTimeframeNode({
+    prefix: `${prefix}_wyckoff`,
+    availableTimeframes,
+    createChildren: (timeframePrefix) => createWyckoffChildren(timeframePrefix),
+    icon: Clock,
+    iconClassName: "text-muted-foreground",
   });
 };
 
