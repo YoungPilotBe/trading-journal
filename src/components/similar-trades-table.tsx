@@ -78,7 +78,8 @@ const SmartTradeLink = ({
   );
 
   // Use provided snapshotId or fall back to the found snapshot
-  const targetSnapshotId = snapshotId || targetSnapshot?._id || "";
+  const targetSnapshotId =
+    snapshotId || (targetSnapshot?._id as Id<"snapshots">);
 
   return (
     <Link

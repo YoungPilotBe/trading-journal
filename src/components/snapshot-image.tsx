@@ -8,8 +8,8 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect } from "react";
 
 interface SnapshotImageProps {
-  snapshotId: string;
-  tradeSetupId: string;
+  snapshotId: Id<"snapshots">;
+  tradeSetupId: Id<"trade_setups">;
   initialFullscreen?: boolean;
   className?: string;
 }
@@ -23,7 +23,7 @@ export function SnapshotImage({
   const navigate = useNavigate();
 
   const { data: image, isLoading: isLoadingImage } = useGetImageBySnapshot({
-    snapshotId: snapshotId as Id<"snapshots">,
+    snapshotId,
   });
 
   useEffect(() => {

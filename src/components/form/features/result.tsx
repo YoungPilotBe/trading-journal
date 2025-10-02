@@ -4,11 +4,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ControllerRenderProps, useFormState } from "react-hook-form";
-import { AddTradeSetupSchema } from "../schemas/add-trade-schema";
+import {
+  ControllerRenderProps,
+  FieldPath,
+  FieldValues,
+  useFormState,
+} from "react-hook-form";
 
-type Props = {
-  field: ControllerRenderProps<AddTradeSetupSchema, "result">;
+type Props<T extends FieldValues> = {
+  field: ControllerRenderProps<T, FieldPath<T>>;
   label: string;
   disabled?: boolean;
   existingResult?: "win" | "loss" | "breakeven" | null;
@@ -32,7 +36,12 @@ const resultOptions = [
   },
 ];
 
-export function Result({ field, label, disabled, ...props }: Props) {
+export function Result<T extends FieldValues>({
+  field,
+  label,
+  disabled,
+  ...props
+}: Props<T>) {
   const { errors } = useFormState({ name: field.name });
   const error = errors[field.name]?.message;
   const hasError = !!error;

@@ -8,7 +8,9 @@ import { Id } from "convex/_generated/dataModel";
 import { ChevronLeft } from "lucide-react";
 import { z } from "zod";
 const searchSchema = z.object({
-  imageId: z.string(),
+  imageId: z.optional(
+    z.custom<Id<"tradingview_images">>((val) => typeof val === "string")
+  ),
   onboarding: z.optional(z.boolean()),
 });
 
@@ -51,7 +53,7 @@ function RouteComponent() {
 
       {/* Content overlay */}
       <AnimatedImageLayout
-        imageId={imageId}
+        imageId={imageId as Id<"tradingview_images">}
         src={data.url}
         asset={data.asset}
         alt={data.fileName || "Trading screenshot"}

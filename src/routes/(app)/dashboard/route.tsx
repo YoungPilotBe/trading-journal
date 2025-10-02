@@ -37,7 +37,7 @@ function LayoutComponent() {
         </nav>
 
         {/* Main Content */}
-        <main className="mx-5 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <main className="mx-5 py-6 px-4 sm:px-6 lg:px-8 max-w-[90rem] mx-auto">
           <Outlet />
         </main>
       </div>

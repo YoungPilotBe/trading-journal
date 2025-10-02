@@ -1,24 +1,19 @@
 import { useGenerateSmartTitle } from "@/hooks/base_titles/use-generate-smart-title";
 import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
-import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
+import { useGetTradeSetupBySnapshotId } from "@/hooks/trade-setup/use-get-trade-setup-by-image-id";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { Id } from "convex/_generated/dataModel";
 
 interface Props {
   imageId: Id<"tradingview_images">;
   snapshotId: Id<"snapshots">;
-  tradeSetupId: Id<"trade_setups">;
 }
 
-export const useExistingValues = ({
-  snapshotId,
-  imageId,
-  tradeSetupId,
-}: Props) => {
+export const useExistingValues = ({ snapshotId, imageId }: Props) => {
   const { data: existingTradeSetup, isLoading: isLoadingTradeSetup } =
-    useGetTradeSetup({
-      id: tradeSetupId,
+    useGetTradeSetupBySnapshotId({
+      snapshotId,
     });
 
   const { data: imageData, isLoading: isLoadingImage } = useGetImage({
@@ -33,7 +28,7 @@ export const useExistingValues = ({
 
   // Get previous statuses for chronological validation
   const { data: previousStatuses = [] } = useGetPreviousStatuses({
-    tradeSetupId,
+    tradeSetupId: existingTradeSetup?._id,
   });
 
   const isLoading =

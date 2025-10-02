@@ -3,11 +3,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ControllerRenderProps, useFormState } from "react-hook-form";
-import { AddTradeSetupSchema } from "../schemas/add-trade-schema";
+import {
+  ControllerRenderProps,
+  FieldPath,
+  FieldValues,
+  useFormState,
+} from "react-hook-form";
 
-type Props = {
-  field: ControllerRenderProps<AddTradeSetupSchema, "direction">;
+type Props<T extends FieldValues> = {
+  field: ControllerRenderProps<T, FieldPath<T>>;
   label: string;
   disabled?: boolean;
 } & Omit<
@@ -28,7 +32,12 @@ const directionOptions = [
   },
 ];
 
-const Direction = ({ field, label, disabled, ...props }: Props) => {
+const Direction = <T extends FieldValues>({
+  field,
+  label,
+  disabled,
+  ...props
+}: Props<T>) => {
   const { errors } = useFormState({ name: field.name });
   const error = errors[field.name]?.message;
   const hasError = !!error;
@@ -48,7 +57,7 @@ const Direction = ({ field, label, disabled, ...props }: Props) => {
                 type="button"
                 onClick={() => field.onChange(option.value)}
                 disabled={disabled}
-                className={`px-0.5 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-0.5 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer whitespace-nowrap  ${
                   isSelected
                     ? option.color
                     : "border-muted text-muted-foreground hover:border-muted-foreground/50"

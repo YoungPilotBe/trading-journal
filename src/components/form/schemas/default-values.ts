@@ -32,14 +32,17 @@ export const createAddTradeSetupDefaultValues = (
     timeframes:
       (existingValues?.existingTradeSetup?.timeframes as Timeframe[]) ||
       (["4h"] as Timeframe[]),
-    riskReward: existingValues?.existingTradeSetup?.riskReward || 1,
+    riskReward: existingValues?.existingTradeSetup?.riskReward || null,
   };
 
   // If there's an existing trade setup with a result, return closed status
-  if (existingValues?.existingTradeSetup?.result) {
+  if (
+    existingValues?.existingTradeSetup?.result &&
+    existingValues.existingSnapshot?.status
+  ) {
     return {
       ...baseData,
-      status: "closed" as const,
+      status: existingValues.existingSnapshot?.status,
       result: existingValues.existingTradeSetup.result,
     };
   }
@@ -65,7 +68,7 @@ export const addTradeSetupDefaultValues = <AddTradeSetupSchema>{
   title: "",
   direction: "long",
   timeframes: ["4h"] as Timeframe[],
-  riskReward: 1,
+  riskReward: null,
   status: "idea",
   // Note: result is intentionally omitted for non-closed statuses
 };

@@ -39,6 +39,7 @@ const NumberField = React.forwardRef<HTMLInputElement, Props>(
             type="number"
             id={name}
             name={name}
+            step={0.01}
             className={clsx(
               "text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]",
               className

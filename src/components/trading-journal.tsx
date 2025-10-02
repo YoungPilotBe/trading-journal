@@ -278,7 +278,7 @@ const TradingJournal = () => {
                 to="/dashboard/setup"
                 search={{
                   tradeSetupId: row.original.id,
-                  snapshotId: row.original.latestSnapshotId || "",
+                  snapshotId: row.original.latestSnapshotId as Id<"snapshots">,
                 }}
                 className="contents"
               >

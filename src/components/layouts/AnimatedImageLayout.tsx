@@ -10,7 +10,7 @@ import { forwardRef, useCallback, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 
 interface AnimatedImageLayoutProps {
-  imageId: string;
+  imageId: Id<"tradingview_images">;
   src: string;
   asset: string;
   alt: string;
@@ -87,7 +87,10 @@ export const AnimatedImageLayout = forwardRef<
       if (searchParams?.imageId) {
         navigate({
           to: "/trade_onboarding/add_trade",
-          search: { imageId: searchParams.imageId, onboarding: true },
+          search: {
+            imageId: searchParams.imageId as Id<"tradingview_images">,
+            onboarding: true,
+          },
         });
       }
     }, [navigate, searchParams]);
@@ -96,7 +99,11 @@ export const AnimatedImageLayout = forwardRef<
       if (searchParams?.imageId) {
         navigate({
           to: "/trade_onboarding/attach_trade",
-          search: { imageId: searchParams.imageId, asset, onboarding: true },
+          search: {
+            imageId: searchParams.imageId as Id<"tradingview_images">,
+            asset,
+            onboarding: true,
+          },
         });
       }
     }, [asset, navigate, searchParams.imageId]);

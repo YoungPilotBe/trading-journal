@@ -11,14 +11,16 @@ import { useGetMostRecentSnapshot } from "@/hooks/snapshots/use-get-most-recent-
 import { useGetTradeSetups } from "@/hooks/trade-setup/use-get-trade-setups";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
-import { Doc } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
 import { format, formatDistanceToNow } from "date-fns";
 import { CalendarIcon, TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  imageId: z.string(),
+  imageId: z.optional(
+    z.custom<Id<"tradingview_images">>((val) => typeof val === "string")
+  ),
   asset: z.string(),
 });
 
@@ -59,7 +61,7 @@ function RouteComponent() {
                     <CommandItem key={tradeSetup._id}>
                       <TradeSetupCard
                         tradeSetup={tradeSetup}
-                        imageId={imageId}
+                        imageId={imageId as Id<"tradingview_images">}
                       />
                     </CommandItem>
                   ))
@@ -78,7 +80,7 @@ function TradeSetupCard({
   imageId,
 }: {
   tradeSetup: Doc<"trade_setups"> & { snapshotId?: string; status?: string };
-  imageId: string;
+  imageId: Id<"tradingview_images">;
 }) {
   const navigate = useNavigate();
 

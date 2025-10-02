@@ -18,7 +18,8 @@ import { useMemo, useState } from "react";
 import z from "zod";
 
 const searchSchema = z.object({
-  tradeSetupId: z.string(),
+  tradeSetupId: z.custom<Id<"trade_setups">>((val) => typeof val === "string"),
+  imageId: z.custom<Id<"tradingview_images">>((val) => typeof val === "string"),
   snapshotId: z.string(),
   onboarding: z.optional(z.boolean()),
 });

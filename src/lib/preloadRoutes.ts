@@ -74,10 +74,10 @@ export const templatesQueryOptions = (sortOrder: "asc" | "desc" = "desc") =>
   });
 
 // Preloader function for the add trade form
+// Preloader function for the add trade form
 export const preloadAddTradeFormData = async (
   queryClient: QueryClient,
   imageId: Id<"tradingview_images">,
-  tradeSetupId?: Id<"trade_setups">,
   snapshotId?: Id<"snapshots">
 ) => {
   const promises = [];
@@ -87,28 +87,31 @@ export const preloadAddTradeFormData = async (
   // Preload smart title
   promises.push(queryClient.ensureQueryData(smartTitleQueryOptions()));
 
-  // Preload trade setup
-  if (tradeSetupId) {
-    promises.push(
-      queryClient.ensureQueryData(tradeSetupQueryOptions(tradeSetupId))
-    );
-  }
-
-  // Preload snapshot
+  // Preload snapshot and get trade setup from it
   if (snapshotId) {
     promises.push(
       queryClient.ensureQueryData(snapshotQueryOptions(snapshotId))
     );
-  }
-
-  // Preload previous statuses if trade setup exists
-  if (tradeSetupId) {
     promises.push(
-      queryClient.ensureQueryData(previousStatusesQueryOptions(tradeSetupId))
+      queryClient.ensureQueryData(tradeSetupBySnapshotQueryOptions(snapshotId))
     );
   }
 
   await Promise.all(promises);
+
+  // After snapshot and trade setup are loaded, get the trade setup ID
+  // and preload previous statuses
+  if (snapshotId) {
+    const tradeSetupData = await queryClient.ensureQueryData(
+      tradeSetupBySnapshotQueryOptions(snapshotId)
+    );
+
+    if (tradeSetupData?._id) {
+      await queryClient.ensureQueryData(
+        previousStatusesQueryOptions(tradeSetupData._id)
+      );
+    }
+  }
 };
 
 // Preloader function for the setup route

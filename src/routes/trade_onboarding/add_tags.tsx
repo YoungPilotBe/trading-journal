@@ -13,8 +13,8 @@ import { z } from "zod";
 import { api } from "../../../convex/_generated/api";
 
 const searchSchema = z.object({
-  tradeSetupId: z.string(),
-  imageId: z.string(),
+  tradeSetupId: z.custom<Id<"trade_setups">>((val) => typeof val === "string"),
+  imageId: z.custom<Id<"tradingview_images">>((val) => typeof val === "string"),
   snapshotId: z.string(),
   attach: z.optional(z.boolean()),
   viewOnly: z.optional(z.boolean()),
