@@ -26,6 +26,16 @@ export const pageVariants: PageVariants = {
       rotateZ: 0,
     },
   },
+  "/trade_onboarding/add_trade_v2": {
+    target: {
+      x: -400,
+      y: -100,
+      scale: 0.6,
+      rotateX: 0,
+      rotateY: 5,
+      rotateZ: 0,
+    },
+  },
   // Page 3 - Left side, scaled down significantly
   "/trade_onboarding/add_template": {
     target: {

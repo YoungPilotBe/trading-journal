@@ -1,4 +1,4 @@
-export const timeframeOrder = [
+export const TIMEFRAMES = [
   "1m",
   "2m",
   "3m",
@@ -28,4 +28,4 @@ export const timeframeOrder = [
   "M",
 ] as const;
 
-export type Timeframe = (typeof timeframeOrder)[number];
+export type Timeframe = (typeof TIMEFRAMES)[number];

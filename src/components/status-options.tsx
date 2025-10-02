@@ -40,7 +40,7 @@ const StatusOptions = ({
   };
 
   return (
-    <div className="flex flex-row gap-1.5 items-center">
+    <div className="flex flex-row gap-1.5 items-center max-w-full overflow-hidden">
       {statusOptions.map((option) => {
         const isSelected = selected === option.value;
         const isOriginalStatus = originalStatus === option.value;
@@ -70,7 +70,7 @@ const StatusOptions = ({
               type="button"
               onClick={() => onClick(option.value)}
               disabled={isDisabled} // Use computed disabled state
-              className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer ${shouldShowDisabled ? "opacity-50 cursor-not-allowed" : ""} ${getButtonClassName()}`}
+              className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer whitespace-nowrap ${shouldShowDisabled ? "opacity-50 cursor-not-allowed" : ""} ${getButtonClassName()}`}
             >
               {option.label}
             </button>

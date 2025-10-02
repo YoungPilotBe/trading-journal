@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { statusOptions } from "@/config/constants";
-import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
+import { Timeframe, TIMEFRAMES } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
 import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
@@ -28,7 +28,7 @@ import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
-import { preloadSetupRouteData } from "@/lib/query-options";
+import { preloadSetupRouteData } from "@/lib/preloadRoutes";
 import { addTradeSetupSchema } from "@/schemas/add_trade_setup";
 import { useForm, useStore } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -68,8 +68,8 @@ const directionOptions = [
 // Helper function to sort timeframes according to timeframeOrder
 const sortTimeframes = (timeframes: string[]) => {
   return [...timeframes].sort((a, b) => {
-    const indexA = timeframeOrder.indexOf(a as Timeframe);
-    const indexB = timeframeOrder.indexOf(b as Timeframe);
+    const indexA = TIMEFRAMES.indexOf(a as Timeframe);
+    const indexB = TIMEFRAMES.indexOf(b as Timeframe);
     return indexA - indexB;
   });
 };

@@ -5,6 +5,8 @@ import { DialogManager } from "@/components/dialog-manager";
 import { Toaster } from "@/components/ui/sonner";
 import { DialogProvider } from "@/contexts/dialog-context";
 import globals from "@/globals.css?url";
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import { FormDevtoolsPlugin } from "@tanstack/react-form-devtools";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import {
@@ -19,6 +21,10 @@ const RootLayout = () => (
     <Toaster />
     <TanStackRouterDevtools />
     <TanStackRouterDevtoolsInProd />
+    <TanStackDevtools
+      config={{ hideUntilHover: true }}
+      plugins={[FormDevtoolsPlugin()]}
+    />
   </DialogProvider>
 );
 

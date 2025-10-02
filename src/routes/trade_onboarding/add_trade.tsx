@@ -1,7 +1,7 @@
 import StatusOptions from "@/components/status-options";
 import { Button } from "@/components/ui/button";
 import { statusOptions } from "@/config/constants";
-import { Timeframe, timeframeOrder } from "@/config/timeframe-order";
+import { Timeframe, TIMEFRAMES } from "@/config/timeframe-order";
 import { useGenerateSmartTitle } from "@/hooks/base_titles/use-generate-smart-title";
 import { useCreateSnapshot } from "@/hooks/snapshots/use-create-snapshot";
 import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
@@ -54,8 +54,8 @@ const resultOptions = [
 // Helper function to sort timeframes according to timeframeOrder
 const sortTimeframes = (timeframes: string[]) => {
   return [...timeframes].sort((a, b) => {
-    const indexA = timeframeOrder.indexOf(a as Timeframe);
-    const indexB = timeframeOrder.indexOf(b as Timeframe);
+    const indexA = TIMEFRAMES.indexOf(a as Timeframe);
+    const indexB = TIMEFRAMES.indexOf(b as Timeframe);
     return indexA - indexB;
   });
 };
@@ -245,7 +245,7 @@ function RouteComponent() {
   // Check if current input is a valid timeframe
   function isValidTimeframe(newTimeframe: string): boolean {
     return newTimeframe.trim()
-      ? timeframeOrder.includes(newTimeframe.trim() as Timeframe)
+      ? TIMEFRAMES.includes(newTimeframe.trim() as Timeframe)
       : true;
   }
 

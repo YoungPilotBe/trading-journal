@@ -5,7 +5,7 @@ export type StatusContext = {
   isNew: boolean;
   currentStatus?: Doc<"snapshots">["status"];
   hasExecutedTrade?: boolean;
-  previousStatuses?: Doc<"snapshots">["status"][];
+  previousStatuses?: Doc<"snapshots">["status"][] | null;
   tradeSetupId?: string;
 };
 
