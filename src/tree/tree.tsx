@@ -44,7 +44,6 @@
  * }
  * ```
  */
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMemo } from "react";
 import { InputField } from "./InputField";
 import { ToggleBadge } from "./ToggleBadge";
@@ -80,80 +79,76 @@ const Tree = ({ viewOnly = false, ...divProps }: Props) => {
   );
 
   return (
-    <TooltipProvider>
-      <div {...divProps}>
-        {gridRows.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            className={`grid gap-2`}
-            style={{
-              gridTemplateColumns: `repeat(${treeDepth}, minmax(50px, 100px))`,
-            }}
-          >
-            {row.map((cell, colIndex) => (
-              <div key={colIndex} className="flex items-stretch w-full py-0.5">
-                {cell && (
-                  <>
-                    {cell.inputField && cell.parentKey ? (
-                      <InputField
-                        config={cell.inputField}
-                        parentKey={cell.parentKey}
-                        fieldName={cell.nodeKey.replace("_input", "")}
-                        initialValue={(() => {
-                          // Extract existing value from tags
-                          const nodePath = findNodePathArray(
-                            strategy,
-                            cell.parentKey
-                          );
-                          const existingData = getNestedValue(
-                            treeState.tags,
-                            nodePath
-                          );
-                          return existingData?.value
-                            ? String(existingData.value)
-                            : "";
-                        })()}
-                        shouldFocus={treeState.selectedNodes.has(
+    <div {...divProps}>
+      {gridRows.map((row, rowIndex) => (
+        <div
+          key={rowIndex}
+          className={`grid gap-2`}
+          style={{
+            gridTemplateColumns: `repeat(${treeDepth}, minmax(50px, 100px))`,
+          }}
+        >
+          {row.map((cell, colIndex) => (
+            <div key={colIndex} className="flex items-stretch w-full py-0.5">
+              {cell && (
+                <>
+                  {cell.inputField && cell.parentKey ? (
+                    <InputField
+                      config={cell.inputField}
+                      parentKey={cell.parentKey}
+                      fieldName={cell.nodeKey.replace("_input", "")}
+                      initialValue={(() => {
+                        // Extract existing value from tags
+                        const nodePath = findNodePathArray(
+                          strategy,
                           cell.parentKey
-                        )}
-                        onSave={saveInputField}
-                        readOnly={viewOnly}
-                      />
-                    ) : cell.isLeaf ? (
-                      <ToggleBadge
-                        label={cell.content}
-                        fieldName={cell.nodeKey}
-                        icon={cell.icon}
-                        iconClassName={cell.iconClassName}
-                        isDir={cell.isDir}
-                        isBranch={false}
-                        readOnly={viewOnly}
-                        description={cell.description}
-                        imageUrl={cell.imageUrl}
-                        imageClassName={cell.imageClassName}
-                      />
-                    ) : (
-                      <ToggleBadge
-                        label={cell.content}
-                        fieldName={cell.nodeKey}
-                        icon={cell.icon}
-                        iconClassName={cell.iconClassName}
-                        isDir={cell.isDir}
-                        isBranch={true}
-                        readOnly={viewOnly}
-                        description={cell.description}
-                        imageUrl={cell.imageUrl}
-                        imageClassName={cell.imageClassName}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </TooltipProvider>
+                        );
+                        const existingData = getNestedValue(
+                          treeState.tags,
+                          nodePath
+                        );
+                        return existingData?.value
+                          ? String(existingData.value)
+                          : "";
+                      })()}
+                      shouldFocus={treeState.selectedNodes.has(cell.parentKey)}
+                      onSave={saveInputField}
+                      readOnly={viewOnly}
+                    />
+                  ) : cell.isLeaf ? (
+                    <ToggleBadge
+                      label={cell.content}
+                      fieldName={cell.nodeKey}
+                      icon={cell.icon}
+                      iconClassName={cell.iconClassName}
+                      isDir={cell.isDir}
+                      isBranch={false}
+                      readOnly={viewOnly}
+                      description={cell.description}
+                      imageUrl={cell.imageUrl}
+                      imageClassName={cell.imageClassName}
+                    />
+                  ) : (
+                    <ToggleBadge
+                      label={cell.content}
+                      fieldName={cell.nodeKey}
+                      icon={cell.icon}
+                      iconClassName={cell.iconClassName}
+                      isDir={cell.isDir}
+                      isBranch={true}
+                      readOnly={viewOnly}
+                      description={cell.description}
+                      imageUrl={cell.imageUrl}
+                      imageClassName={cell.imageClassName}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 };
 

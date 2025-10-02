@@ -3,29 +3,30 @@
 // other imports...
 import { DialogManager } from "@/components/dialog-manager";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { DialogProvider } from "@/contexts/dialog-context";
 import globals from "@/globals.css?url";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { FormDevtoolsPlugin } from "@tanstack/react-form-devtools";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
-import {
-  TanStackRouterDevtools,
-  TanStackRouterDevtoolsInProd,
-} from "@tanstack/react-router-devtools";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 const RootLayout = () => (
-  <DialogProvider>
-    <DialogManager />
-    <Outlet />
-    <Toaster />
-    <TanStackRouterDevtools />
-    <TanStackRouterDevtoolsInProd />
+  <>
+    <DialogProvider>
+      <TooltipProvider>
+        <DialogManager />
+        <Outlet />
+        <Toaster />
+        <TanStackRouterDevtools />
+      </TooltipProvider>
+    </DialogProvider>
     <TanStackDevtools
       config={{ hideUntilHover: true }}
       plugins={[FormDevtoolsPlugin()]}
     />
-  </DialogProvider>
+  </>
 );
 
 export const Route = createRootRouteWithContext<{
