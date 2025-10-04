@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { resultUnion, statusUnion } from "../constants/unions";
@@ -8,7 +8,7 @@ export const updateTradeSetup = mutation({
   args: {
     id: v.id("trade_setups"),
     snapshotId: v.id("snapshots"),
-    imageId: v.id("tradingview_images"),
+    imageId: v.optional(v.id("tradingview_images")),
     title: v.optional(v.union(v.string(), v.null())),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     status: v.optional(statusUnion),
@@ -39,11 +39,18 @@ export const updateTradeSetup = mutation({
       );
     }
 
-    if (imageId) {
-      await ctx.db.patch(imageId, {
-        timeframe,
-      });
-    }
+    const imgId =
+      imageId ??
+      (
+        await ctx.db
+          .query("tradingview_images")
+          .withIndex("by_snapshot", (q) => q.eq("snapshotId", snapshotId))
+          .first()
+      )?._id;
+
+    if (!imgId) throw new ConvexError("No associated image to snapshot found");
+
+    await ctx.db.patch(imgId, { timeframe });
 
     return { snapshotId, tradeSetupId: id };
   },

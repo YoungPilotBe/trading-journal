@@ -113,6 +113,7 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
     await updateTradeSetup({
       id: search.tradeSetupId as Id<"trade_setups">,
       snapshotId: search.snapshotId as Id<"snapshots">,
+      imageId: search.imageId as Id<"tradingview_images">,
       trade_template: template._id as Id<"trade_templates">,
     });
   }
