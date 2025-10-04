@@ -153,7 +153,6 @@ const TradeDetailsForm = ({
       }),
       updateSnapshot({
         status,
-        notes: notes || [],
         snapshotId: snapshotId,
       }),
     ]);

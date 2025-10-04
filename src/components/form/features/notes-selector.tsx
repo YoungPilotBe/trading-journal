@@ -5,8 +5,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDialog } from "@/contexts/dialog-context";
+import { useGetNotesTradeSetup } from "@/hooks/notes/use-get-notes-trade-setup";
 import { Doc, Id } from "convex/_generated/dataModel";
-import { PlusIcon } from "lucide-react";
+import { FileTextIcon, PlusIcon } from "lucide-react";
 import {
   ControllerRenderProps,
   FieldPath,
@@ -37,14 +38,13 @@ const NotesSelector = <T extends FieldValues>({
   const error = errors[field.name]?.message;
   const hasError = !!error;
 
+  const { data: notes } = useGetNotesTradeSetup({ snapshotId });
+
   const handleOpenNotesDialog = () => {
     openDialog("NOTES", {
       snapshotId,
       tradeSetupId,
       snapshot,
-      onSave: (notes: any[]) => {
-        field.onChange(notes);
-      },
     });
   };
 
@@ -62,18 +62,17 @@ const NotesSelector = <T extends FieldValues>({
           disabled={disabled}
           onClick={handleOpenNotesDialog}
         >
-          <PlusIcon />
-          {/* {hasNotes ? (
+          {notes ? (
             <>
               <FileTextIcon className="size-3" />
-              {notesCount} Note{notesCount !== 1 ? "s" : ""}
+              {notes.length} Note{notes.length !== 1 ? "s" : ""}
             </>
           ) : (
             <>
               <PlusIcon className="size-2" />
               Add Notes
             </>
-          )} */}
+          )}
         </Button>
       </div>
       <div className="flex items-center justify-center">

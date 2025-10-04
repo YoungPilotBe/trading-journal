@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { useCreateNote } from "@/hooks/notes/use-create-note";
 import { useDeleteNote } from "@/hooks/notes/use-delete-note";
-import { useGetNotesSnapshot } from "@/hooks/notes/use-get-notes-snapshot";
+import { useGetNotesTradeSetup } from "@/hooks/notes/use-get-notes-trade-setup";
 import { useUpdateNote } from "@/hooks/notes/use-update-note";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
@@ -10,9 +10,9 @@ import "@blocknote/shadcn/style.css";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import clsx from "clsx";
 import { Doc, Id } from "convex/_generated/dataModel";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
+import NoteCard from "../note-card";
 import NoteEditor from "../note-editor";
-import StatusOption from "../status-option";
 
 interface NotesDialogProps {
   open: boolean;
@@ -20,10 +20,7 @@ interface NotesDialogProps {
   snapshotId: Id<"snapshots">;
   tradeSetupId: Id<"trade_setups">;
   snapshot?: Doc<"snapshots"> | null;
-  onSave: (notes: BlockNoteDocument[]) => void;
 }
-
-type BlockNoteDocument = unknown[];
 
 const NotesDialog = ({ open, onOpenChange }: NotesDialogProps) => {
   const { snapshotId, noteId } = useSearch({
@@ -59,7 +56,7 @@ const NotesDialog = ({ open, onOpenChange }: NotesDialogProps) => {
     },
   });
 
-  const { data: snapshotNotes } = useGetNotesSnapshot({
+  const { data: snapshotNotes } = useGetNotesTradeSetup({
     snapshotId,
   });
 
@@ -115,72 +112,34 @@ const NotesDialog = ({ open, onOpenChange }: NotesDialogProps) => {
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              {snapshotNotes?.length && (
+              {snapshotNotes && snapshotNotes.length > 0 ? (
                 <div className="grid gap-2">
-                  {snapshotNotes?.map((note, index) => (
-                    <div
+                  {snapshotNotes.map((note, index) => (
+                    <NoteCard
                       key={`current-${index}`}
-                      className={clsx(
-                        "p-3 rounded-lg border transition-colors grid grid-cols-[1fr_auto_auto] gap-2 items-center",
-                        isUpdatingNote
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer hover:bg-muted",
-                        noteId === note._id &&
-                          "bg-accent border-accent-foreground/20"
-                      )}
-                      onClick={() => {
-                        if (!isUpdatingNote) {
-                          navigate({
-                            to: "/dashboard/setup",
-                            search: (prev) => ({
-                              ...prev,
-                              ...search,
-                              noteId: note._id,
-                            }),
-                            replace: true,
-                          });
-                        }
+                      note={note}
+                      isSelected={noteId === note._id}
+                      isUpdating={isUpdatingNote}
+                      onSelect={() => {
+                        navigate({
+                          to: "/dashboard/setup",
+                          search: (prev) => ({
+                            ...prev,
+                            ...search,
+                            noteId: note._id,
+                          }),
+                          replace: true,
+                        });
                       }}
-                    >
-                      <div className="min-w-0">
-                        <h4
-                          className={clsx(
-                            "text-sm font-medium truncate",
-                            note.title === "Untitled" && "text-muted-foreground"
-                          )}
-                        >
-                          {note.title}
-                        </h4>
-                      </div>
-                      <StatusOption
-                        snapshotId={note.snapshotId}
-                        disableSeparators
-                      />
-                      <button
-                        type="button"
-                        className={clsx(
-                          "w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded-sm",
-                          isUpdatingNote && "opacity-50 cursor-not-allowed"
-                        )}
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          await handleDeleteNote(note._id);
-                        }}
-                        disabled={isUpdatingNote}
-                      >
-                        <Trash2Icon className="w-4 h-4" />
-                      </button>
-                    </div>
+                      onDelete={handleDeleteNote}
+                    />
                   ))}
                 </div>
+              ) : (
+                <div className="text-center text-muted-foreground text-sm py-8">
+                  No notes yet. Click "Add Note" to get started.
+                </div>
               )}
-              {snapshotNotes?.length === 0 &&
-                (!snapshotNotes || snapshotNotes.length === 0) && (
-                  <div className="text-center text-muted-foreground text-sm py-8">
-                    No notes yet. Click "Add Note" to get started.
-                  </div>
-                )}
             </div>
           </div>
 
