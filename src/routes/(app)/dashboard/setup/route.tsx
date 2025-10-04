@@ -31,6 +31,7 @@ import { z } from "zod";
 const searchSchema = z.object({
   tradeSetupId: z.custom<Id<"trade_setups">>((val) => typeof val === "string"),
   snapshotId: z.custom<Id<"snapshots">>((val) => typeof val === "string"),
+  noteId: z.optional(z.custom<Id<"notes">>((val) => typeof val === "string")),
   image: z.optional(z.enum(["preview"])),
 });
 

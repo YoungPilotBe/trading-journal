@@ -3,14 +3,16 @@ import { LoaderCircle } from "lucide-react";
 
 type Props = {
   isSaving: boolean;
+  className?: string;
 };
 
-const AutoSavePortal = ({ isSaving }: Props) => {
+const AutoSavePortal = ({ isSaving, className }: Props) => {
   return (
     <div
       className={clsx(
         "hidden flex-row gap-3 text-muted-foreground items-center starting:opacity-0 transition-opacity",
-        isSaving && "!flex"
+        isSaving && "!flex",
+        className
       )}
     >
       <LoaderCircle className="size-3 animate-spin" />

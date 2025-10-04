@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import NumberField from "../components/number-field";
 import TextField from "../components/text-field";
 import Direction from "../features/direction";
+import NotesSelector from "../features/notes-selector";
 import Result from "../features/result";
 import StatusOptions from "../features/status-options";
 import TemplateSelector from "../features/template-selector";
@@ -140,7 +141,8 @@ const TradeDetailsForm = ({
     if (!tradeSetup || !snapshot) return;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { status, asset, creationTime, result, ...tradeSetupData } = formData;
+    const { status, asset, creationTime, result, notes, ...tradeSetupData } =
+      formData;
 
     await Promise.all([
       updateTradeSetup({
@@ -151,6 +153,7 @@ const TradeDetailsForm = ({
       }),
       updateSnapshot({
         status,
+        notes: notes || [],
         snapshotId: snapshotId,
       }),
     ]);
@@ -194,6 +197,23 @@ const TradeDetailsForm = ({
               field={field}
               label="Template"
               disabled={isPending || isSubmitting}
+            />
+          )}
+        />
+
+        {/* Notes Selector */}
+        <Controller
+          name="notes"
+          control={control}
+          disabled={isPending}
+          render={({ field }) => (
+            <NotesSelector
+              field={field}
+              label="Notes"
+              disabled={isPending || isSubmitting}
+              snapshotId={snapshotId}
+              tradeSetupId={tradeSetupId}
+              snapshot={snapshot}
             />
           )}
         />

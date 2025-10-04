@@ -21,6 +21,8 @@ import type * as base_titles_utilities from "../base_titles/utilities.js";
 import type * as config_analytics from "../config/analytics.js";
 import type * as constants_unions from "../constants/unions.js";
 import type * as drawings from "../drawings.js";
+import type * as notes_mutation from "../notes/mutation.js";
+import type * as notes_queries from "../notes/queries.js";
 import type * as orchestration_internal from "../orchestration/internal.js";
 import type * as orchestration_mutations from "../orchestration/mutations.js";
 import type * as snaphot_internal from "../snaphot/internal.js";
@@ -54,6 +56,8 @@ declare const fullApi: ApiFromModules<{
   "config/analytics": typeof config_analytics;
   "constants/unions": typeof constants_unions;
   drawings: typeof drawings;
+  "notes/mutation": typeof notes_mutation;
+  "notes/queries": typeof notes_queries;
   "orchestration/internal": typeof orchestration_internal;
   "orchestration/mutations": typeof orchestration_mutations;
   "snaphot/internal": typeof snaphot_internal;

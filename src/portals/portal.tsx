@@ -6,7 +6,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-const NavbarPortal = ({ children, target = "navbar-items" }: Props) => {
+const Portal = ({ children, target = "navbar-items" }: Props) => {
   const [container, setContainer] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -22,4 +22,4 @@ const NavbarPortal = ({ children, target = "navbar-items" }: Props) => {
   );
 };
 
-export default NavbarPortal;
+export default Portal;

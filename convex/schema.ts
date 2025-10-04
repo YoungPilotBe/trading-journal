@@ -46,6 +46,18 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_drawing", ["drawingId"]),
+  notes: defineTable({
+    document: v.optional(v.any()),
+
+    title: v.optional(v.string()),
+
+    // One-to-many relationship: many notes can belong to one snapshot
+    snapshotId: v.id("snapshots"),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_snapshot", ["snapshotId"]),
 
   trade_setups: defineTable({
     // Basic trade information

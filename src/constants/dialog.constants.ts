@@ -1,5 +1,6 @@
 import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-dialog";
 import { DeleteTradeTemplateDialog } from "@/components/dialog/delete-trade-template-dialog";
+import NotesDialog from "@/components/dialog/notes-dialog";
 import { StatusChangeConfirmationDialog } from "@/components/dialog/status-change-confirmation-dialog";
 import { TagsComparisonDialog } from "@/components/dialog/tags-comparison-dialog";
 import { ComponentType } from "react";
@@ -23,6 +24,10 @@ export const DIALOGS = {
   DELETE_TRADE_TEMPLATE: {
     key: "DELETE_TRADE_TEMPLATE" as const,
     component: DeleteTradeTemplateDialog,
+  },
+  NOTES: {
+    key: "NOTES" as const,
+    component: NotesDialog,
   },
   STATUS_CHANGE_CONFIRMATION: {
     key: "STATUS_CHANGE_CONFIRMATION" as const,

@@ -30,7 +30,7 @@ import { useUploadDrawing } from "@/hooks/drawings/useUploadDrawing";
 import { useCreateTradeTemplate } from "@/hooks/trade_templates/create_trade_template";
 import { useGetTradeTemplate } from "@/hooks/trade_templates/get_trade_template";
 import { useUpdateTradeTemplate } from "@/hooks/trade_templates/update_trade_template";
-import NavbarPortal from "@/portals/navbar_portal";
+import Portal from "@/portals/portal";
 import "@blocknote/core/fonts/inter.css";
 import { convexQuery } from "@convex-dev/react-query";
 import clsx from "clsx";
@@ -169,7 +169,7 @@ function RouteComponent() {
 
   return (
     <>
-      <NavbarPortal
+      <Portal
         target="navbar-items"
         children={
           <AutoSavePortal isSaving={isUpdatingTemplate || isCreatingTemplate} />

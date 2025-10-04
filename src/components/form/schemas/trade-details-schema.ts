@@ -23,6 +23,7 @@ const baseSchema = z.object({
 // Extend with trade_template field that's specific to trade details
 export const tradeDetailsSchema = baseSchema.extend({
   trade_template: z.custom<Id<"trade_templates">>().optional(),
+  notes: z.array(z.any()).optional(),
 });
 
 export type TradeDetailsSchema = z.infer<typeof tradeDetailsSchema>;
@@ -50,5 +51,6 @@ export const createTradeDetailsDefaultValues = (
     riskReward: existingData?.existingTradeSetup?.riskReward || null,
     timeframes: existingData?.existingTradeSetup?.timeframes || ["4h"],
     result: existingData?.existingTradeSetup?.result || null,
+    notes: existingData?.existingSnapshot?.notes || [],
   };
 };
