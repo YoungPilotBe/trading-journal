@@ -51,6 +51,5 @@ export const createTradeDetailsDefaultValues = (
     riskReward: existingData?.existingTradeSetup?.riskReward || null,
     timeframes: existingData?.existingTradeSetup?.timeframes || ["4h"],
     result: existingData?.existingTradeSetup?.result || null,
-    notes: existingData?.existingSnapshot?.notes || [],
   };
 };
