@@ -82,7 +82,7 @@ const NotesDialog = ({ open, onOpenChange }: NotesDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="flex flex-col h-[70vh] font-mono ring-0"
+        className="flex flex-col h-[70vh] font-mono ring-0 pr-14"
         style={{ maxWidth: "70vw", width: "70vw" }}
       >
         <DialogHeader id="note-view-navbar" className="mb-2" />

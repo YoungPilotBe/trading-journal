@@ -14,6 +14,7 @@ export const generateUploadUrl = mutation({
 export const saveFileMetadata = mutation({
   args: {
     storageId: v.id("_storage"),
+    timeframe: v.optional(v.string()),
     fileName: v.string(),
     fileSize: v.number(),
     contentType: v.string(),
@@ -27,6 +28,7 @@ export const saveFileMetadata = mutation({
       storageId: args.storageId,
       fileName: args.fileName,
       fileSize: args.fileSize,
+      timeframe: args.timeframe,
       contentType: args.contentType,
       source: args.source || "unknown",
       asset,

@@ -5,6 +5,9 @@ import { Id } from "convex/_generated/dataModel";
 import { z } from "zod";
 
 const searchSchema = z.object({
+  tradeSetupId: z.optional(
+    z.custom<Id<"trade_setups">>((val) => typeof val === "string")
+  ),
   snapshotId: z.optional(
     z.custom<Id<"snapshots">>((val) => typeof val === "string")
   ),

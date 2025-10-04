@@ -15,6 +15,7 @@ type Props = {
   field: ControllerRenderProps<AddTradeSetupSchema, "timeframes">;
   label: string;
   disabled?: boolean;
+  singleTimeframe?: string; // The value from the single timeframe field
 } & Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   "value" | "onClick" | "onBlur" | "name" | "id"
@@ -34,7 +35,13 @@ function sortTimeframes(timeframes: string[]) {
   });
 }
 
-const Timeframes = ({ field, label, disabled, ...props }: Props) => {
+const Timeframes = ({
+  field,
+  label,
+  disabled,
+  singleTimeframe,
+  ...props
+}: Props) => {
   const { errors } = useFormState({ name: field.name });
   const error = errors[field.name]?.message;
   const hasError = !!error;
@@ -54,23 +61,31 @@ const Timeframes = ({ field, label, disabled, ...props }: Props) => {
       </label>
       <div className="flex justify-end">
         <div className="flex flex-row gap-1 items-center max-w-full overflow-hidden">
-          {sortTimeframes(currentTimeframes).map((timeframe) => (
-            <button
-              key={timeframe}
-              type="button"
-              onClick={() =>
-                field.onChange(
-                  currentTimeframes.filter((tf) => tf !== timeframe)
-                )
-              }
-              disabled={disabled}
-              className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-muted disabled:hover:text-muted-foreground whitespace-nowrap"
-              title="Click to remove"
-              {...props}
-            >
-              {timeframe}
-            </button>
-          ))}
+          {sortTimeframes(currentTimeframes).map((timeframe) => {
+            const isSingleTimeframe =
+              singleTimeframe && timeframe === singleTimeframe;
+            return (
+              <button
+                key={timeframe}
+                type="button"
+                onClick={() =>
+                  field.onChange(
+                    currentTimeframes.filter((tf) => tf !== timeframe)
+                  )
+                }
+                disabled={disabled}
+                className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-muted disabled:hover:text-muted-foreground whitespace-nowrap ${
+                  isSingleTimeframe
+                    ? "border-sky-400 text-sky-400"
+                    : "border-muted text-muted-foreground"
+                }`}
+                title="Click to remove"
+                {...props}
+              >
+                {timeframe}
+              </button>
+            );
+          })}
 
           {/* Add timeframe button/input */}
           {isAddingTimeframe && !disabled ? (

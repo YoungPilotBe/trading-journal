@@ -23,15 +23,15 @@ export const createAddTradeSetupDefaultValues = (
 ): AddTradeSetupSchema => {
   const baseData = {
     asset: existingValues?.imageData?.asset || "",
-    timeframe: "4h" as Timeframe,
     creationTime: existingValues?.imageData?._creationTime
       ? format(new Date(existingValues.imageData._creationTime), "HH:mm")
       : "",
     title: existingValues?.smartTitle?.title || "",
     direction: existingValues?.existingTradeSetup?.direction || "long",
+    timeframe: existingValues?.imageData?.timeframe as Timeframe,
     timeframes:
       (existingValues?.existingTradeSetup?.timeframes as Timeframe[]) ||
-      (["4h"] as Timeframe[]),
+      ([existingValues?.imageData?.timeframe] as Timeframe[]),
     riskReward: existingValues?.existingTradeSetup?.riskReward || null,
   };
 

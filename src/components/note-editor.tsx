@@ -1,3 +1,4 @@
+import { useGenerateNoteTitle } from "@/hooks/ai/use-generate-note-title";
 import { useGetNote } from "@/hooks/notes/use-get-note";
 import { useUpdateNote } from "@/hooks/notes/use-update-note";
 import Portal from "@/portals/portal";
@@ -8,11 +9,20 @@ import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/shadcn/style.css";
 import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
+import { Loader2, TypeIcon } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { useDebouncedCallback } from "use-debounce";
 import AutoSavePortal from "./portals/auto-save-portal";
-
-type BlockNoteDocument = unknown[];
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "./ui/breadcrumb";
+import { Button } from "./ui/button";
 
 interface NoteEditorProps {
   noteId: Id<"notes">;
@@ -23,6 +33,10 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
   const { data: note, isLoading: isLoadingNote } = useGetNote({ id: noteId });
   const { mutateAsync: updateNote, isPending: isUpdatingNote } =
     useUpdateNote();
+
+  // AI title generation
+  const { mutateAsync: generateTitle, isPending: isGeneratingTitle } =
+    useGenerateNoteTitle();
 
   // Create editor with default content
   const editor = useCreateBlockNote({
@@ -75,23 +89,32 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
     await updateNote({
       noteId,
       document: editor.document,
-      title: getNoteTitle(editor.document),
     });
   }
 
-  // Extract title from document
-  function getNoteTitle(document: BlockNoteDocument) {
-    const firstBlock = document?.[0] as {
-      type?: string;
-      content?: Array<{ text?: string }>;
-    };
+  // Handle AI title generation
+  const handleGenerateTitle = async () => {
+    try {
+      // Convert editor content to text
 
-    if (firstBlock?.type === "heading" && firstBlock.content?.[0]?.text) {
-      return firstBlock.content[0].text;
+      if (!editor.document) {
+        toast.error("Please add some content to generate a title");
+        return;
+      }
+
+      // Generate title using AI
+      const generatedTitle = await generateTitle({
+        content: JSON.stringify(editor.document),
+      });
+
+      await updateNote({ noteId, title: generatedTitle });
+
+      toast.success("Title generated successfully!");
+    } catch (error) {
+      console.error("Error generating title:", error);
+      toast.error("Failed to generate title. Please try again.");
     }
-
-    return "Untitled";
-  }
+  };
 
   if (isLoadingNote) {
     return (
@@ -108,13 +131,48 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
       <Portal
         target="note-view-navbar"
         children={
-          <AutoSavePortal
-            isSaving={isUpdatingNote}
-            className="absolute top-4 right-12"
-          />
+          // Padding of 4 + sidebar width = 64 + 4 = 68
+          <div className="ml-68 flex flex-row justify-between items-center w-full">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <button className="hover:text-foreground transition-colors">
+                      Notes
+                    </button>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="flex items-center gap-2">
+                    {note?.title}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <div className="inline-flex flex-row gap-3">
+              <AutoSavePortal isSaving={isUpdatingNote} />
+              <Button
+                variant="outline"
+                size="badge"
+                className="text-[10px]"
+                onClick={handleGenerateTitle}
+                disabled={isGeneratingTitle}
+              >
+                {isGeneratingTitle ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <TypeIcon className="size-3" />
+                )}
+                {isGeneratingTitle ? "Generating..." : "Generate Title"}
+              </Button>
+            </div>
+          </div>
         }
       />
+
       <BlockNoteView
+        className="pt-6"
         editor={editor}
         onChange={() => autoSave()}
         theme={{

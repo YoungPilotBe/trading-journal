@@ -7,6 +7,7 @@ export default defineSchema({
     storageId: v.id("_storage"),
     fileName: v.string(),
     fileSize: v.number(),
+    timeframe: v.optional(v.string()),
     contentType: v.string(),
     source: v.string(),
     asset: v.string(),
@@ -103,7 +104,7 @@ export default defineSchema({
     tags_config: v.optional(v.any()),
 
     // Timeframe couples
-    timeframeTagCouples: v.optional(v.any()),
+    timeframe: v.optional(v.string()),
 
     // Foreign key to link snapshot to the triggering image
     imageId: v.optional(v.id("tradingview_images")),

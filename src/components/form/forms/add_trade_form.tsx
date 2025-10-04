@@ -4,7 +4,7 @@ import { useCreateSnapshot } from "@/hooks/snapshots/use-create-snapshot";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { Loader } from "lucide-react";
@@ -14,6 +14,7 @@ import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
 import Direction from "../features/direction";
 import Result from "../features/result";
+import SingleTimeframe from "../features/single-timeframe";
 import StatusOptions from "../features/status-options";
 import Timeframes from "../features/timeframes";
 import { useExistingValues } from "../hooks/use-existing-values";
@@ -41,7 +42,7 @@ const AddTradeForm = ({
   disabledFields,
 }: Props) => {
   const navigate = useNavigate();
-
+  const search = useSearch({ from: "/trade_onboarding/add_trade" });
   const {
     existingSnapshot,
     existingTradeSetup,
@@ -72,21 +73,28 @@ const AddTradeForm = ({
 
   const { register, control, handleSubmit, watch } = form;
 
-  function handleNavigate(search: {
+  function handleNavigate(args: {
     tradeSetupId: Id<"trade_setups">;
     imageId: Id<"tradingview_images">;
     snapshotId: Id<"snapshots">;
   }) {
+    const newSearch = { ...search, ...args };
+    navigate({
+      from: "/trade_onboarding/add_trade",
+      search: newSearch,
+      replace: true,
+    });
     navigate({
       to: "/trade_onboarding/add_template",
-      search,
+      search: newSearch,
     });
   }
 
   const { mutateAsync: createTradeSetup, isPending: isPendingSubmit } =
     useCreateTradeSetup({
-      onSuccess: ({ tradeSetupId, snapshotId }) =>
-        handleNavigate({ imageId, snapshotId, tradeSetupId }),
+      onSuccess: ({ tradeSetupId, snapshotId }) => {
+        handleNavigate({ imageId, snapshotId, tradeSetupId });
+      },
     });
   const { mutateAsync: updateTradeSetup, isPending: isPendingUpdateSubmit } =
     useUpdateTradeSetup({
@@ -97,6 +105,23 @@ const AddTradeForm = ({
     useCreateSnapshot({});
   // Watch status to conditionally render result field
   const status = watch("status");
+
+  // Watch timeframe field and automatically add to timeframes array
+  const timeframe = watch("timeframe");
+
+  form.subscribe({
+    name: "timeframe",
+    callback({ values }) {
+      if (values.timeframe && values.timeframe.trim() !== "") {
+        const currentTimeframes = Array.isArray(values.timeframes)
+          ? values.timeframes
+          : [];
+        if (!currentTimeframes.includes(values.timeframe)) {
+          form.setValue("timeframes", [...currentTimeframes, values.timeframe]);
+        }
+      }
+    },
+  });
 
   const onAttachSubmit = async (data: AddTradeSetupSchema) => {
     if (!tradeSetupId) throw new Error("No trade setup found");
@@ -114,6 +139,7 @@ const AddTradeForm = ({
     const updateData = updateTradeSetupSchema.parse({
       id: tradeSetupId,
       snapshotId: snapshot.snapshotId,
+      imageId,
       ...data,
     });
 
@@ -152,12 +178,13 @@ const AddTradeForm = ({
           disabled
           className="text-muted-foreground"
         />
-        <TextField
-          {...register("timeframe")}
-          label="Timeframe"
-          value="4h"
-          disabled
-          className="text-muted-foreground"
+        <Controller
+          name="timeframe"
+          control={control}
+          disabled={disabledFields?.includes("timeframe")}
+          render={({ field }) => (
+            <SingleTimeframe field={field} label="Timeframe" />
+          )}
         />
         <TextField
           {...register("creationTime")}
@@ -230,7 +257,11 @@ const AddTradeForm = ({
           control={control}
           disabled={disabledFields?.includes("timeframes")}
           render={({ field }) => (
-            <Timeframes field={field} label="Timeframes" />
+            <Timeframes
+              field={field}
+              label="Timeframes"
+              singleTimeframe={timeframe}
+            />
           )}
         />
 

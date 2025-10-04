@@ -9,7 +9,7 @@ type NoteCardProps = {
   isSelected: boolean;
   isUpdating: boolean;
   onSelect: () => void;
-  onDelete: (noteId: Id<"notes">) => void;
+  onDelete: (noteId: Id<"notes">) => Promise<void>;
   showSeparator?: boolean;
   separatorText?: string;
 };

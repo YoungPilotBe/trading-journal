@@ -8,6 +8,7 @@ export const updateTradeSetup = mutation({
   args: {
     id: v.id("trade_setups"),
     snapshotId: v.id("snapshots"),
+    imageId: v.id("tradingview_images"),
     title: v.optional(v.union(v.string(), v.null())),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     status: v.optional(statusUnion),
@@ -15,9 +16,10 @@ export const updateTradeSetup = mutation({
     riskReward: v.optional(v.union(v.number(), v.null())),
     result: v.optional(resultUnion),
     timeframes: v.optional(v.array(v.string())),
+    timeframe: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { id, snapshotId, title, ...updates } = args;
+    const { id, snapshotId, title, timeframe, imageId, ...updates } = args;
 
     await ctx.db.patch(id, {
       ...updates,
@@ -35,6 +37,12 @@ export const updateTradeSetup = mutation({
         internal.template.internal.addTradeSetupToTemplate,
         { tradeSetupId: id, templateId: args.trade_template }
       );
+    }
+
+    if (imageId) {
+      await ctx.db.patch(imageId, {
+        timeframe,
+      });
     }
 
     return { snapshotId, tradeSetupId: id };

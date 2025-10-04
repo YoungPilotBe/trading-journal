@@ -8,7 +8,7 @@ const timeframesSchema = timeframeSchema.array();
 // Base schema object for all trade setups
 const baseTradeSetupObject = {
   asset: z.string(),
-  timeframe: timeframeSchema,
+  timeframe: z.optional(timeframeSchema),
   creationTime: z.string(),
   title: z.string().min(1).max(100),
   direction: z.enum(["long", "short"]),
@@ -49,6 +49,7 @@ export type UnionKeys<T> = T extends T ? keyof T : never;
 // Schema for createSnapshot mutation - only the fields it needs
 export const createSnapshotSchema = z.object({
   tradeSetupId: z.custom<Id<"trade_setups">>(),
+  timeframe: timeframeSchema,
   status: z.enum([
     "idea",
     "watching",
@@ -68,6 +69,7 @@ export const createTradeSetupSchema = z.object({
   direction: z.enum(["long", "short"]),
   riskReward: z.number().nullable(),
   timeframes: timeframesSchema,
+  timeframe: timeframeSchema,
   status: z.enum([
     "idea",
     "watching",
@@ -84,6 +86,7 @@ export const createTradeSetupSchema = z.object({
 export const updateTradeSetupSchema = z.object({
   id: z.custom<Id<"trade_setups">>(),
   snapshotId: z.custom<Id<"snapshots">>(),
+  imageId: z.custom<Id<"tradingview_images">>(),
   title: z.string().min(1).max(100).optional(),
   direction: z.enum(["long", "short"]).optional(),
   trade_template: z.custom<Id<"trade_templates">>().optional(),

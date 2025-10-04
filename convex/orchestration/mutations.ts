@@ -11,6 +11,7 @@ export const createTradeSetupWithSnapshot = mutation({
     status: statusUnion,
     riskReward: v.union(v.number(), v.null()),
     timeframes: v.array(v.string()),
+    timeframe: v.optional(v.string()),
     result: v.optional(resultUnion),
     imageId: v.id("tradingview_images"), // Link to the image that triggered this trade setup
   },
@@ -35,6 +36,7 @@ export const createTradeSetupWithSnapshot = mutation({
 
     const snapshotId = await ctx.db.insert("snapshots", {
       tradeSetupId,
+      timeframe: args.timeframe,
       status: args.status,
       imageId: args.imageId,
       createdAt: now,
@@ -44,6 +46,7 @@ export const createTradeSetupWithSnapshot = mutation({
     if (args.imageId) {
       await ctx.db.patch(args.imageId, {
         snapshotId,
+        timeframe: args.timeframe,
         onboarding_complete: true,
       });
     }
