@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { statusOptions } from "@/config/constants";
+import { Timeframe } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
@@ -266,6 +267,7 @@ const TradeDetailsForm = ({
             <TimeframesGeneric
               field={field}
               label="Timeframes"
+              singleTimeframe={snapshot?.timeframe as Timeframe}
               disabled={isPending || isSubmitting}
             />
           )}

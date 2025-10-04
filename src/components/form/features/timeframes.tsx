@@ -4,6 +4,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Timeframe, TIMEFRAMES } from "@/config/timeframe-order";
+import clsx from "clsx";
 import { useState } from "react";
 import { ControllerRenderProps, useFormState } from "react-hook-form";
 import {
@@ -15,7 +16,7 @@ type Props = {
   field: ControllerRenderProps<AddTradeSetupSchema, "timeframes">;
   label: string;
   disabled?: boolean;
-  singleTimeframe?: string; // The value from the single timeframe field
+  singleTimeframe?: string;
 } & Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   "value" | "onClick" | "onBlur" | "name" | "id"
@@ -74,11 +75,12 @@ const Timeframes = ({
                   )
                 }
                 disabled={disabled}
-                className={`px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-muted disabled:hover:text-muted-foreground whitespace-nowrap ${
+                className={clsx(
+                  "px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-muted disabled:hover:text-muted-foreground whitespace-nowrap",
                   isSingleTimeframe
                     ? "border-sky-400 text-sky-400"
                     : "border-muted text-muted-foreground"
-                }`}
+                )}
                 title="Click to remove"
                 {...props}
               >
