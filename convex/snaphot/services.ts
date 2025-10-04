@@ -12,6 +12,10 @@ export const cascadeDeleteSnapshot = internalMutation({
       internal.orchestration.mutations.deleteImagesBySnapshotId,
       args
     );
+    await ctx.runMutation(
+      internal.orchestration.mutations.deleteNotesBySnapshotId,
+      args
+    );
 
     // delete the snapshot itself
     await ctx.db.delete(args.snapshotId);

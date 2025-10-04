@@ -83,6 +83,31 @@ export const deleteImagesBySnapshotId = internalMutation({
   },
 });
 
+export const deleteNotesBySnapshotId = internalMutation({
+  args: {
+    snapshotId: v.id("snapshots"),
+  },
+  handler: async (ctx, { snapshotId }) => {
+    // Find all images linked to this snapshot
+    const notes = await ctx.db
+      .query("notes")
+      .withIndex("by_snapshot", (q) => q.eq("snapshotId", snapshotId))
+      .collect();
+
+    const deletedIds = [];
+
+    // Delete each image from storage and table
+    for (const note of notes) {
+      // Delete from storage first
+      await ctx.db.delete(note._id);
+
+      deletedIds.push(note._id);
+    }
+
+    return deletedIds; // Return array of deleted image IDs
+  },
+});
+
 export const deleteSnapshotsByTradeSetupId = internalMutation({
   args: {
     tradeSetupId: v.id("trade_setups"),
