@@ -32,14 +32,19 @@ export const createSnapshot = mutation({
     status: statusUnion,
     imageId: v.id("tradingview_images"),
     result: v.optional(resultUnion),
+    timeframe: v.string(),
   },
-  handler: async (ctx, { imageId, tradeSetupId, status, result }) => {
+  handler: async (
+    ctx,
+    { imageId, tradeSetupId, status, result, timeframe }
+  ) => {
     const now = Date.now();
 
     const snapshotId = await ctx.db.insert("snapshots", {
       tradeSetupId,
       status: status,
       imageId: imageId,
+      timeframe,
       createdAt: now,
     });
 
@@ -53,6 +58,7 @@ export const createSnapshot = mutation({
 
     await ctx.db.patch(imageId, {
       snapshotId,
+      timeframe,
       onboarding_complete: true,
     });
 

@@ -40,6 +40,7 @@ export const createTestDataSet = internalMutation({
           tradeSetupId: createdTradeSetup.tradeSetupId as Id<"trade_setups">,
           status: snapshot.status as Doc<"snapshots">["status"],
           imageId: snapshot.imageId as Id<"tradingview_images">,
+          timeframe: snapshot.timeframe,
         });
       }
     }

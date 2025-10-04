@@ -1,6 +1,7 @@
 import { TIMEFRAMES } from "@/config/timeframe-order";
 import { Doc } from "convex/_generated/dataModel";
 import { format } from "date-fns";
+import { addTimeframeToTimeframes } from "../utils";
 import { AddTradeSetupSchema } from "./add-trade-schema";
 
 type Timeframe = (typeof TIMEFRAMES)[number];
@@ -29,9 +30,10 @@ export const createAddTradeSetupDefaultValues = (
     title: existingValues?.smartTitle?.title || "",
     direction: existingValues?.existingTradeSetup?.direction || "long",
     timeframe: existingValues?.imageData?.timeframe as Timeframe,
-    timeframes:
-      (existingValues?.existingTradeSetup?.timeframes as Timeframe[]) ||
-      ([existingValues?.imageData?.timeframe] as Timeframe[]),
+    timeframes: addTimeframeToTimeframes(
+      existingValues?.existingTradeSetup?.timeframes as Timeframe[],
+      existingValues?.imageData?.timeframe as Timeframe
+    ),
     riskReward: existingValues?.existingTradeSetup?.riskReward || null,
   };
 

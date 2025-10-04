@@ -28,8 +28,9 @@ export class Generator {
     const tagsGenerator = new TagsGenerator(this.seed);
     const tags = tagsGenerator.generateStrategyConfig();
     const imageId = "jd7dnjvky94cbnzhv4tyk35nwx7rfdbe";
+    const timeframe = "4h";
     const tagsConfig = {};
-    return { status, tags, tagsConfig, imageId };
+    return { status, tags, tagsConfig, imageId, timeframe };
   }
 
   public generate() {

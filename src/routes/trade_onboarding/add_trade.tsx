@@ -51,16 +51,7 @@ function RouteComponent() {
           imageId={imageId}
           attach={attach}
           disabledFields={
-            attach
-              ? [
-                  "title",
-                  "asset",
-                  "creationTime",
-                  "direction",
-                  "timeframe",
-                  "timeframes",
-                ]
-              : undefined
+            attach ? ["title", "asset", "creationTime", "direction"] : undefined
           }
         />
       </div>

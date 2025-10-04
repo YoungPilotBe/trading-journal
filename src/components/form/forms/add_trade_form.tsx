@@ -27,6 +27,7 @@ import {
   updateTradeSetupSchema,
 } from "../schemas/add-trade-schema";
 import { createAddTradeSetupDefaultValues } from "../schemas/default-values";
+import { addTimeframeToTimeframes } from "../utils";
 
 interface Props {
   imageId: Id<"tradingview_images">;
@@ -112,13 +113,12 @@ const AddTradeForm = ({
   form.subscribe({
     name: "timeframe",
     callback({ values }) {
+      // Only update if there's a timeframe value and it's not empty
       if (values.timeframe && values.timeframe.trim() !== "") {
-        const currentTimeframes = Array.isArray(values.timeframes)
-          ? values.timeframes
-          : [];
-        if (!currentTimeframes.includes(values.timeframe)) {
-          form.setValue("timeframes", [...currentTimeframes, values.timeframe]);
-        }
+        form.setValue(
+          "timeframes",
+          addTimeframeToTimeframes(values.timeframes, values.timeframe)
+        );
       }
     },
   });
