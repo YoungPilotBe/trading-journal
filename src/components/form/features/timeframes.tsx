@@ -69,11 +69,12 @@ const Timeframes = ({
               <button
                 key={timeframe}
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  if (isSingleTimeframe) return;
                   field.onChange(
                     currentTimeframes.filter((tf) => tf !== timeframe)
-                  )
-                }
+                  );
+                }}
                 disabled={disabled}
                 className={clsx(
                   "px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-muted disabled:hover:text-muted-foreground whitespace-nowrap",
