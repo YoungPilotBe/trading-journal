@@ -66,7 +66,7 @@ function RouteComponent() {
 
   const handleCreateNew = () => {
     navigate({
-      to: "/dashboard/trade_templates/trade_template",
+      to: "/trade_template",
     });
   };
 
@@ -219,7 +219,7 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
       </div>
 
       <Link
-        to="/dashboard/trade_templates/trade_template"
+        to="/trade_template"
         search={{ templateId: template._id }}
         className="group"
       >

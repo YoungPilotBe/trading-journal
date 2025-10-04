@@ -1,10 +1,9 @@
+import "@/blocknote-styles.css";
 import { useGenerateNoteTitle } from "@/hooks/ai/use-generate-note-title";
 import { useGetNote } from "@/hooks/notes/use-get-note";
 import { useUpdateNote } from "@/hooks/notes/use-update-note";
 import Portal from "@/portals/portal";
 import "@blocknote/core/fonts/inter.css";
-import { BlockNoteView } from "@blocknote/mantine";
-import "@blocknote/mantine/style.css";
 import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/shadcn/style.css";
 import clsx from "clsx";
@@ -24,6 +23,19 @@ import {
 } from "./ui/breadcrumb";
 import { Button } from "./ui/button";
 
+import { model } from "@/ai/openai";
+import { en } from "@blocknote/core/locales";
+import { BlockNoteView } from "@blocknote/shadcn";
+import {
+  AIMenuController,
+  ClientSideTransport,
+  createAIExtension,
+} from "@blocknote/xl-ai";
+
+import { FormattingToolbarWithAI, SuggestionMenuWithAI } from "@/editor/menu";
+import { en as aiEn } from "@blocknote/xl-ai/locales";
+import "@blocknote/xl-ai/style.css"; // add the AI stylesheet
+
 interface NoteEditorProps {
   noteId: Id<"notes">;
   isDisabled?: boolean;
@@ -40,6 +52,18 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
 
   // Create editor with default content
   const editor = useCreateBlockNote({
+    dictionary: {
+      ...en,
+      ai: aiEn, // add default translations for the AI extension
+    },
+    extensions: [
+      createAIExtension({
+        transport: new ClientSideTransport({
+          model,
+        }),
+      }),
+    ],
+
     initialContent: [
       {
         type: "heading",
@@ -175,29 +199,12 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
         className="pt-6"
         editor={editor}
         onChange={() => autoSave()}
-        theme={{
-          light: {
-            borderRadius: 0,
-            colors: {
-              editor: {
-                background: "transparent",
-              },
-            },
-          },
-          dark: {
-            borderRadius: 0,
-            colors: {
-              editor: {
-                background: "transparent",
-              },
-            },
-          },
-        }}
-        style={{
-          backgroundColor: "transparent",
-          height: "100%",
-        }}
-      />
+        data-theming-css-demo
+      >
+        <FormattingToolbarWithAI />
+        <SuggestionMenuWithAI editor={editor} />
+        <AIMenuController />
+      </BlockNoteView>
     </div>
   );
 };

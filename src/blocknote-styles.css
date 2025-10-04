@@ -1,0 +1,189 @@
+/* BlockNote Dark Theme */
+.bn-container {
+  background: transparent;
+  color: oklch(0.985 0.001 106.423);
+}
+
+.bn-editor {
+  background: transparent !important;
+  color: oklch(0.985 0.001 106.423);
+  min-height: 100%;
+  font-family: monospace;
+}
+
+.bn-block {
+  color: oklch(0.985 0.001 106.423);
+  margin: 0.5rem 0;
+}
+
+.bn-block-content {
+  color: oklch(0.985 0.001 106.423);
+}
+
+.bn-inline-content {
+  color: oklch(0.985 0.001 106.423);
+}
+
+/* Headings */
+[data-content-type="heading"] {
+  color: oklch(0.985 0.001 106.423);
+  font-weight: 600;
+}
+
+[data-content-type="heading"][data-level="1"] {
+  font-size: 2rem;
+  color: oklch(0.985 0.001 106.423);
+}
+
+[data-content-type="heading"][data-level="2"] {
+  font-size: 1.5rem;
+  color: oklch(0.985 0.001 106.423);
+}
+
+[data-content-type="heading"][data-level="3"] {
+  font-size: 1.25rem;
+  color: oklch(0.985 0.001 106.423);
+}
+
+/* Paragraphs */
+[data-content-type="paragraph"] {
+  color: oklch(0.709 0.01 56.259);
+  line-height: 1.6;
+}
+
+/* Lists */
+[data-content-type="bulletListItem"],
+[data-content-type="numberedListItem"] {
+  color: oklch(0.709 0.01 56.259);
+}
+
+/* Code */
+[data-content-type="codeBlock"] {
+  background: oklch(0.216 0.006 56.043);
+  border: 1px solid oklch(1 0 0 / 10%);
+  border-radius: 0.375rem;
+  color: oklch(0.985 0.001 106.423);
+  padding: 1rem;
+}
+
+[data-content-type="inlineCode"] {
+  background: oklch(0.216 0.006 56.043);
+  color: oklch(0.985 0.001 106.423);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+}
+
+/* Links */
+[data-content-type="link"] {
+  color: oklch(0.709 0.01 56.259);
+  text-decoration: underline;
+}
+
+[data-content-type="link"]:hover {
+  color: oklch(0.8 0.01 56.259);
+}
+
+/* Toolbars */
+.bn-toolbar {
+  background: oklch(0.216 0.006 56.043);
+  border: 1px solid oklch(1 0 0 / 10%);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.bn-toolbar button {
+  color: oklch(0.985 0.001 106.423);
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.bn-toolbar button:hover {
+  background: oklch(0.268 0.007 34.298);
+  color: oklch(0.985 0.001 106.423);
+}
+
+.bn-toolbar button[aria-pressed="true"] {
+  background: oklch(0.268 0.007 34.298);
+  color: oklch(0.985 0.001 106.423);
+}
+
+/* Side Menu */
+.bn-side-menu {
+  background: transparent;
+  border: none;
+}
+
+.bn-side-menu button {
+  color: oklch(0.985 0.001 106.423);
+  background: oklch(0.268 0.007 34.298);
+  border: none;
+  padding: 1rem;
+  border-radius: 0.25rem;
+}
+
+.bn-side-menu button:hover {
+  background: oklch(0.216 0.006 56.043);
+  color: oklch(0.985 0.001 106.423);
+}
+
+/* Drag Handle Menu */
+.bn-drag-handle-menu {
+  background: oklch(0.216 0.006 56.043);
+  border: 1px solid oklch(1 0 0 / 10%);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.bn-drag-handle-menu button {
+  color: oklch(0.985 0.001 106.423);
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.bn-drag-handle-menu button:hover {
+  background: oklch(0.268 0.007 34.298);
+  color: oklch(0.985 0.001 106.423);
+}
+
+/* Placeholder text */
+.bn-inline-content[data-placeholder]:empty::before {
+  color: oklch(0.553 0.013 58.071);
+  font-style: italic;
+}
+
+/* Selection */
+.bn-inline-content::selection {
+  background: oklch(0.553 0.013 58.071);
+  color: oklch(0.985 0.001 106.423);
+}
+
+/* Focus styles */
+.bn-inline-content:focus {
+  outline: none;
+}
+
+/* AI specific styles */
+.bn-ai-menu {
+  background: oklch(0.216 0.006 56.043);
+  border: 1px solid oklch(1 0 0 / 10%);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.bn-ai-toolbar-button {
+  color: oklch(0.985 0.001 106.423);
+  background: transparent;
+  border: 1px solid oklch(1 0 0 / 10%);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+}
+
+.bn-ai-toolbar-button:hover {
+  background: oklch(0.268 0.007 34.298);
+  color: oklch(0.985 0.001 106.423);
+}

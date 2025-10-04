@@ -5,7 +5,6 @@ import { useDeleteNote } from "@/hooks/notes/use-delete-note";
 import { useGetNotesTradeSetup } from "@/hooks/notes/use-get-notes-trade-setup";
 import { useUpdateNote } from "@/hooks/notes/use-update-note";
 import "@blocknote/core/fonts/inter.css";
-import "@blocknote/mantine/style.css";
 import "@blocknote/shadcn/style.css";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import clsx from "clsx";
