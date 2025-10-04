@@ -58,7 +58,7 @@ const TemplateSelector = <T extends FieldValues>({
               >
                 {templates?.find((t) => t._id === field.value)?.title}
                 <Link
-                  to={"/dashboard/trade_templates/trade_template"}
+                  to={"/trade_template"}
                   search={{
                     templateId: field.value as unknown as Id<"trade_templates">,
                   }}
@@ -117,7 +117,7 @@ const TemplateSelector = <T extends FieldValues>({
                   </button>
                 ) : (
                   <Link
-                    to={"/dashboard/trade_templates/trade_template"}
+                    to={"/trade_template"}
                     search={{ templateId: template._id }}
                     className="p-1 rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
                     onClick={(e) => e.stopPropagation()}
@@ -134,7 +134,7 @@ const TemplateSelector = <T extends FieldValues>({
                 e.preventDefault();
                 e.stopPropagation();
                 navigate({
-                  to: "/dashboard/trade_templates/trade_template",
+                  to: "/trade_template",
                 });
               }}
             >

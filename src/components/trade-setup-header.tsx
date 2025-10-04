@@ -204,7 +204,7 @@ const TradeSetupCard = ({
   const handleTemplateClick = () => {
     if (template) {
       navigate({
-        to: "/dashboard/trade_templates/trade_template",
+        to: "/trade_template",
         search: { templateId: template._id },
       });
     }
