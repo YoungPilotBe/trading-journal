@@ -5,6 +5,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
@@ -14,7 +15,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import { CalendarIcon, ImageIcon } from "lucide-react";
+import { CalendarIcon, ImageIcon, SkipForward } from "lucide-react";
 import { useMemo, useState } from "react";
 import z from "zod";
 
@@ -77,6 +78,12 @@ function RouteComponent() {
             <CommandList>
               <CommandEmpty>No templates found.</CommandEmpty>
               <CommandGroup>
+                {/* Skip Template Option */}
+                <CommandItem>
+                  <SkipTemplateOption />
+                </CommandItem>
+
+                <CommandSeparator className="my-1" />
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-sm text-muted-foreground">
@@ -152,6 +159,48 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
         <div className="flex items-center text-xs text-muted-foreground">
           <CalendarIcon className="w-3 h-3 mr-1" />
           <span>{formatDistanceToNow(updatedAt, { addSuffix: true })}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkipTemplateOption() {
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const { mutateAsync: updateTradeSetup, isPending } = useUpdateTradeSetup({
+    onSuccess: () => {
+      navigate({ to: "/trade_onboarding/add_tags", search });
+    },
+  });
+
+  async function handleSkip() {
+    await updateTradeSetup({
+      id: search.tradeSetupId as Id<"trade_setups">,
+      snapshotId: search.snapshotId as Id<"snapshots">,
+      imageId: search.imageId as Id<"tradingview_images">,
+      trade_template: undefined, // No template selected
+    });
+  }
+
+  return (
+    <div
+      className={clsx(
+        "flex items-center gap-3 p-2 w-full cursor-pointer hover:bg-muted/50 rounded-md transition-colors",
+        isPending && "opacity-50 pointer-events-none"
+      )}
+      onClick={handleSkip}
+    >
+      {/* Skip Icon */}
+      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center flex-shrink-0">
+        <SkipForward className="w-4 h-4 text-muted-foreground" />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-sm line-clamp-1 mb-1">Skip Template</h3>
+        <div className="flex items-center text-xs text-muted-foreground">
+          <span>Continue without a template</span>
         </div>
       </div>
     </div>
