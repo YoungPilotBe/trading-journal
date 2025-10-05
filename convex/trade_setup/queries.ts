@@ -106,6 +106,7 @@ export const getTradingJournalData = query({
         return {
           id: tradeSetup._id,
           asset: tradeSetup.asset,
+          result: tradeSetup.result,
           direction: tradeSetup.direction,
           title: tradeSetup.title,
           riskReward: tradeSetup.riskReward,

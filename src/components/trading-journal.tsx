@@ -23,11 +23,13 @@ import { Doc, Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { ArrowRight, Calendar } from "lucide-react";
 import { useMemo, useState } from "react";
+import ResultBadge from "./result-badge";
 
 // Types
 type JournalEntry = {
   id: Id<"trade_setups">;
   asset: string;
+  result: Doc<"trade_setups">["result"];
   direction: "long" | "short";
   title: string;
   riskReward?: number;
@@ -51,6 +53,9 @@ const TableRowSkeleton = () => (
   <TableRow>
     <TableCell>
       <Skeleton className="h-4 w-16" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-6" />
     </TableCell>
     <TableCell>
       <Skeleton className="h-4 w-24" />
@@ -97,6 +102,30 @@ const TradingJournal = () => {
             {getValue()}
           </div>
         ),
+      }),
+      columnHelper.accessor("result", {
+        header: ({ column }) => (
+          <button
+            className="flex flex-row items-center hover:bg-muted/50 p-1 rounded font-mono text-xs"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Result
+          </button>
+        ),
+        cell: ({ getValue }) => (
+          <ResultBadge result={getValue() as Doc<"trade_setups">["result"]} />
+        ),
+        sortingFn: (rowA, rowB) => {
+          const a = rowA.original.result;
+          const b = rowB.original.result;
+
+          // Define custom order: win, loss, breakeven, null
+          const order = { win: 0, breakeven: 1, loss: 2, null: 3 };
+          const aOrder = a ? order[a] : order.null;
+          const bOrder = b ? order[b] : order.null;
+
+          return aOrder - bOrder;
+        },
       }),
       columnHelper.accessor("dateRange", {
         header: ({ column }) => (
@@ -282,7 +311,14 @@ const TradingJournal = () => {
                 }}
                 className="contents"
               >
-                <TableRow data-state={row.getIsSelected() && "selected"}>
+                <TableRow
+                  data-state={row.getIsSelected() && "selected"}
+                  className={
+                    row.original.latestStatus === "canceled"
+                      ? "relative opacity-80 after:absolute after:top-1/2 after:left-0 after:right-0 after:h-[0.5px] after:bg-muted-foreground after:transform after:-translate-y-1/2"
+                      : ""
+                  }
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
