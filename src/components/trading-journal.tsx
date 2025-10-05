@@ -302,33 +302,34 @@ const TradingJournal = () => {
           ) : table.getRowModel().rows?.length ? (
             // Data rows
             table.getRowModel().rows.map((row) => (
-              <Link
+              <TableRow
                 key={row.id}
-                to="/dashboard/setup"
-                search={{
-                  tradeSetupId: row.original.id,
-                  snapshotId: row.original.latestSnapshotId as Id<"snapshots">,
-                }}
-                className="contents"
+                data-state={row.getIsSelected() && "selected"}
+                className={
+                  row.original.latestStatus === "canceled"
+                    ? "relative opacity-80 after:absolute after:top-1/2 after:left-0 after:right-0 after:h-[0.5px] after:bg-muted-foreground after:transform after:-translate-y-1/2"
+                    : ""
+                }
               >
-                <TableRow
-                  data-state={row.getIsSelected() && "selected"}
-                  className={
-                    row.original.latestStatus === "canceled"
-                      ? "relative opacity-80 after:absolute after:top-1/2 after:left-0 after:right-0 after:h-[0.5px] after:bg-muted-foreground after:transform after:-translate-y-1/2"
-                      : ""
-                  }
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    <Link
+                      to="/dashboard/setup"
+                      search={{
+                        tradeSetupId: row.original.id,
+                        snapshotId: row.original
+                          .latestSnapshotId as Id<"snapshots">,
+                      }}
+                      className="block w-full h-full"
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
                       )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </Link>
+                    </Link>
+                  </TableCell>
+                ))}
+              </TableRow>
             ))
           ) : (
             // Empty state

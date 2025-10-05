@@ -174,41 +174,6 @@ function handleOverflow(
 }
 
 // Sub-components
-function SnapshotDot({
-  snapshot,
-  isCurrentSnapshot,
-  isLoading,
-  onClick,
-}: {
-  snapshot: SnapshotWithPosition;
-  isCurrentSnapshot: boolean;
-  isLoading: boolean;
-  onClick: () => void;
-}) {
-  const getDotClassName = () => {
-    const baseClasses =
-      "absolute top-1/2 size-3 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg before:absolute before:inset-0 before:rounded-full before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100";
-
-    if (isCurrentSnapshot) {
-      return `${baseClasses} bg-emerald-500 size-4 border-green-500 shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 before:bg-green-500/20 before:shadow-lg before:shadow-green-500/50`;
-    }
-
-    if (isLoading) {
-      return `${baseClasses} bg-muted border-blue-500 shadow-lg animate-pulse hover:shadow-xl`;
-    }
-
-    return `${baseClasses} bg-gray-500 border  hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-400/30 before:bg-emerald-400/20 before:shadow-lg before:shadow-emerald-400/30`;
-  };
-
-  return (
-    <button
-      className={getDotClassName()}
-      style={{ left: `${snapshot.position}%` }}
-      onClick={onClick}
-      disabled={isLoading || isCurrentSnapshot}
-    />
-  );
-}
 
 function SnapshotTooltipContent({
   snapshot,
@@ -301,14 +266,17 @@ const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
             style={{ left: `${snapshot.position}%` }}
           >
             <Tooltip>
-              <TooltipTrigger>
-                <SnapshotDot
-                  snapshot={snapshot}
-                  isCurrentSnapshot={isCurrentSnapshot}
-                  isLoading={isLoading}
-                  onClick={() => handleSnapshotClick(snapshot._id)}
-                />
-              </TooltipTrigger>
+              <TooltipTrigger
+                className={`absolute top-1/2 size-3 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg before:absolute before:inset-0 before:rounded-full before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${
+                  isCurrentSnapshot
+                    ? "bg-emerald-500 size-4 border-green-500 shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 before:bg-green-500/20 before:shadow-lg before:shadow-green-500/50"
+                    : isLoading
+                      ? "bg-muted border-blue-500 shadow-lg animate-pulse hover:shadow-xl"
+                      : "bg-gray-500 border hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-400/30 before:bg-emerald-400/20 before:shadow-lg before:shadow-emerald-400/30"
+                }`}
+                onClick={() => handleSnapshotClick(snapshot._id)}
+                disabled={isLoading || isCurrentSnapshot}
+              />
               <SnapshotTooltipContent
                 snapshot={snapshot}
                 isCurrentSnapshot={isCurrentSnapshot}

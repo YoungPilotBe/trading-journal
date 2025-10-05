@@ -12,7 +12,7 @@ export const updateTradeSetup = mutation({
     title: v.optional(v.union(v.string(), v.null())),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     status: v.optional(statusUnion),
-    trade_template: v.optional(v.id("trade_templates")),
+    trade_template: v.optional(v.union(v.id("trade_templates"), v.null())),
     riskReward: v.optional(v.union(v.number(), v.null())),
     result: v.optional(resultUnion),
     timeframes: v.optional(v.array(v.string())),
@@ -24,6 +24,7 @@ export const updateTradeSetup = mutation({
     await ctx.db.patch(id, {
       ...updates,
       updatedAt: Date.now(),
+      trade_template: args.trade_template ? args.trade_template : undefined,
     });
 
     if (title) {
@@ -36,6 +37,11 @@ export const updateTradeSetup = mutation({
       await ctx.runMutation(
         internal.template.internal.addTradeSetupToTemplate,
         { tradeSetupId: id, templateId: args.trade_template }
+      );
+    } else {
+      await ctx.runMutation(
+        internal.template.internal.removeTradeSetupFromAllTemplates,
+        { tradeSetupId: id }
       );
     }
 

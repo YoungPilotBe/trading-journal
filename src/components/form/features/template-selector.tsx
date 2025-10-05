@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Doc, Id } from "convex/_generated/dataModel";
+import { Doc } from "convex/_generated/dataModel";
 import { ChevronRightIcon, PlusIcon, XIcon } from "lucide-react";
 import {
   ControllerRenderProps,
@@ -48,47 +48,24 @@ const TemplateSelector = <T extends FieldValues>({
       </label>
       <div className="flex justify-end">
         <DropdownMenu>
-          <DropdownMenuTrigger disabled={disabled}>
+          <DropdownMenuTrigger
+            className={buttonVariants({
+              variant: "outline",
+              size: "badge",
+              className:
+                "text-[10px] justify-between hover:bg-accent hover:text-accent-foreground group-hover:[&:not(:has(.chevron-link:hover))]:bg-accent group-hover:[&:not(:has(.chevron-link:hover))]:text-accent-foreground group-[.chevron-hovered]:bg-transparent group-[.chevron-hovered]:text-inherit transition-colors gap-1",
+            })}
+            disabled={isLoadingTemplates || disabled}
+          >
             {field.value ? (
-              <Button
-                variant="outline"
-                size="badge"
-                className="text-[10px] justify-between hover:bg-accent hover:text-accent-foreground group-hover:[&:not(:has(.chevron-link:hover))]:bg-accent group-hover:[&:not(:has(.chevron-link:hover))]:text-accent-foreground group-[.chevron-hovered]:bg-transparent group-[.chevron-hovered]:text-inherit transition-colors gap-1"
-                disabled={disabled}
-              >
+              <span>
                 {templates?.find((t) => t._id === field.value)?.title}
-                <Link
-                  to={"/trade_template"}
-                  search={{
-                    templateId: field.value as unknown as Id<"trade_templates">,
-                  }}
-                  className="chevron-link rounded hover:bg-accent/50 hover:text-white text-white/50 transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseEnter={(e) => {
-                    e.currentTarget
-                      .closest(".group")
-                      ?.classList.add("chevron-hovered");
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget
-                      .closest(".group")
-                      ?.classList.remove("chevron-hovered");
-                  }}
-                >
-                  <ChevronRightIcon className="size-4 text-inherit" />
-                </Link>
-              </Button>
+              </span>
             ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="badge"
-                className="text-[10px]"
-                disabled={isLoadingTemplates || disabled}
-              >
+              <div className="flex flex-ro items-center gap-2">
                 <PlusIcon className="size-2" />
                 Add Template
-              </Button>
+              </div>
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -110,7 +87,7 @@ const TemplateSelector = <T extends FieldValues>({
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      field.onChange(undefined);
+                      field.onChange(null);
                     }}
                   >
                     <XIcon className="size-4 text-inherit" />

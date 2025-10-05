@@ -7,7 +7,7 @@ import {
 import { useDialog } from "@/contexts/dialog-context";
 import { useGetNotesTradeSetup } from "@/hooks/notes/use-get-notes-trade-setup";
 import { Doc, Id } from "convex/_generated/dataModel";
-import { FileTextIcon, PlusIcon } from "lucide-react";
+import { FileTextIcon, Loader2, PlusIcon } from "lucide-react";
 import {
   ControllerRenderProps,
   FieldPath,
@@ -38,7 +38,9 @@ const NotesSelector = <T extends FieldValues>({
   const error = errors[field.name]?.message;
   const hasError = !!error;
 
-  const { data: notes } = useGetNotesTradeSetup({ snapshotId });
+  const { data: notes, isLoading: isLoadingNotes } = useGetNotesTradeSetup({
+    snapshotId,
+  });
 
   const handleOpenNotesDialog = () => {
     openDialog("NOTES", {
@@ -59,14 +61,18 @@ const NotesSelector = <T extends FieldValues>({
           variant="outline"
           size="badge"
           className="text-[10px] justify-between hover:bg-accent hover:text-accent-foreground transition-colors gap-1"
-          disabled={disabled}
+          disabled={disabled || isLoadingNotes}
           onClick={handleOpenNotesDialog}
         >
-          {notes ? (
-            <>
+          {isLoadingNotes ? (
+            <span className="flex items-center gap-1">
+              <Loader2 className="size-2 text-muted-foreground animate-spin" />
+            </span>
+          ) : notes ? (
+            <div className="flex flex-row items-center gap-1">
               <FileTextIcon className="size-3" />
               {notes.length} Note{notes.length !== 1 ? "s" : ""}
-            </>
+            </div>
           ) : (
             <>
               <PlusIcon className="size-2" />

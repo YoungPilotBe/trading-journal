@@ -88,7 +88,7 @@ const SmartTradeLink = ({
         tradeSetupId,
         snapshotId: targetSnapshotId,
       }}
-      className="contents"
+      className="block w-full h-full"
     >
       {children}
     </Link>
@@ -463,23 +463,27 @@ const SimilarTradesTable = ({
             ) : similarTrades && similarTrades.length > 0 ? (
               // Data rows
               table.getRowModel().rows.map((row) => (
-                <SmartTradeLink
+                <TableRow
                   key={row.id}
-                  tradeSetupId={row.original.tradeSetupId}
-                  currentStatus={currentStatus}
-                  snapshotId={row.original.snapshotId}
+                  data-state={row.getIsSelected() && "selected"}
                 >
-                  <TableRow data-state={row.getIsSelected() && "selected"}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </SmartTradeLink>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      <SmartTradeLink
+                        tradeSetupId={row.original.tradeSetupId}
+                        currentStatus={currentStatus}
+                        snapshotId={row.original.snapshotId}
+                      >
+                        <div className="block w-full h-full">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </div>
+                      </SmartTradeLink>
+                    </TableCell>
+                  ))}
+                </TableRow>
               ))
             ) : (
               // Empty state

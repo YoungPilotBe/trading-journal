@@ -11,7 +11,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,13 +82,11 @@ function RouteComponent() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <button
-                        onClick={() => navigate({ to: "/dashboard" })}
-                        className="hover:text-foreground transition-colors"
-                      >
-                        Trade Setups
-                      </button>
+                    <BreadcrumbLink
+                      onClick={() => navigate({ to: "/dashboard" })}
+                      className="hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      Trade Setups
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
@@ -103,15 +101,15 @@ function RouteComponent() {
 
               {/* Actions Menu */}
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 translate-x-4"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
+                <DropdownMenuTrigger
+                  className={buttonVariants({
+                    variant: "ghost",
+                    size: "sm",
+                    className: "h-8 w-8 p-0 translate-x-4",
+                  })}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
