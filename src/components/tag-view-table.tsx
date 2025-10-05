@@ -25,7 +25,7 @@ const TagViewTable = ({ snapshotId, tradeSetupId, ...treeProps }: Props) => {
       tradeSetup={{ ...tradeSetup, ...(snapshot?.tags || {}) }}
       initialTreeState={treeState}
     >
-      <Tree viewOnly {...treeProps} />
+      <Tree {...treeProps} />
     </TreeProvider>
   );
 };

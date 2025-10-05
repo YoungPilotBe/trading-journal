@@ -151,6 +151,7 @@ const TradeDetailsForm = ({
         result: result || undefined, // Convert null to undefined
         id: tradeSetup._id,
         snapshotId: snapshot._id,
+        imageId: snapshot.imageId!,
       }),
       updateSnapshot({
         status,
