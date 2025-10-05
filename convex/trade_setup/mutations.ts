@@ -8,7 +8,7 @@ export const updateTradeSetup = mutation({
   args: {
     id: v.id("trade_setups"),
     snapshotId: v.id("snapshots"),
-    imageId: v.optional(v.id("tradingview_images")),
+    imageId: v.id("tradingview_images"),
     title: v.optional(v.union(v.string(), v.null())),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     status: v.optional(statusUnion),
@@ -38,6 +38,8 @@ export const updateTradeSetup = mutation({
         { tradeSetupId: id, templateId: args.trade_template }
       );
     }
+
+    console.log();
 
     const imgId =
       imageId ??

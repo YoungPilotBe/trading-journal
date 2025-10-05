@@ -53,6 +53,7 @@ export const createSnapshot = mutation({
         id: tradeSetupId,
         snapshotId,
         result,
+        imageId,
       });
     }
 

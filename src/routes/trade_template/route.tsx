@@ -12,40 +12,25 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useCreateBlockNote } from "@blocknote/react";
-
-import "@blocknote/core/fonts/inter.css";
-import "@blocknote/shadcn/style.css";
+import { BlockNoteEditorComponent, useBlockNoteEditor } from "@/editor";
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 
-import { model } from "@/ai/openai";
 import AutoSavePortal from "@/components/portals/auto-save-portal";
 import { useDialog } from "@/contexts/dialog-context";
-import { FormattingToolbarWithAI, SuggestionMenuWithAI } from "@/editor/menu";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUploadDrawing } from "@/hooks/drawings/useUploadDrawing";
 import { useCreateTradeTemplate } from "@/hooks/trade_templates/create_trade_template";
 import { useGetTradeTemplate } from "@/hooks/trade_templates/get_trade_template";
 import { useUpdateTradeTemplate } from "@/hooks/trade_templates/update_trade_template";
-import Portal from "@/portals/portal";
-import { en } from "@blocknote/core/locales";
-import { BlockNoteView } from "@blocknote/shadcn";
-import {
-  AIMenuController,
-  ClientSideTransport,
-  createAIExtension,
-} from "@blocknote/xl-ai";
-import { en as aiEn } from "@blocknote/xl-ai/locales";
 import { convexQuery } from "@convex-dev/react-query";
 import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
 import { useMemo } from "react";
 import z from "zod";
 
-import "@blocknote/xl-ai/style.css"; // add the AI stylesheet
 import { api } from "../../../convex/_generated/api";
 
 const searchSchema = z.object({
@@ -114,22 +99,11 @@ function RouteComponent() {
     );
   }, [existingTemplate]);
 
-  const editor = useCreateBlockNote({
-    initialContent,
-    dictionary: {
-      ...en,
-      ai: aiEn,
-    },
-    extensions: [
-      createAIExtension({
-        transport: new ClientSideTransport({
-          model,
-        }),
-      }),
-    ],
-
-    placeholders: {
-      heading: "Note Title",
+  const { editor } = useBlockNoteEditor({
+    config: {
+      initialContent,
+      placeholder: "Note Title",
+      loadContentDynamically: false,
     },
   });
 
@@ -188,127 +162,114 @@ function RouteComponent() {
   }
 
   return (
-    <>
-      <Portal
-        target="navbar-items"
-        children={
-          <AutoSavePortal isSaving={isUpdatingTemplate || isCreatingTemplate} />
-        }
-      />
-      <div
-        className={clsx(
-          "relative xl:max-w-7xl mx-auto min-h-screen xl:pt-6 flex-col flex @container",
-          (isLoading || isUploading) && "opacity-50 pointer-events-none"
-        )}
-      >
-        {/* Breadcrumbs */}
-        <div className="mb-6 relative">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <button
-                    onClick={() =>
-                      navigate({ to: "/dashboard/trade_templates" })
-                    }
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Trade Templates
-                  </button>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>
-                  {existingTemplate?.title.toString()}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-
-          <div className="top-1/2 absolute -translate-y-1/2 right-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => {
-                    if (existingTemplate) {
-                      openDialog("DELETE_TRADE_TEMPLATE", {
-                        template: existingTemplate,
-                      });
-                    }
-                  }}
-                  variant={"ghost"}
+    <div
+      className={clsx(
+        "relative xl:max-w-7xl mx-auto min-h-screen xl:pt-6 flex-col flex @container",
+        (isLoading || isUploading) && "opacity-50 pointer-events-none"
+      )}
+    >
+      {/* Breadcrumbs */}
+      <div className="mb-6 relative">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <button
+                  onClick={() => navigate({ to: "/dashboard/trade_templates" })}
+                  className="hover:text-foreground transition-colors"
                 >
-                  <TrashIcon className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete template</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
+                  Trade Templates
+                </button>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>
+                {existingTemplate?.title.toString()}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-        {/* Header Section */}
-        <div className="xl:rounded-t-xl bg-card flex-1 flex flex-col">
-          <div className="mb-8 space-y-4 flex-shrink-0">
-            <div className="h-[300px] w-full mx-auto relative overflow-hidden">
-              {drawingData?.url ? (
-                <>
-                  {/* Display the uploaded image */}
-                  <img
-                    src={drawingData.url}
-                    alt="Trade template drawing"
-                    className="w-full h-full object-contain py-4"
-                  />
-                  {/* Button overlay - always visible on top */}
-                  <div className="absolute top-2 right-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2 bg-white/90 backdrop-blur-sm"
-                      onClick={handleUploadDrawing}
-                      disabled={isUploading}
-                    >
-                      <PlusIcon className="w-4 h-4" />
-                      {isUploading ? "Uploading..." : "Replace"}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                /* No image - show centered button */
-                <div className="w-full h-full flex items-center justify-center">
+        <div className="top-1/2 absolute -translate-y-1/2 right-0 inline-flex flex-row gap-2">
+          <AutoSavePortal isSaving={isUpdatingTemplate || isCreatingTemplate} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() => {
+                  if (existingTemplate) {
+                    openDialog("DELETE_TRADE_TEMPLATE", {
+                      template: existingTemplate,
+                    });
+                  }
+                }}
+                variant={"ghost"}
+              >
+                <TrashIcon className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete template</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* Header Section */}
+      <div className="xl:rounded-t-xl bg-card flex-1 flex flex-col">
+        <div className="mb-8 space-y-4 flex-shrink-0">
+          <div className="h-[300px] w-full mx-auto relative overflow-hidden">
+            {drawingData?.url ? (
+              <>
+                {/* Display the uploaded image */}
+                <img
+                  src={drawingData.url}
+                  alt="Trade template drawing"
+                  className="w-full h-full object-contain py-4"
+                />
+                {/* Button overlay - always visible on top */}
+                <div className="absolute top-2 right-2">
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2"
+                    size="sm"
+                    className="flex items-center gap-2 bg-white/90 backdrop-blur-sm"
                     onClick={handleUploadDrawing}
                     disabled={isUploading}
                   >
                     <PlusIcon className="w-4 h-4" />
-                    {isUploading ? "Uploading..." : "Add Drawing"}
+                    {isUploading ? "Uploading..." : "Replace"}
                   </Button>
                 </div>
-              )}
-            </div>
-          </div>
-          {/* Description Editor */}
-          <div className="bg-muted mb-8 pt-4">
-            <BlockNoteView
-              editable
-              editor={editor}
-              onChange={() => autoSave()}
-              style={{
-                backgroundColor: "transparent",
-                height: "100%",
-              }}
-            >
-              <FormattingToolbarWithAI />
-              <SuggestionMenuWithAI editor={editor} />
-              <AIMenuController />
-            </BlockNoteView>
+              </>
+            ) : (
+              /* No image - show centered button */
+              <div className="w-full h-full flex items-center justify-center">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={handleUploadDrawing}
+                  disabled={isUploading}
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  {isUploading ? "Uploading..." : "Add Drawing"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
+        {/* Description Editor */}
+        <div className="pt-4 flex-1 bg-muted">
+          <BlockNoteEditorComponent
+            editor={editor}
+            onChange={() => autoSave()}
+            style={{
+              backgroundColor: "transparent",
+              height: "100%",
+              paddingBottom: "200px", // Add extra scrollable space within the editor
+            }}
+          />
+        </div>
       </div>
-    </>
+    </div>
   );
 }

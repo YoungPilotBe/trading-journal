@@ -124,7 +124,8 @@ const AddTradeForm = ({
   });
 
   const onAttachSubmit = async (data: AddTradeSetupSchema) => {
-    if (!tradeSetupId) throw new Error("No trade setup found");
+    if (!tradeSetupId || !imageId)
+      throw new Error("No trade setup or image found");
 
     // Parse and sanitize data for createSnapshot
     const snapshotData = createSnapshotSchema.parse({
@@ -149,7 +150,8 @@ const AddTradeForm = ({
     createTradeSetup({ ...createTradeSetupSchema.parse(data), imageId });
   };
   const onUpdateSubmit = (data: AddTradeSetupSchema) => {
-    if (!tradeSetupId) throw new Error("No trade setup found");
+    if (!tradeSetupId || !imageId)
+      throw new Error("No trade setup or image found");
     updateTradeSetup(
       updateTradeSetupSchema.parse({ id: tradeSetupId, snapshotId, ...data })
     );

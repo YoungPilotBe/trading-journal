@@ -27,7 +27,10 @@ export const createAddTradeSetupDefaultValues = (
     creationTime: existingValues?.imageData?._creationTime
       ? format(new Date(existingValues.imageData._creationTime), "HH:mm")
       : "",
-    title: existingValues?.smartTitle?.title || "",
+    title:
+      existingValues?.existingTradeSetup?.title ||
+      existingValues?.smartTitle?.title ||
+      "",
     direction: existingValues?.existingTradeSetup?.direction || "long",
     timeframe: existingValues?.imageData?.timeframe as Timeframe,
     timeframes: addTimeframeToTimeframes(

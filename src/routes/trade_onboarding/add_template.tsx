@@ -9,6 +9,7 @@ import {
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-templates";
+import { templateMiddleware } from "@/middlewares/template_middleware";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
 import { Doc, Id } from "convex/_generated/dataModel";
@@ -17,7 +18,8 @@ import { CalendarIcon, ImageIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import z from "zod";
 
-const searchSchema = z.object({
+// eslint-disable-next-line react-refresh/only-export-components
+export const searchSchema = z.object({
   tradeSetupId: z.custom<Id<"trade_setups">>((val) => typeof val === "string"),
   imageId: z.custom<Id<"tradingview_images">>((val) => typeof val === "string"),
   snapshotId: z.string(),
@@ -25,6 +27,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/trade_onboarding/add_template")({
+  beforeLoad: templateMiddleware,
   component: RouteComponent,
   validateSearch: searchSchema,
 });

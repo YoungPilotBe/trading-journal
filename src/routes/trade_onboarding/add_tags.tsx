@@ -17,7 +17,6 @@ const searchSchema = z.object({
   imageId: z.custom<Id<"tradingview_images">>((val) => typeof val === "string"),
   snapshotId: z.string(),
   attach: z.optional(z.boolean()),
-  viewOnly: z.optional(z.boolean()),
   onboarding: z.optional(z.boolean()),
 });
 
@@ -60,7 +59,7 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
 });
 
 // Component that uses tree state from context
-function TreeContent({ viewOnly }: { viewOnly: boolean }) {
+function TreeContent() {
   const { snapshotId } = Route.useSearch();
   const navigate = useNavigate();
   const { mutateAsync: updateSnapshot, isPending } = useUpdateSnapshot();
@@ -84,22 +83,20 @@ function TreeContent({ viewOnly }: { viewOnly: boolean }) {
 
   return (
     <>
-      <Tree viewOnly={viewOnly} className="overflow-y-auto flex-1" />
-      {!viewOnly && (
-        <Button
-          className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
-          onClick={handleSubmit}
-          disabled={isPending}
-        >
-          {isPending ? "Saving..." : "Update"}
-        </Button>
-      )}
+      <Tree className="overflow-y-auto flex-1" />
+
+      <Button
+        className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
+        onClick={handleSubmit}
+        disabled={isPending}
+      >
+        {isPending ? "Saving..." : "Update"}
+      </Button>
     </>
   );
 }
 
 function RouteComponent() {
-  const { viewOnly = false } = Route.useSearch();
   const { tradeSetup, snapshot, previousSnapshot } = Route.useLoaderData();
   if (!snapshot || !tradeSetup) return;
 
@@ -129,7 +126,7 @@ function RouteComponent() {
             strategyFactory={strategyFactory}
             strategyConfig={strategyConfig}
           >
-            <TreeContent viewOnly={viewOnly} />
+            <TreeContent />
           </TreeProvider>
         </div>
       </div>

@@ -1,15 +1,10 @@
-import "@/blocknote-styles.css";
 import { useGenerateNoteTitle } from "@/hooks/ai/use-generate-note-title";
 import { useGetNote } from "@/hooks/notes/use-get-note";
 import { useUpdateNote } from "@/hooks/notes/use-update-note";
 import Portal from "@/portals/portal";
-import "@blocknote/core/fonts/inter.css";
-import { useCreateBlockNote } from "@blocknote/react";
-import "@blocknote/shadcn/style.css";
 import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
 import { Loader2, TypeIcon } from "lucide-react";
-import { useEffect } from "react";
 import { toast } from "sonner";
 import { useDebouncedCallback } from "use-debounce";
 import AutoSavePortal from "./portals/auto-save-portal";
@@ -23,18 +18,7 @@ import {
 } from "./ui/breadcrumb";
 import { Button } from "./ui/button";
 
-import { model } from "@/ai/openai";
-import { en } from "@blocknote/core/locales";
-import { BlockNoteView } from "@blocknote/shadcn";
-import {
-  AIMenuController,
-  ClientSideTransport,
-  createAIExtension,
-} from "@blocknote/xl-ai";
-
-import { FormattingToolbarWithAI, SuggestionMenuWithAI } from "@/editor/menu";
-import { en as aiEn } from "@blocknote/xl-ai/locales";
-import "@blocknote/xl-ai/style.css"; // add the AI stylesheet
+import { BlockNoteEditorComponent, useBlockNoteEditor } from "@/editor";
 
 interface NoteEditorProps {
   noteId: Id<"notes">;
@@ -50,52 +34,21 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
   const { mutateAsync: generateTitle, isPending: isGeneratingTitle } =
     useGenerateNoteTitle();
 
-  // Create editor with default content
-  const editor = useCreateBlockNote({
-    dictionary: {
-      ...en,
-      ai: aiEn, // add default translations for the AI extension
+  // Create editor with centralized hook
+  const { editor } = useBlockNoteEditor({
+    config: {
+      initialContent: [
+        {
+          type: "heading",
+          content: "",
+        },
+      ],
+      placeholder: "Note Title",
+      loadContentDynamically: true,
     },
-    extensions: [
-      createAIExtension({
-        transport: new ClientSideTransport({
-          model,
-        }),
-      }),
-    ],
-
-    initialContent: [
-      {
-        type: "heading",
-        content: "",
-      },
-    ],
-    placeholders: {
-      heading: "Note Title",
-    },
+    existingContent: note?.document,
+    contentId: note?._id,
   });
-
-  // Load note content only when noteId changes
-  useEffect(() => {
-    function loadNoteContent() {
-      if (!note?.document || !Array.isArray(note.document)) {
-        // Clear editor if no valid document data
-        editor.replaceBlocks(editor.document, [
-          {
-            type: "heading",
-            content: "",
-          },
-        ]);
-        return;
-      }
-
-      editor.replaceBlocks(editor.document, note.document);
-    }
-
-    // Only load content if noteId has actually changed
-    loadNoteContent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, note?._id]);
 
   // Auto-save functionality
   const autoSave = useDebouncedCallback(() => {
@@ -195,16 +148,11 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
         }
       />
 
-      <BlockNoteView
+      <BlockNoteEditorComponent
         className="pt-6"
         editor={editor}
         onChange={() => autoSave()}
-        data-theming-css-demo
-      >
-        <FormattingToolbarWithAI />
-        <SuggestionMenuWithAI editor={editor} />
-        <AIMenuController />
-      </BlockNoteView>
+      />
     </div>
   );
 };

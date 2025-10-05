@@ -20,7 +20,6 @@ interface SimplifiedToggleBadgeProps
   icon?: LucideIcon;
   iconClassName?: string;
   isDir?: boolean;
-  readOnly?: boolean;
   isBranch?: boolean;
   description?: string;
   imageUrl?: string;
@@ -35,7 +34,6 @@ export const ToggleBadge = ({
   iconClassName = "",
   isDir = false,
   isBranch = false,
-  readOnly = false,
   description,
   imageUrl,
   imageClassName = "",
@@ -58,7 +56,7 @@ export const ToggleBadge = ({
     : isSelected;
 
   const handleToggle = () => {
-    if (buttonProps.disabled || readOnly) return;
+    if (buttonProps.disabled) return;
     toggleNode(fieldName, isBranch, hasAntiSelection);
   };
 
@@ -93,9 +91,9 @@ export const ToggleBadge = ({
           "bg-gradient-to-t from-muted/20 to-muted/10 border-muted/50 text-muted-foreground hover:from-muted hover:to-accent":
             !isToggled,
           // Disabled/readonly state
-          "opacity-50 cursor-not-allowed": buttonProps.disabled || readOnly,
+          "opacity-50 cursor-not-allowed": buttonProps.disabled,
           // Interactive cursor
-          "cursor-pointer": !buttonProps.disabled && !readOnly,
+          "cursor-pointer": !buttonProps.disabled,
         },
         // Custom badgeStyle overrides
         isToggled && badgeStyle,

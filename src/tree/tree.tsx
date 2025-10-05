@@ -55,11 +55,9 @@ import {
   getTreeDepthArray,
 } from "./tree.utils";
 
-interface Props extends React.InputHTMLAttributes<HTMLDivElement> {
-  viewOnly?: boolean;
-}
+interface Props extends React.InputHTMLAttributes<HTMLDivElement> {}
 
-const Tree = ({ viewOnly = false, ...divProps }: Props) => {
+const Tree = ({ ...divProps }: Props) => {
   // Get tree state and actions from context
   const treeState = useTreeState();
   const { saveInputField } = useTreeActions();
@@ -113,7 +111,6 @@ const Tree = ({ viewOnly = false, ...divProps }: Props) => {
                       })()}
                       shouldFocus={treeState.selectedNodes.has(cell.parentKey)}
                       onSave={saveInputField}
-                      readOnly={viewOnly}
                     />
                   ) : cell.isLeaf ? (
                     <ToggleBadge
@@ -123,7 +120,6 @@ const Tree = ({ viewOnly = false, ...divProps }: Props) => {
                       iconClassName={cell.iconClassName}
                       isDir={cell.isDir}
                       isBranch={false}
-                      readOnly={viewOnly}
                       description={cell.description}
                       imageUrl={cell.imageUrl}
                       imageClassName={cell.imageClassName}
@@ -136,7 +132,6 @@ const Tree = ({ viewOnly = false, ...divProps }: Props) => {
                       iconClassName={cell.iconClassName}
                       isDir={cell.isDir}
                       isBranch={true}
-                      readOnly={viewOnly}
                       description={cell.description}
                       imageUrl={cell.imageUrl}
                       imageClassName={cell.imageClassName}
