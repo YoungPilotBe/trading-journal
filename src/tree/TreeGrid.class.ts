@@ -17,17 +17,17 @@ export interface GridCell {
   content: string;
   level: number;
   rowIndex: number;
-  nodeKey: string;
+  nodePath: string;
   hasChildren: boolean;
   isExpanded: boolean;
   isLeaf: boolean;
   isSelected: boolean;
-  parentKey?: string;
+  parentPath?: string;
   metadata: TreeNodeMetadata;
   // Dynamic node creation
   isAddButton?: boolean;
   addButtonLabel?: string;
-  templateNodeKey?: string;
+  templateNodePath?: string;
 }
 
 /**
@@ -62,15 +62,15 @@ export class TreeGrid {
   /**
    * Flatten the tree(s) into a 2D grid structure
    */
-  toGrid(expandedKeys: Set<string>, selectedNodes: Set<string>): GridCell[][] {
+  toGrid(expandedPaths: Set<string>, selectedPaths: Set<string>): GridCell[][] {
     const allRows: GridCell[][] = [];
     let currentRowIndex = 0;
 
     for (const tree of this.trees) {
       const treeRows = this.flattenTreeToGrid(
         tree,
-        expandedKeys,
-        selectedNodes
+        expandedPaths,
+        selectedPaths
       );
 
       // Adjust row indices for the combined grid
@@ -97,8 +97,8 @@ export class TreeGrid {
    */
   private flattenTreeToGrid(
     tree: TreeNode,
-    expandedKeys: Set<string>,
-    selectedNodes: Set<string>
+    expandedPaths: Set<string>,
+    selectedPaths: Set<string>
   ): GridCell[][] {
     const rows: GridCell[][] = [];
 
@@ -106,27 +106,27 @@ export class TreeGrid {
       node: TreeNode,
       level: number,
       rowIndex: number,
-      parentKey?: string
+      parentPath?: string
     ): number => {
       if (!rows[rowIndex]) {
         rows[rowIndex] = new Array(this.maxDepth).fill(null);
       }
 
       const hasChildren = node.hasChildren;
-      const isExpanded = expandedKeys.has(node.key);
+      const isExpanded = expandedPaths.has(node.path);
       const isLeaf = node.isLeaf;
-      const isSelected = selectedNodes.has(node.key);
+      const isSelected = selectedPaths.has(node.path);
 
       rows[rowIndex][level] = {
         content: node.title,
         level,
         rowIndex,
-        nodeKey: node.key,
+        nodePath: node.path,
         hasChildren,
         isExpanded,
         isLeaf,
         isSelected,
-        parentKey,
+        parentPath,
         metadata: node.metadata,
       };
 
@@ -136,15 +136,16 @@ export class TreeGrid {
       if (hasChildren && isExpanded) {
         const children = node.children;
 
-        // Helper function to get the base key (without _#N suffix)
-        const getBaseKey = (key: string): string => {
-          const match = key.match(/^(.+)_#\d+$/);
-          return match ? match[1] : key;
+        // Helper function to check if a path contains dynamic instance notation
+        const isDynamicInstance = (path: string): boolean => {
+          return path.includes(".[#");
         };
 
         // Helper function to check if a node is a template (addable but not an instance)
         const isTemplateNode = (child: TreeNode): boolean => {
-          return child.metadata.isAddable === true && !child.key.includes("_#");
+          return (
+            child.metadata.isAddable === true && !isDynamicInstance(child.path)
+          );
         };
 
         for (let i = 0; i < children.length; i++) {
@@ -153,8 +154,8 @@ export class TreeGrid {
           // Skip rendering template nodes - we'll only show the Add button for them
           if (isTemplateNode(child)) {
             // Check if this template has any instances
-            const hasInstances = children.some((c) =>
-              c.key.startsWith(`${child.key}_#`)
+            const hasInstances = children.some(
+              (c) => c.key === child.key && isDynamicInstance(c.path)
             );
 
             if (!hasInstances) {
@@ -168,16 +169,16 @@ export class TreeGrid {
                   child.metadata.addButtonLabel || `+ Add ${child.title}`,
                 level: level + 1,
                 rowIndex: currentRowIndex,
-                nodeKey: `${child.key}_add_button`,
+                nodePath: `${child.path}_add_button`,
                 hasChildren: false,
                 isExpanded: false,
                 isLeaf: true,
                 isSelected: false,
-                parentKey: node.key,
+                parentPath: node.path,
                 metadata: child.metadata,
                 isAddButton: true,
                 addButtonLabel: child.metadata.addButtonLabel,
-                templateNodeKey: child.key,
+                templateNodePath: child.path,
               };
               currentRowIndex++;
             }
@@ -190,29 +191,29 @@ export class TreeGrid {
             child,
             level + 1,
             currentRowIndex,
-            node.key
+            node.path
           );
 
-          // Check if current child is an addable instance and if we should add a button after it
-          if (child.metadata.isAddable && child.key.includes("_#")) {
-            const currentBaseKey = getBaseKey(child.key);
+          // Check if current child is an addable dynamic instance and if we should add a button after it
+          if (child.metadata.isAddable && isDynamicInstance(child.path)) {
+            const currentBaseKey = child.key;
             const nextChild = i < children.length - 1 ? children[i + 1] : null;
 
             // Add button if:
             // 1. There's no next child (we're at the end), OR
-            // 2. Next child is not an instance of the same group
+            // 2. Next child has a different key (different group)
             const shouldAddButton =
               !nextChild ||
-              getBaseKey(nextChild.key) !== currentBaseKey ||
-              !nextChild.key.includes("_#");
+              nextChild.key !== currentBaseKey ||
+              !isDynamicInstance(nextChild.path);
 
             if (shouldAddButton) {
               // Find the template node for this group
               const templateNode = children.find(
                 (c) =>
                   c.metadata.isAddable &&
-                  getBaseKey(c.key) === currentBaseKey &&
-                  !c.key.includes("_#")
+                  c.key === currentBaseKey &&
+                  !isDynamicInstance(c.path)
               );
 
               if (templateNode) {
@@ -227,16 +228,16 @@ export class TreeGrid {
                     `+ Add ${templateNode.title}`,
                   level: level + 1,
                   rowIndex: currentRowIndex,
-                  nodeKey: `${templateNode.key}_add_button`,
+                  nodePath: `${templateNode.path}_add_button`,
                   hasChildren: false,
                   isExpanded: false,
                   isLeaf: true,
                   isSelected: false,
-                  parentKey: node.key,
+                  parentPath: node.path,
                   metadata: templateNode.metadata,
                   isAddButton: true,
                   addButtonLabel: templateNode.metadata.addButtonLabel,
-                  templateNodeKey: templateNode.key,
+                  templateNodePath: templateNode.path,
                 };
               }
             }
@@ -263,12 +264,12 @@ export class TreeGrid {
           content: "",
           level: level + 1,
           rowIndex,
-          nodeKey: `${node.key}_input`,
+          nodePath: `${node.path}_input`,
           hasChildren: false,
           isExpanded: false,
           isLeaf: true,
           isSelected: false,
-          parentKey: node.key,
+          parentPath: node.path,
           metadata: node.metadata,
         };
       }
@@ -281,19 +282,19 @@ export class TreeGrid {
   }
 
   /**
-   * Get the position (row, col) for a specific node key in the grid
+   * Get the position (row, col) for a specific node path in the grid
    */
   getNodePosition(
-    nodeKey: string,
-    expandedKeys: Set<string>,
-    selectedNodes: Set<string>
+    nodePath: string,
+    expandedPaths: Set<string>,
+    selectedPaths: Set<string>
   ): { row: number; col: number } | null {
-    const grid = this.toGrid(expandedKeys, selectedNodes);
+    const grid = this.toGrid(expandedPaths, selectedPaths);
 
     for (let row = 0; row < grid.length; row++) {
       for (let col = 0; col < grid[row].length; col++) {
         const cell = grid[row][col];
-        if (cell && cell.nodeKey === nodeKey) {
+        if (cell && cell.nodePath === nodePath) {
           return { row, col };
         }
       }

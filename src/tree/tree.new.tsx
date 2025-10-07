@@ -32,7 +32,6 @@ import { ConfirmationBadge } from "./components/ConfirmationBadge";
 import { InputField } from "./components/InputField";
 import { TimeframeBadge } from "./components/TimeframeBadge";
 import { ToggleBadge } from "./components/ToggleBadge";
-import { findNodePathArray } from "./tree.utils.new";
 import {
   useTreeActions,
   useTreeManagers,
@@ -51,7 +50,7 @@ type CellType =
 
 export const Tree = ({ ...divProps }: Props) => {
   // Get tree managers and state from context
-  const { trees, treeState, treeGrid } = useTreeManagers();
+  const { treeState, treeGrid } = useTreeManagers();
   const { saveInputField } = useTreeActions();
   const currentState = useTreeStateValue();
 
@@ -61,16 +60,16 @@ export const Tree = ({ ...divProps }: Props) => {
   // Flatten tree to grid
   const gridRows = useMemo(
     () =>
-      treeGrid.toGrid(currentState.expandedKeys, currentState.selectedNodes),
-    [treeGrid, currentState.expandedKeys, currentState.selectedNodes]
+      treeGrid.toGrid(currentState.expandedPaths, currentState.selectedPaths),
+    [treeGrid, currentState.expandedPaths, currentState.selectedPaths]
   );
 
   // Determine cell type
   const getCellType = (
     cell: NonNullable<(typeof gridRows)[0][0]>
   ): CellType => {
-    if (cell.isAddButton && cell.templateNodeKey) return "addButton";
-    if (cell.metadata.inputField && cell.parentKey) return "inputField";
+    if (cell.isAddButton && cell.templateNodePath) return "addButton";
+    if (cell.metadata.inputField && cell.parentPath) return "inputField";
     if (cell.metadata.isTimeframe) return "timeframe";
     if (cell.metadata.isConfirmation) return "confirmation";
     if (cell.isLeaf) return "leaf";
@@ -84,13 +83,13 @@ export const Tree = ({ ...divProps }: Props) => {
     const componentMap: Record<CellType, JSX.Element> = {
       addButton: (
         <AddNodeButton
-          templateNodeKey={cell.templateNodeKey!}
+          templateNodePath={cell.templateNodePath!}
           label={cell.addButtonLabel || cell.content}
         />
       ),
       inputField: (() => {
-        const nodePath = findNodePathArray(trees, cell.parentKey!);
-        const existingData = treeState.getNestedValue(nodePath);
+        const pathSegments = cell.nodePath.split(".").slice(1); // Remove root segment
+        const existingData = treeState.getNestedValue(pathSegments);
         const initialValue = existingData?.value
           ? String(existingData.value)
           : "";
@@ -98,10 +97,10 @@ export const Tree = ({ ...divProps }: Props) => {
         return (
           <InputField
             config={cell.metadata.inputField!}
-            parentKey={cell.parentKey!}
-            fieldName={cell.nodeKey.replace("_input", "")}
+            parentPath={cell.parentPath!}
+            fieldName={cell.nodePath}
             initialValue={initialValue}
-            shouldFocus={currentState.selectedNodes.has(cell.parentKey!)}
+            shouldFocus={currentState.selectedPaths.has(cell.parentPath!)}
             onSave={saveInputField}
           />
         );
@@ -109,7 +108,7 @@ export const Tree = ({ ...divProps }: Props) => {
       timeframe: (
         <TimeframeBadge
           label={cell.content}
-          fieldName={cell.nodeKey}
+          fieldName={cell.nodePath}
           isBranch={!cell.isLeaf}
           {...cell}
           {...cell.metadata}
@@ -118,7 +117,7 @@ export const Tree = ({ ...divProps }: Props) => {
       confirmation: (
         <ConfirmationBadge
           label={cell.content}
-          fieldName={cell.nodeKey}
+          fieldName={cell.nodePath}
           isBranch={!cell.isLeaf}
           {...cell}
           {...cell.metadata}
@@ -127,28 +126,28 @@ export const Tree = ({ ...divProps }: Props) => {
       leaf: (
         <ToggleBadge
           label={cell.content}
-          fieldName={cell.nodeKey}
+          fieldName={cell.nodePath}
           isBranch={false}
           {...cell}
           {...cell.metadata}
           isDir={
             cell.metadata.isDir ||
             cell.content.includes("_+_") ||
-            cell.nodeKey.includes("_+_")
+            cell.nodePath.includes("_+_")
           }
         />
       ),
       branch: (
         <ToggleBadge
           label={cell.content}
-          fieldName={cell.nodeKey}
+          fieldName={cell.nodePath}
           isBranch={true}
           {...cell}
           {...cell.metadata}
           isDir={
             cell.metadata.isDir ||
             cell.content.includes("_+_") ||
-            cell.nodeKey.includes("_+_")
+            cell.nodePath.includes("_+_")
           }
         />
       ),

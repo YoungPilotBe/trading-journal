@@ -15,8 +15,8 @@ import { TreeNode } from "./TreeNode.class";
  * State interface for tree
  */
 export interface ITreeState {
-  expandedKeys: Set<string>;
-  selectedNodes: Set<string>;
+  expandedPaths: Set<string>;
+  selectedPaths: Set<string>;
   tags: Record<string, unknown>;
 }
 
@@ -24,15 +24,15 @@ export interface ITreeState {
  * TreeState - Manages selection and expansion state for a tree
  */
 export class TreeState {
-  private expandedKeys: Set<string>;
-  private selectedNodes: Set<string>;
+  private expandedPaths: Set<string>;
+  private selectedPaths: Set<string>;
   private tags: Record<string, unknown>;
   private trees: TreeNode[];
 
   constructor(trees: TreeNode[], initialState?: Partial<ITreeState>) {
     this.trees = trees;
-    this.expandedKeys = initialState?.expandedKeys || new Set<string>();
-    this.selectedNodes = initialState?.selectedNodes || new Set<string>();
+    this.expandedPaths = initialState?.expandedPaths || new Set<string>();
+    this.selectedPaths = initialState?.selectedPaths || new Set<string>();
     this.tags = initialState?.tags || {};
   }
 
@@ -40,12 +40,12 @@ export class TreeState {
   // Getters
   // ========================================
 
-  getExpandedKeys(): Set<string> {
-    return new Set(this.expandedKeys);
+  getExpandedPaths(): Set<string> {
+    return new Set(this.expandedPaths);
   }
 
-  getSelectedNodes(): Set<string> {
-    return new Set(this.selectedNodes);
+  getSelectedPaths(): Set<string> {
+    return new Set(this.selectedPaths);
   }
 
   getTags(): Record<string, unknown> {
@@ -54,8 +54,8 @@ export class TreeState {
 
   getState(): ITreeState {
     return {
-      expandedKeys: this.getExpandedKeys(),
-      selectedNodes: this.getSelectedNodes(),
+      expandedPaths: this.getExpandedPaths(),
+      selectedPaths: this.getSelectedPaths(),
       tags: this.getTags(),
     };
   }
@@ -68,11 +68,11 @@ export class TreeState {
    * Update the state from a partial state object
    */
   updateState(newState: Partial<ITreeState>): void {
-    if (newState.expandedKeys) {
-      this.expandedKeys = new Set(newState.expandedKeys);
+    if (newState.expandedPaths) {
+      this.expandedPaths = new Set(newState.expandedPaths);
     }
-    if (newState.selectedNodes) {
-      this.selectedNodes = new Set(newState.selectedNodes);
+    if (newState.selectedPaths) {
+      this.selectedPaths = new Set(newState.selectedPaths);
     }
     if (newState.tags !== undefined) {
       this.tags = { ...newState.tags };
@@ -84,11 +84,11 @@ export class TreeState {
   // ========================================
 
   /**
-   * Find a node across all trees
+   * Find a node by path across all trees
    */
-  private findNode(key: string): TreeNode | null {
+  private findNodeByPath(path: string): TreeNode | null {
     for (const tree of this.trees) {
-      const node = tree.findNode(key);
+      const node = tree.findNodeByPath(path);
       if (node) return node;
     }
     return null;
@@ -98,16 +98,16 @@ export class TreeState {
    * Toggle a node (branch or leaf) with anti-selection logic
    */
   toggleNode(
-    nodeKey: string,
+    nodePath: string,
     isBranch: boolean,
     hasAntiSelection: boolean
   ): ITreeState {
     if (hasAntiSelection) {
-      return this.toggleWithAntiSelection(nodeKey, isBranch);
+      return this.toggleWithAntiSelection(nodePath, isBranch);
     } else if (isBranch) {
-      return this.toggleBranchExpansion(nodeKey);
+      return this.toggleBranchExpansion(nodePath);
     } else {
-      return this.toggleLeaf(nodeKey);
+      return this.toggleLeaf(nodePath);
     }
   }
 
@@ -115,56 +115,55 @@ export class TreeState {
    * Toggle a branch node with anti-selection logic
    */
   private toggleWithAntiSelection(
-    nodeKey: string,
+    nodePath: string,
     isBranch: boolean
   ): ITreeState {
-    const newSelectedNodes = new Set(this.selectedNodes);
-    const newExpandedKeys = new Set(this.expandedKeys);
+    const newSelectedPaths = new Set(this.selectedPaths);
+    const newExpandedPaths = new Set(this.expandedPaths);
 
-    const node = this.findNode(nodeKey);
+    const node = this.findNodeByPath(nodePath);
     if (!node) {
       return this.getState();
     }
 
-    const wasSelected = newSelectedNodes.has(nodeKey);
+    const wasSelected = newSelectedPaths.has(nodePath);
 
     if (wasSelected) {
       // Check if this is a dynamic instance being untoggled - if so, remove it
-      if (this._isDynamicInstance(nodeKey)) {
-        return this.removeDynamicNode(nodeKey);
+      if (this._isDynamicInstance(nodePath)) {
+        return this.removeDynamicNode(nodePath);
       }
 
       // Deselect and collapse
-      newSelectedNodes.delete(nodeKey);
-      newExpandedKeys.delete(nodeKey);
+      newSelectedPaths.delete(nodePath);
+      newExpandedPaths.delete(nodePath);
 
       // Also deselect and collapse all descendants
       if (isBranch) {
-        const descendantKeys = node.getAllDescendantKeys();
-        descendantKeys.forEach((key) => {
-          newSelectedNodes.delete(key);
-          newExpandedKeys.delete(key);
+        node.getAllDescendants().forEach((descendant) => {
+          newSelectedPaths.delete(descendant.path);
+          newExpandedPaths.delete(descendant.path);
         });
       }
     } else {
       // Select and handle anti-logic
-      newSelectedNodes.add(nodeKey);
+      newSelectedPaths.add(nodePath);
 
-      // Handle anti-selection
-      const antiKeys = node.getAntiKeysWithDescendants();
-      antiKeys.forEach((antiKey) => {
-        newSelectedNodes.delete(antiKey);
-        newExpandedKeys.delete(antiKey);
+      // Handle anti-selection - resolve sibling keys to paths
+      const antiPaths = node.getAntiPathsWithDescendants();
+      antiPaths.forEach((antiPath) => {
+        newSelectedPaths.delete(antiPath);
+        newExpandedPaths.delete(antiPath);
       });
 
       // Expand if has children and is a branch
       if (node.hasChildren && isBranch) {
-        newExpandedKeys.add(nodeKey);
+        newExpandedPaths.add(nodePath);
       }
     }
 
-    this.expandedKeys = newExpandedKeys;
-    this.selectedNodes = newSelectedNodes;
+    this.expandedPaths = newExpandedPaths;
+    this.selectedPaths = newSelectedPaths;
     this.tags = this.convertSelectionToJson();
 
     return this.getState();
@@ -173,36 +172,35 @@ export class TreeState {
   /**
    * Toggle branch expansion without anti-selection
    */
-  private toggleBranchExpansion(nodeKey: string): ITreeState {
-    const newSelectedNodes = new Set(this.selectedNodes);
-    const newExpandedKeys = new Set(this.expandedKeys);
+  private toggleBranchExpansion(nodePath: string): ITreeState {
+    const newSelectedPaths = new Set(this.selectedPaths);
+    const newExpandedPaths = new Set(this.expandedPaths);
 
-    const node = this.findNode(nodeKey);
+    const node = this.findNodeByPath(nodePath);
     if (!node) {
       return this.getState();
     }
 
     // Toggle expansion
-    if (newExpandedKeys.has(nodeKey)) {
+    if (newExpandedPaths.has(nodePath)) {
       // Check if this is a dynamic instance being collapsed - if so, remove it
-      if (this._isDynamicInstance(nodeKey)) {
-        return this.removeDynamicNode(nodeKey);
+      if (this._isDynamicInstance(nodePath)) {
+        return this.removeDynamicNode(nodePath);
       }
 
-      newExpandedKeys.delete(nodeKey);
+      newExpandedPaths.delete(nodePath);
 
       // When collapsing, deselect all descendants
-      const descendantKeys = node.getAllDescendantKeys();
-      descendantKeys.forEach((key) => {
-        newSelectedNodes.delete(key);
-        newExpandedKeys.delete(key);
+      node.getAllDescendants().forEach((descendant) => {
+        newSelectedPaths.delete(descendant.path);
+        newExpandedPaths.delete(descendant.path);
       });
     } else {
-      newExpandedKeys.add(nodeKey);
+      newExpandedPaths.add(nodePath);
     }
 
-    this.expandedKeys = newExpandedKeys;
-    this.selectedNodes = newSelectedNodes;
+    this.expandedPaths = newExpandedPaths;
+    this.selectedPaths = newSelectedPaths;
     this.tags = this.convertSelectionToJson();
 
     return this.getState();
@@ -211,21 +209,21 @@ export class TreeState {
   /**
    * Toggle a leaf node without anti-selection
    */
-  private toggleLeaf(nodeKey: string): ITreeState {
-    const newSelectedNodes = new Set(this.selectedNodes);
+  private toggleLeaf(nodePath: string): ITreeState {
+    const newSelectedPaths = new Set(this.selectedPaths);
 
-    if (newSelectedNodes.has(nodeKey)) {
+    if (newSelectedPaths.has(nodePath)) {
       // Check if this is a dynamic instance being untoggled - if so, remove it
-      if (this._isDynamicInstance(nodeKey)) {
-        return this.removeDynamicNode(nodeKey);
+      if (this._isDynamicInstance(nodePath)) {
+        return this.removeDynamicNode(nodePath);
       }
 
-      newSelectedNodes.delete(nodeKey);
+      newSelectedPaths.delete(nodePath);
     } else {
-      newSelectedNodes.add(nodeKey);
+      newSelectedPaths.add(nodePath);
     }
 
-    this.selectedNodes = newSelectedNodes;
+    this.selectedPaths = newSelectedPaths;
     this.tags = this.convertSelectionToJson();
 
     return this.getState();
@@ -235,8 +233,8 @@ export class TreeState {
    * Check if a node should be destroyed when untoggled
    * This is determined by the destroyOnUntoggle metadata flag
    */
-  private _isDynamicInstance(nodeKey: string): boolean {
-    const node = this.findNode(nodeKey);
+  private _isDynamicInstance(nodePath: string): boolean {
+    const node = this.findNodeByPath(nodePath);
     if (!node) return false;
 
     // Check if the node has the destroyOnUntoggle flag set
@@ -263,22 +261,29 @@ export class TreeState {
 
   /**
    * Convert selection for a single tree to JSON
+   * Paths are dot-separated like "demand.range.obim.1m"
+   * Dynamic instances use bracket notation: "demand.range.[#1].obim"
    */
   private convertTreeSelectionToJson(tree: TreeNode): Record<string, unknown> {
     const result: Record<string, unknown> = {};
 
-    this.selectedNodes.forEach((nodeKey) => {
-      const node = tree.findNode(nodeKey);
+    this.selectedPaths.forEach((nodePath) => {
+      const node = tree.findNodeByPath(nodePath);
       if (!node) return;
 
-      const path = node.getPathWithoutRoot();
-      if (path.length === 0) return;
+      // Split path by dots, but keep bracket notation together
+      // e.g., "demand.range.[#1].obim" -> ["demand", "range", "[#1]", "obim"]
+      const pathSegments = nodePath.split(".");
+
+      // Skip the root segment (first segment is the tree root)
+      const segments = pathSegments.slice(1);
+      if (segments.length === 0) return;
 
       // Build nested object structure
       let current: Record<string, unknown> = result;
 
-      for (let i = 0; i < path.length - 1; i++) {
-        const segment = path[i];
+      for (let i = 0; i < segments.length - 1; i++) {
+        const segment = segments[i];
 
         // If the current segment is already set to true (boolean),
         // convert it to an object to add children
@@ -292,7 +297,7 @@ export class TreeState {
       }
 
       // Set the final node to true
-      const nodeName = path[path.length - 1];
+      const nodeName = segments[segments.length - 1];
       current[nodeName] = true;
     });
 
@@ -305,9 +310,10 @@ export class TreeState {
 
   /**
    * Add a new dynamic instance of a node
+   * Template is identified by path, instance will have bracket notation in path
    */
-  addDynamicNode(templateNodeKey: string): ITreeState {
-    const templateNode = this.findNode(templateNodeKey);
+  addDynamicNode(templateNodePath: string): ITreeState {
+    const templateNode = this.findNodeByPath(templateNodePath);
     if (!templateNode || !templateNode.metadata.isAddable) {
       return this.getState();
     }
@@ -322,59 +328,49 @@ export class TreeState {
       const instances = templateNode.getDynamicInstances();
       if (instances.length >= templateNode.metadata.maxInstances) {
         console.warn(
-          `Maximum instances (${templateNode.metadata.maxInstances}) reached for ${templateNodeKey}`
+          `Maximum instances (${templateNode.metadata.maxInstances}) reached for ${templateNodePath}`
         );
         return this.getState();
       }
     }
 
-    // Get all existing keys in the tree to ensure uniqueness
-    const allKeys: string[] = [];
+    // Get all existing paths in the tree to determine next instance number
+    const allPaths: string[] = [];
     for (const tree of this.trees) {
-      allKeys.push(...tree.getAllDescendantKeys());
-      allKeys.push(tree.key);
+      tree.getAllDescendants().forEach((node) => allPaths.push(node.path));
+      allPaths.push(tree.path);
     }
 
-    // Generate unique key and title
-    let instanceKey: string;
-    let instanceNumber: number;
-
-    // Use custom addablePrefix function if provided
-    if (templateNode.metadata.addablePrefix) {
-      instanceKey = TreeNode.generateInstanceKey(templateNodeKey, allKeys);
-      instanceNumber = parseInt(instanceKey.split("#")[1]);
-      instanceKey = templateNode.metadata.addablePrefix(
-        templateNodeKey,
-        instanceNumber
-      );
-    } else {
-      // Default behavior
-      instanceKey = TreeNode.generateInstanceKey(templateNodeKey, allKeys);
-      instanceNumber = parseInt(instanceKey.split("#")[1]);
-    }
-
+    // Generate unique instance number
+    const instanceNumber = TreeNode.generateInstanceNumber(
+      templateNode.key,
+      allPaths
+    );
     const instanceTitle = TreeNode.generateInstanceTitle(
       templateNode.title,
       instanceNumber
     );
 
-    // Clone the template node with new key and title
-    // Mark this instance as destroyable when untoggled
-    const newInstance = templateNode.clone(instanceKey, instanceTitle, {
-      destroyOnUntoggle: true,
-    });
+    // Clone the template node with instance number
+    // This will create a path with bracket notation like "demand.range.[#1]"
+    const newInstance = templateNode.clone(
+      templateNode.key, // Keep the same key
+      instanceTitle,
+      { destroyOnUntoggle: true },
+      instanceNumber // Pass instance number for path generation
+    );
 
-    // Add as a sibling after the template node (or after the last instance)
+    // Add as a sibling after the last instance
     const instances = templateNode.getDynamicInstances();
     const lastInstance = instances[instances.length - 1];
     lastInstance.addSibling(newInstance, "after");
 
     // Automatically select the new instance
-    this.selectedNodes.add(instanceKey);
+    this.selectedPaths.add(newInstance.path);
 
     // Expand the new instance if it has children
     if (newInstance.hasChildren) {
-      this.expandedKeys.add(instanceKey);
+      this.expandedPaths.add(newInstance.path);
     }
 
     this.tags = this.convertSelectionToJson();
@@ -383,16 +379,17 @@ export class TreeState {
 
   /**
    * Remove a dynamic instance node
+   * Instance is identified by bracket notation in path: .[#N]
    */
-  removeDynamicNode(instanceKey: string): ITreeState {
-    const instanceNode = this.findNode(instanceKey);
+  removeDynamicNode(instancePath: string): ITreeState {
+    const instanceNode = this.findNodeByPath(instancePath);
     if (!instanceNode) {
       return this.getState();
     }
 
-    // Only allow removing nodes that are instances (have #N in their key)
-    if (!instanceKey.includes("_#")) {
-      console.warn(`Cannot remove non-instance node: ${instanceKey}`);
+    // Only allow removing nodes that are instances (have .[#N] in their path)
+    if (!instancePath.match(/\.\[#\d+\]/)) {
+      console.warn(`Cannot remove non-instance node: ${instancePath}`);
       return this.getState();
     }
 
@@ -402,18 +399,17 @@ export class TreeState {
     }
 
     // Remove from expanded and selected
-    this.expandedKeys.delete(instanceKey);
-    this.selectedNodes.delete(instanceKey);
+    this.expandedPaths.delete(instancePath);
+    this.selectedPaths.delete(instancePath);
 
     // Remove all descendants from state
-    const descendantKeys = instanceNode.getAllDescendantKeys();
-    descendantKeys.forEach((key) => {
-      this.expandedKeys.delete(key);
-      this.selectedNodes.delete(key);
+    instanceNode.getAllDescendants().forEach((descendant) => {
+      this.expandedPaths.delete(descendant.path);
+      this.selectedPaths.delete(descendant.path);
     });
 
-    // Remove the node from the tree
-    parent.removeChild(instanceKey);
+    // Remove the node from the tree by key (all instances share same key)
+    parent.removeChild(instanceNode.key);
 
     this.tags = this.convertSelectionToJson();
     return this.getState();
@@ -425,15 +421,20 @@ export class TreeState {
 
   /**
    * Save input field data for a node
+   * Path is used to navigate the tags structure
    */
-  saveInputField(nodeKey: string, values: Record<string, unknown>): ITreeState {
-    const node = this.findNode(nodeKey);
+  saveInputField(
+    nodePath: string,
+    values: Record<string, unknown>
+  ): ITreeState {
+    const node = this.findNodeByPath(nodePath);
     if (!node) return this.getState();
 
-    const path = node.getPathWithoutRoot();
+    // Convert path to segments (excluding root)
+    const pathSegments = nodePath.split(".").slice(1);
     const newTags = { ...this.tags };
 
-    this.setNestedValue(newTags, path, values, true);
+    this.setNestedValue(newTags, pathSegments, values, true);
 
     this.tags = newTags;
     return this.getState();
@@ -511,7 +512,7 @@ export class TreeState {
         targetNode.children.forEach((timeframeChild) => {
           // Check if this timeframe has any selected descendants
           const hasSelectedDescendants = timeframeChild.children.some(
-            (descendant) => this.selectedNodes.has(descendant.key)
+            (descendant) => this.selectedPaths.has(descendant.path)
           );
 
           if (hasSelectedDescendants) {

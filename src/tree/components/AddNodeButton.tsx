@@ -3,20 +3,20 @@ import { Plus } from "lucide-react";
 import { useTreeActions } from "../TreeContext.new";
 
 interface AddNodeButtonProps {
-  templateNodeKey: string;
+  templateNodePath: string;
   label?: string;
   className?: string;
 }
 
 export const AddNodeButton = ({
-  templateNodeKey,
+  templateNodePath,
   label = "Add",
   className,
 }: AddNodeButtonProps) => {
   const { addDynamicNode } = useTreeActions();
 
   const handleClick = () => {
-    addDynamicNode(templateNodeKey);
+    addDynamicNode(templateNodePath);
   };
 
   return (

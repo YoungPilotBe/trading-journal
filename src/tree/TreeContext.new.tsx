@@ -224,7 +224,7 @@ export function TreeProvider<
         for (const [conditionKey, conditionConfig] of Object.entries(
           rule.conditions
         )) {
-          if (currentState.selectedNodes.has(conditionKey)) {
+          if (currentState.selectedPaths.has(conditionKey)) {
             const conditionalEffect = conditionConfig.childEffects[fieldName];
             if (conditionalEffect !== undefined) {
               return conditionalEffect;
@@ -267,7 +267,7 @@ export function TreeProvider<
   const contextValue: TreeContextType = {
     tradeSetup,
     getFieldEffect,
-    selectedTags: currentState.selectedNodes,
+    selectedTags: currentState.selectedPaths,
     trees,
     treeState: treeStateManager,
     treeGrid,

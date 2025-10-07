@@ -9,7 +9,7 @@ interface InputFieldProps
     "onChange" | "onBlur" | "onKeyDown" | "value"
   > {
   config: InputFieldConfig;
-  parentKey: string;
+  parentPath: string;
   fieldName: string;
   initialValue?: string;
   shouldFocus?: boolean;
@@ -18,7 +18,7 @@ interface InputFieldProps
 
 export const InputField = ({
   config,
-  parentKey: _parentKey, // eslint-disable-line @typescript-eslint/no-unused-vars
+  parentPath: _parentPath, // eslint-disable-line @typescript-eslint/no-unused-vars
   fieldName,
   initialValue = "",
   shouldFocus = false,

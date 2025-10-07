@@ -152,10 +152,10 @@ export function createTreeStateFromSnapshot(
   if (!snapshot.tags || Object.keys(snapshot.tags).length === 0) {
     if (previousSnapshot?.tags_config) {
       return {
-        expandedKeys: new Set<string>(
+        expandedPaths: new Set<string>(
           previousSnapshot.tags_config.expandedKeys || ["strategy"]
         ),
-        selectedNodes: new Set<string>(
+        selectedPaths: new Set<string>(
           previousSnapshot.tags_config.selectedNodes || []
         ),
         tags: previousSnapshot.tags || {},
@@ -166,18 +166,18 @@ export function createTreeStateFromSnapshot(
   if (snapshot?.tags_config) {
     // Restore complete tree state from saved config
     return {
-      expandedKeys: new Set<string>(
+      expandedPaths: new Set<string>(
         snapshot.tags_config.expandedKeys || ["strategy"]
       ),
-      selectedNodes: new Set<string>(snapshot.tags_config.selectedNodes || []),
+      selectedPaths: new Set<string>(snapshot.tags_config.selectedNodes || []),
       tags: snapshot.tags || {},
     };
   }
 
   // If no config exists but we have tags, create a default state
   return {
-    expandedKeys: new Set<string>(["strategy"]),
-    selectedNodes: new Set<string>(),
+    expandedPaths: new Set<string>(["strategy"]),
+    selectedPaths: new Set<string>(),
     tags: snapshot.tags || {},
   };
 }
@@ -188,20 +188,20 @@ export function createTreeStateFromSnapshot(
 export function mergeTagConfigs(
   config1?: { expandedKeys?: string[]; selectedNodes?: string[] },
   config2?: { expandedKeys?: string[]; selectedNodes?: string[] }
-): { expandedKeys: Set<string>; selectedNodes: Set<string> } {
-  const mergedExpandedKeys = new Set<string>([
+): { expandedPaths: Set<string>; selectedPaths: Set<string> } {
+  const mergedExpandedPaths = new Set<string>([
     ...(config1?.expandedKeys || []),
     ...(config2?.expandedKeys || []),
   ]);
 
-  const mergedSelectedNodes = new Set<string>([
+  const mergedSelectedPaths = new Set<string>([
     ...(config1?.selectedNodes || []),
     ...(config2?.selectedNodes || []),
   ]);
 
   return {
-    expandedKeys: mergedExpandedKeys,
-    selectedNodes: mergedSelectedNodes,
+    expandedPaths: mergedExpandedPaths,
+    selectedPaths: mergedSelectedPaths,
   };
 }
 
@@ -219,43 +219,29 @@ export function hydrateDynamicInstances(
   trees: TreeNode[],
   treeState: ITreeState
 ): TreeNode[] {
-  // Collect all keys from the state
-  const allKeys = new Set<string>([
-    ...treeState.expandedKeys,
-    ...treeState.selectedNodes,
+  // Collect all paths from the state
+  const allPaths = new Set<string>([
+    ...treeState.expandedPaths,
+    ...treeState.selectedPaths,
   ]);
 
-  // Also extract keys from tags object
-  const extractKeysFromTags = (
-    obj: Record<string, unknown>,
-    prefix = ""
-  ): void => {
-    for (const [key, value] of Object.entries(obj)) {
-      const fullKey = prefix ? `${prefix}_${key}` : key;
-      allKeys.add(fullKey);
+  // Find all dynamic instance patterns in paths (containing .[#N])
+  const dynamicInstancePattern = /\.\[#(\d+)\]/g;
+  const instanceMap = new Map<string, Set<number>>(); // templatePath -> Set of instance numbers
 
-      if (value && typeof value === "object" && !Array.isArray(value)) {
-        extractKeysFromTags(value as Record<string, unknown>, fullKey);
-      }
-    }
-  };
-  extractKeysFromTags(treeState.tags);
-
-  // Find all dynamic instance patterns (keys containing _#N)
-  const dynamicInstancePattern = /_#(\d+)(?:_|$)/;
-  const instanceMap = new Map<string, Set<number>>(); // templateKey -> Set of instance numbers
-
-  for (const key of allKeys) {
-    const match = key.match(dynamicInstancePattern);
-    if (match) {
+  for (const path of allPaths) {
+    let match;
+    dynamicInstancePattern.lastIndex = 0; // Reset regex state
+    while ((match = dynamicInstancePattern.exec(path)) !== null) {
       const instanceNumber = parseInt(match[1], 10);
-      // Extract the template key by removing the _#N part and everything after
-      const templateKey = key.substring(0, key.indexOf(`_#${instanceNumber}`));
+      // Extract the template path by removing the .[#N] part
+      const beforeInstance = path.substring(0, match.index);
+      const templatePath = beforeInstance;
 
-      if (!instanceMap.has(templateKey)) {
-        instanceMap.set(templateKey, new Set());
+      if (!instanceMap.has(templatePath)) {
+        instanceMap.set(templatePath, new Set());
       }
-      instanceMap.get(templateKey)!.add(instanceNumber);
+      instanceMap.get(templatePath)!.add(instanceNumber);
     }
   }
 
@@ -265,27 +251,33 @@ export function hydrateDynamicInstances(
   }
 
   // For each dynamic instance, find the template and clone it
-  for (const [templateKey, instanceNumbers] of instanceMap) {
-    // Find the template node
+  for (const [templatePath, instanceNumbers] of instanceMap) {
+    // Find the template node by path
     let templateNode: TreeNode | null = null;
     for (const tree of trees) {
-      templateNode = tree.findNode(templateKey);
+      templateNode = tree.findNodeByPath(templatePath);
       if (templateNode) break;
     }
 
     if (!templateNode) {
-      console.warn(`Template node not found for key: ${templateKey}`);
+      console.warn(
+        `[hydrateDynamicInstances] Template node not found for path: ${templatePath}`
+      );
       continue;
     }
 
     if (!templateNode.metadata.isAddable) {
-      console.warn(`Template node is not addable: ${templateKey}`);
+      console.warn(
+        `[hydrateDynamicInstances] Template node is not addable: ${templatePath}`
+      );
       continue;
     }
 
     const parent = templateNode.parent;
     if (!parent) {
-      console.warn(`Template node has no parent: ${templateKey}`);
+      console.warn(
+        `[hydrateDynamicInstances] Template node has no parent: ${templatePath}`
+      );
       continue;
     }
 
@@ -294,10 +286,10 @@ export function hydrateDynamicInstances(
 
     // Create each missing instance
     for (const instanceNumber of sortedInstances) {
-      const instanceKey = `${templateKey}_#${instanceNumber}`;
+      const instancePath = `${templatePath}.[#${instanceNumber}]`;
 
       // Check if instance already exists
-      const existingInstance = parent.findNode(instanceKey);
+      const existingInstance = parent.findNodeByPath(instancePath);
       if (existingInstance) {
         continue; // Skip if already exists
       }
@@ -307,16 +299,25 @@ export function hydrateDynamicInstances(
         templateNode.title,
         instanceNumber
       );
-      const newInstance = templateNode.clone(instanceKey, instanceTitle, {
-        destroyOnUntoggle: true,
-      });
+      const newInstance = templateNode.clone(
+        templateNode.key,
+        instanceTitle,
+        { destroyOnUntoggle: true },
+        instanceNumber
+      );
 
-      // Add as sibling after the last instance
-      const currentLastInstance =
-        templateNode.getDynamicInstances()[
-          templateNode.getDynamicInstances().length - 1
-        ];
-      currentLastInstance.addSibling(newInstance, "after");
+      console.log(
+        `[hydrateDynamicInstances] Created instance: ${newInstance.path}, destroyOnUntoggle: ${newInstance.metadata.destroyOnUntoggle}`
+      );
+
+      // Add as sibling after the last instance or after template
+      const existingInstances = templateNode.getDynamicInstances();
+      if (existingInstances.length > 0) {
+        const lastInstance = existingInstances[existingInstances.length - 1];
+        lastInstance.addSibling(newInstance, "after");
+      } else {
+        templateNode.addSibling(newInstance, "after");
+      }
     }
   }
 

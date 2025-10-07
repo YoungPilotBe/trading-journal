@@ -70,23 +70,28 @@ export interface TreeNodeConfig {
  */
 export class TreeNode {
   readonly key: string;
+  readonly path: string;
   readonly title: string;
   readonly metadata: TreeNodeMetadata;
 
   private _children: TreeNode[] = [];
   private _parent: TreeNode | null = null;
 
-  constructor(config: TreeNodeConfig) {
+  constructor(config: TreeNodeConfig, parentPath?: string) {
     this.key = config.key;
     this.title = config.title;
     this.metadata = config.metadata || {};
+
+    // Auto-generate path from parent path + key
+    // If parentPath provided, use it; otherwise this is a root node
+    this.path = parentPath ? `${parentPath}.${config.key}` : config.key;
 
     if (config.children) {
       config.children.forEach((childConfig) => {
         const child =
           childConfig instanceof TreeNode
             ? childConfig
-            : new TreeNode(childConfig);
+            : new TreeNode(childConfig, this.path);
         this.addChild(child);
       });
     }
@@ -164,12 +169,27 @@ export class TreeNode {
 
   /**
    * Find a node by key in this subtree
+   * @deprecated Use findNodeByPath instead for unique identification
    */
   findNode(key: string): TreeNode | null {
     if (this.key === key) return this;
 
     for (const child of this._children) {
       const found = child.findNode(key);
+      if (found) return found;
+    }
+
+    return null;
+  }
+
+  /**
+   * Find a node by path in this subtree
+   */
+  findNodeByPath(path: string): TreeNode | null {
+    if (this.path === path) return this;
+
+    for (const child of this._children) {
+      const found = child.findNodeByPath(path);
       if (found) return found;
     }
 
@@ -263,143 +283,113 @@ export class TreeNode {
   // ========================================
 
   /**
-   * Extract the prefix from a key by finding the common suffix
-   * Example: demand_range_1m -> prefix: demand_range, suffix: 1m
-   */
-  private _extractKeyPrefixes(
-    oldKey: string,
-    newKey: string
-  ): { oldPrefix: string; newPrefix: string } {
-    const oldKeyParts = oldKey.split("_");
-    const newKeyParts = newKey.split("_");
-
-    // Find the last common suffix (e.g., "1m" in both keys)
-    let suffixStartIndex = -1;
-    for (
-      let i = 1;
-      i <= Math.min(oldKeyParts.length, newKeyParts.length);
-      i++
-    ) {
-      const oldIndex = oldKeyParts.length - i;
-      const newIndex = newKeyParts.length - i;
-      if (oldKeyParts[oldIndex] === newKeyParts[newIndex]) {
-        suffixStartIndex = oldIndex;
-      } else {
-        break;
-      }
-    }
-
-    // Extract prefixes (everything before the common suffix)
-    const oldPrefix =
-      suffixStartIndex > 0
-        ? oldKeyParts.slice(0, suffixStartIndex).join("_")
-        : oldKey;
-
-    const newPrefix =
-      suffixStartIndex > 0 && suffixStartIndex < newKeyParts.length
-        ? newKeyParts
-            .slice(
-              0,
-              newKeyParts.length - (oldKeyParts.length - suffixStartIndex)
-            )
-            .join("_")
-        : newKey;
-
-    return { oldPrefix, newPrefix };
-  }
-
-  /**
-   * Update anti-selection keys by replacing the old prefix with the new prefix
-   */
-  private _updateAntiKeys(
-    antiKeys: string[],
-    oldPrefix: string,
-    newPrefix: string
-  ): string[] {
-    return antiKeys.map((antiKey) => {
-      if (antiKey.startsWith(oldPrefix + "_") || antiKey === oldPrefix) {
-        return antiKey.replace(oldPrefix, newPrefix);
-      }
-      return antiKey;
-    });
-  }
-
-  /**
-   * Clone this node with a new key and title
-   * Useful for creating dynamic instances
+   * Clone this node with a new key and optional instance suffix for dynamic nodes
+   * For dynamic instances, the path will include the instance in bracket notation: range.[#1]
    */
   clone(
     newKey: string,
     newTitle?: string,
-    metadataOverrides?: Partial<TreeNodeMetadata>
+    metadataOverrides?: Partial<TreeNodeMetadata>,
+    instanceNumber?: number
   ): TreeNode {
     const updatedMetadata = { ...this.metadata, ...metadataOverrides };
 
-    // Update anti-selection keys to match the new cloned structure
-    if (updatedMetadata.anti && updatedMetadata.anti.length > 0) {
-      const { oldPrefix, newPrefix } = this._extractKeyPrefixes(
-        this.key,
-        newKey
-      );
-      updatedMetadata.anti = this._updateAntiKeys(
-        updatedMetadata.anti,
-        oldPrefix,
-        newPrefix
-      );
+    // Anti-selection keys remain as simple sibling keys (no path transformation needed)
+    // They will be resolved to full paths at runtime by looking at siblings
+
+    // Determine the parent path for this cloned node
+    const parentPath = this._parent?.path;
+
+    // For dynamic instances, construct path with bracket notation
+    let clonedNodePath: string;
+    if (instanceNumber !== undefined) {
+      // Dynamic instance: parent.path + "." + key + ".[#N]"
+      clonedNodePath = parentPath
+        ? `${parentPath}.${newKey}.[#${instanceNumber}]`
+        : `${newKey}.[#${instanceNumber}]`;
+    } else {
+      // Normal clone: parent.path + "." + key
+      clonedNodePath = parentPath ? `${parentPath}.${newKey}` : newKey;
     }
 
-    // Clone children with updated keys
+    // Clone children - they inherit from the cloned node's path
     // NOTE: Do NOT propagate destroyOnUntoggle to children - only the root instance should be destroyable
     const clonedChildren = this._children.map((child) => {
-      const childKeySuffix = child.key.replace(this.key + "_", "");
       const childMetadataOverrides = metadataOverrides
         ? { ...metadataOverrides, destroyOnUntoggle: undefined }
         : undefined;
-      return child.clone(
-        `${newKey}_${childKeySuffix}`,
-        undefined,
-        childMetadataOverrides
+
+      // Create child with same key (not modified)
+      const childNode = new TreeNode(
+        {
+          key: child.key,
+          title: child.title,
+          metadata: { ...child.metadata, ...childMetadataOverrides },
+          children: child._children.map((c) => c.toJSON()),
+        },
+        clonedNodePath
       );
+
+      return childNode;
     });
 
-    // Create and return the cloned node
-    return new TreeNode({
-      key: newKey,
-      title: newTitle || this.title,
-      metadata: updatedMetadata,
-      children: clonedChildren,
+    // Create node without auto-path generation (we set it manually)
+    const clonedNode = Object.create(TreeNode.prototype);
+    clonedNode.key = newKey;
+    clonedNode.path = clonedNodePath;
+    clonedNode.title = newTitle || this.title;
+    clonedNode.metadata = updatedMetadata;
+    clonedNode._children = clonedChildren;
+    clonedNode._parent = null;
+
+    // Update children's parent reference
+    clonedChildren.forEach((child) => {
+      child._parent = clonedNode;
     });
+
+    return clonedNode;
   }
 
   /**
-   * Get all dynamic instances of this node (nodes that share the same template key pattern)
+   * Get all dynamic instances of this node
+   * Identifies instances by checking for bracket notation in path: .[#N]
    */
   getDynamicInstances(): TreeNode[] {
     if (!this._parent) return [];
 
-    // Extract the base key (without instance number)
-    const baseKeyMatch = this.key.match(/^(.+)_#\d+$/);
-    const baseKey = baseKeyMatch ? baseKeyMatch[1] : this.key;
+    const baseKey = this.key;
 
-    // Find all siblings that match the pattern
+    // Find all siblings with same key (template + all instances)
     return this._parent._children.filter((sibling) => {
-      return sibling.key === baseKey || sibling.key.startsWith(`${baseKey}_#`);
+      return sibling.key === baseKey;
     });
   }
 
   /**
-   * Generate a unique key for a new instance
+   * Generate next instance number for dynamic nodes
+   * Checks existing paths with bracket notation
    */
-  static generateInstanceKey(baseKey: string, existingKeys: string[]): string {
+  static generateInstanceNumber(
+    baseKey: string,
+    existingPaths: string[]
+  ): number {
     let instanceNumber = 1;
-    let newKey = `${baseKey}_#${instanceNumber}`;
 
-    while (existingKeys.includes(newKey)) {
-      instanceNumber++;
-      newKey = `${baseKey}_#${instanceNumber}`;
+    // Check all paths for existing instances of this key with bracket notation
+    const instancePattern = new RegExp(`\\.${baseKey}\\.\\[#(\\d+)\\]`);
+
+    const existingNumbers = existingPaths
+      .map((path) => {
+        const match = path.match(instancePattern);
+        return match ? parseInt(match[1], 10) : null;
+      })
+      .filter((n): n is number => n !== null);
+
+    if (existingNumbers.length > 0) {
+      instanceNumber = Math.max(...existingNumbers) + 1;
     }
 
-    return newKey;
+    return instanceNumber;
   }
 
   /**
@@ -417,22 +407,53 @@ export class TreeNode {
   // ========================================
 
   /**
-   * Get all keys that should be deselected when this node is selected
-   * Includes anti keys and their descendants
+   * Resolve anti-selection sibling keys to full paths
+   * Anti keys in metadata are simple sibling keys, resolved at runtime
    */
-  getAntiKeysWithDescendants(): string[] {
-    const antiKeys = [...this.antiKeys];
+  resolveAntiPaths(): string[] {
+    if (!this.antiKeys || this.antiKeys.length === 0) {
+      return [];
+    }
+
+    if (!this._parent) {
+      return [];
+    }
+
+    const antiPaths: string[] = [];
+
+    // Look through siblings to find nodes with matching keys
+    for (const antiKey of this.antiKeys) {
+      const sibling = this._parent._children.find(
+        (child) => child.key === antiKey
+      );
+      if (sibling) {
+        antiPaths.push(sibling.path);
+      }
+    }
+
+    return antiPaths;
+  }
+
+  /**
+   * Get all paths that should be deselected when this node is selected
+   * Includes anti paths and their descendants
+   */
+  getAntiPathsWithDescendants(): string[] {
+    const antiPaths = this.resolveAntiPaths();
+    const allAntiPaths = [...antiPaths];
     const root = this.getRoot();
 
-    // For each anti key, also get its descendants
-    this.antiKeys.forEach((antiKey) => {
-      const antiNode = root.findNode(antiKey);
+    // For each anti path, also get its descendants
+    antiPaths.forEach((antiPath) => {
+      const antiNode = root.findNodeByPath(antiPath);
       if (antiNode?.hasChildren) {
-        antiKeys.push(...antiNode.getAllDescendantKeys());
+        antiNode.getAllDescendants().forEach((desc) => {
+          allAntiPaths.push(desc.path);
+        });
       }
     });
 
-    return antiKeys;
+    return allAntiPaths;
   }
 
   // ========================================

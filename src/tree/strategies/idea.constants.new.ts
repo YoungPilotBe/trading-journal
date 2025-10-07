@@ -61,9 +61,9 @@ export interface IdeaStrategyConfig extends Record<string, unknown> {
 /**
  * Helper function to create liquidity children nodes
  */
-const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
+const createLiquidityChildren = (): TreeNodeConfig[] => [
   {
-    key: `${prefix}_wicking_tops`,
+    key: "wicking_tops",
     title: "Wicking Tops",
     metadata: {
       icon: Mountain,
@@ -71,7 +71,7 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
     },
   },
   {
-    key: `${prefix}_wicking_bottoms`,
+    key: "wicking_bottoms",
     title: "Wicking Bottoms",
     metadata: {
       icon: Mountain,
@@ -79,23 +79,23 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
     },
   },
   {
-    key: `${prefix}_liquidity_curve`,
+    key: "curve",
     title: "Curve",
     metadata: {
       iconClassName: "",
     },
     children: [
       {
-        key: `${prefix}_liquidity_curve_below`,
+        key: "below",
         title: "Below",
         metadata: {
           icon: Spline,
           iconClassName: "rotate-180 text-emerald-500",
-          anti: [`${prefix}_liquidity_curve_above`],
+          anti: ["above"],
         },
         children: [
           {
-            key: `${prefix}_return_rounded`,
+            key: "rounded",
             title: "Rounded",
             metadata: {
               icon: CircleDot,
@@ -103,15 +103,11 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
               description:
                 "Liquidity is being left behind under the curve which may cause a quick sweep down, proving the supply zone successful",
               imageUrl: roundedReturnImg,
-              anti: [
-                `${prefix}_return_corrective`,
-                `${prefix}_return_sweep`,
-                `${prefix}_return_v_shape`,
-              ],
+              anti: ["corrective", "sweep", "v_shape"],
             },
           },
           {
-            key: `${prefix}_return_corrective`,
+            key: "corrective",
             title: "Corrective",
             metadata: {
               icon: TrendingDown,
@@ -119,15 +115,11 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
               description:
                 "Liquidity is being left behind under the trendline which may cause a quick sweep down, proving the supply zone successful",
               imageUrl: correctiveReturnImg,
-              anti: [
-                `${prefix}_return_rounded`,
-                `${prefix}_return_sweep`,
-                `${prefix}_return_v_shape`,
-              ],
+              anti: ["rounded", "sweep", "v_shape"],
             },
           },
           {
-            key: `${prefix}_return_sweep`,
+            key: "sweep",
             title: "Sweep",
             metadata: {
               icon: Waves,
@@ -135,15 +127,11 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
               description:
                 "Liquidity is being taken on the way up, meaning that smart money may be engineering their positions. This could cause the supply zone to fail.",
               imageUrl: liquiditySweepReturnImg,
-              anti: [
-                `${prefix}_return_rounded`,
-                `${prefix}_return_corrective`,
-                `${prefix}_return_v_shape`,
-              ],
+              anti: ["rounded", "corrective", "v_shape"],
             },
           },
           {
-            key: `${prefix}_return_v_shape`,
+            key: "v_shape",
             title: "V-Shape",
             metadata: {
               icon: Triangle,
@@ -151,26 +139,22 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
               description:
                 "Aggressive return after the pivot was created, usually causes the supply/demand zone to fail",
               imageUrl: vShapeReturnImg,
-              anti: [
-                `${prefix}_return_rounded`,
-                `${prefix}_return_corrective`,
-                `${prefix}_return_sweep`,
-              ],
+              anti: ["rounded", "corrective", "sweep"],
             },
           },
         ],
       },
       {
-        key: `${prefix}_liquidity_curve_above`,
+        key: "above",
         title: "Above",
         metadata: {
           icon: Spline,
           iconClassName: "rotate-90 text-rose-500",
-          anti: [`${prefix}_liquidity_curve_below`],
+          anti: ["below"],
         },
         children: [
           {
-            key: `${prefix}_return_rounded`,
+            key: "rounded",
             title: "Rounded",
             metadata: {
               icon: CircleDot,
@@ -179,15 +163,11 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
                 "Liquidity is being left behind above the curve which may cause a quick sweep up, proving the demand zone successful",
               imageUrl: roundedReturnImg,
               imageClassName: "rotate-180 -scale-x-100",
-              anti: [
-                `${prefix}_return_corrective`,
-                `${prefix}_return_sweep`,
-                `${prefix}_return_v_shape`,
-              ],
+              anti: ["corrective", "sweep", "v_shape"],
             },
           },
           {
-            key: `${prefix}_return_corrective`,
+            key: "corrective",
             title: "Corrective",
             metadata: {
               icon: TrendingUp,
@@ -196,15 +176,11 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
               description:
                 "Liquidity is being left behind above the trendline which may cause a quick sweep up, proving the demand zone successful",
               imageUrl: correctiveReturnImg,
-              anti: [
-                `${prefix}_return_rounded`,
-                `${prefix}_return_sweep`,
-                `${prefix}_return_v_shape`,
-              ],
+              anti: ["rounded", "sweep", "v_shape"],
             },
           },
           {
-            key: `${prefix}_return_sweep`,
+            key: "sweep",
             title: "Sweep",
             metadata: {
               icon: Waves,
@@ -213,15 +189,11 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
               description:
                 "Liquidity is being taken on the way down, meaning that smart money may be engineering their positions. This could cause the demand zone to fail.",
               imageUrl: liquiditySweepReturnImg,
-              anti: [
-                `${prefix}_return_rounded`,
-                `${prefix}_return_corrective`,
-                `${prefix}_return_v_shape`,
-              ],
+              anti: ["rounded", "corrective", "v_shape"],
             },
           },
           {
-            key: `${prefix}_return_v_shape`,
+            key: "v_shape",
             title: "V-Shape",
             metadata: {
               icon: Triangle,
@@ -230,11 +202,7 @@ const createLiquidityChildren = (prefix: string): TreeNodeConfig[] => [
                 "Aggressive return after the pivot was created, usually causes the supply/demand zone to fail",
               imageClassName: "rotate-180 -scale-x-100",
               imageUrl: vShapeReturnImg,
-              anti: [
-                `${prefix}_return_rounded`,
-                `${prefix}_return_corrective`,
-                `${prefix}_return_sweep`,
-              ],
+              anti: ["rounded", "corrective", "sweep"],
             },
           },
         ],
@@ -278,46 +246,42 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
           children: createTimeframeNodes({
             prefix: "swing",
             availableTimeframes: availableTimeframes.map((tf) => tf.toString()),
-            createChildren: (timeframePrefix) => [
+            createChildren: () => [
               {
-                key: `${timeframePrefix}_bullish`,
+                key: "bullish",
                 title: "Bullish",
                 metadata: {
                   icon: TrendingUp,
                   iconClassName: "text-emerald-500",
-                  anti: [`${timeframePrefix}_bearish`],
+                  anti: ["bearish"],
                 },
               },
               {
-                key: `${timeframePrefix}_bearish`,
+                key: "bearish",
                 title: "Bearish",
                 metadata: {
                   icon: TrendingDown,
                   iconClassName: "text-rose-500",
-                  anti: [`${timeframePrefix}_bullish`],
+                  anti: ["bullish"],
                 },
               },
               {
-                key: `${timeframePrefix}_range`,
+                key: "range",
                 title: "Range",
                 metadata: {
                   icon: MenuIcon,
                   iconClassName: "text-sky-500/70",
                 },
-                children: createDiscountPremiumPricing(
-                  `${timeframePrefix}_range`
-                ),
+                children: createDiscountPremiumPricing(),
               },
               {
-                key: `${timeframePrefix}_liquidity`,
+                key: "liquidity",
                 title: "Liquidity",
                 metadata: {
                   icon: Droplets,
                   iconClassName: "",
                 },
-                children: createLiquidityChildren(
-                  `${timeframePrefix}_liquidity`
-                ),
+                children: createLiquidityChildren(),
               },
             ],
           }),
@@ -338,46 +302,42 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
           children: createTimeframeNodes({
             prefix: "fractal",
             availableTimeframes: availableTimeframes.map((tf) => tf.toString()),
-            createChildren: (timeframePrefix) => [
+            createChildren: () => [
               {
-                key: `${timeframePrefix}_bullish`,
+                key: "bullish",
                 title: "Bullish",
                 metadata: {
                   icon: TrendingUp,
                   iconClassName: "text-emerald-500",
-                  anti: [`${timeframePrefix}_bearish`],
+                  anti: ["bearish"],
                 },
               },
               {
-                key: `${timeframePrefix}_bearish`,
+                key: "bearish",
                 title: "Bearish",
                 metadata: {
                   icon: TrendingDown,
                   iconClassName: "text-rose-500",
-                  anti: [`${timeframePrefix}_bullish`],
+                  anti: ["bullish"],
                 },
               },
               {
-                key: `${timeframePrefix}_range`,
+                key: "range",
                 title: "Range",
                 metadata: {
                   icon: MenuIcon,
                   iconClassName: "text-sky-500/70",
                 },
-                children: createDiscountPremiumPricing(
-                  `${timeframePrefix}_range`
-                ),
+                children: createDiscountPremiumPricing(),
               },
               {
-                key: `${timeframePrefix}_liquidity`,
+                key: "liquidity",
                 title: "Liquidity",
                 metadata: {
                   icon: Droplets,
                   iconClassName: "",
                 },
-                children: createLiquidityChildren(
-                  `${timeframePrefix}_liquidity`
-                ),
+                children: createLiquidityChildren(),
               },
             ],
           }),
@@ -464,7 +424,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
       },
       children: [
         {
-          key: "demand_range",
+          key: "range",
           title: "Range",
           metadata: {
             icon: Square,
@@ -475,10 +435,10 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
             addablePrefix: (originalKey, instanceNumber) =>
               `${originalKey}_#${instanceNumber}`,
           },
-          children: createRangeWithTimeframes("demand", availableTimeframes),
+          children: createRangeWithTimeframes(availableTimeframes),
         },
         {
-          key: "demand_obim",
+          key: "obim",
           title: "OBIM",
           metadata: {
             icon: Target,
@@ -489,10 +449,10 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
             addablePrefix: (originalKey, instanceNumber) =>
               `${originalKey}_#${instanceNumber}`,
           },
-          children: createOBIMWithTimeframes("demand", availableTimeframes),
+          children: createOBIMWithTimeframes(false, true, availableTimeframes),
         },
         {
-          key: "demand_wyckoff",
+          key: "wyckoff",
           title: "Wyckoff Acc.",
           metadata: {
             icon: Target,
@@ -503,11 +463,10 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               `${originalKey}_#${instanceNumber}`,
           },
           children: createWyckoffWithTimeframes(
-            "demand",
             availableTimeframes.map((tf) => tf.toString())
           ),
         },
-        ...createFVG("demand", availableTimeframes),
+        ...createFVG(availableTimeframes),
       ],
     }),
     new TreeNode({
@@ -519,7 +478,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
       },
       children: [
         {
-          key: "supply_range",
+          key: "range",
           title: "Range",
           metadata: {
             icon: Square,
@@ -528,17 +487,14 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
             isAddable: true,
             addButtonLabel: "Add Range",
             // Custom prefix function for dynamic instances
-            // Generates keys like: supply_range_#1, supply_range_#2, etc.
+            // Generates keys like: range_#1, range_#2, etc.
             addablePrefix: (originalKey, instanceNumber) =>
               `${originalKey}_#${instanceNumber}`,
           },
-          children: createSupplyRangeWithTimeframes(
-            "supply",
-            availableTimeframes
-          ),
+          children: createSupplyRangeWithTimeframes(availableTimeframes),
         },
         {
-          key: "supply_obim",
+          key: "obim",
           title: "OBIM",
           metadata: {
             icon: Target,
@@ -549,10 +505,10 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
             addablePrefix: (originalKey, instanceNumber) =>
               `${originalKey}_#${instanceNumber}`,
           },
-          children: createOBIMWithTimeframes("supply", availableTimeframes),
+          children: createOBIMWithTimeframes(true, false, availableTimeframes),
         },
         {
-          key: "supply_wyckoff",
+          key: "wyckoff",
           title: "Wyckoff Dis.",
           metadata: {
             icon: Target,
@@ -563,7 +519,6 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               `${originalKey}_#${instanceNumber}`,
           },
           children: createWyckoffWithTimeframes(
-            "supply",
             availableTimeframes.map((tf) => tf.toString())
           ),
         },

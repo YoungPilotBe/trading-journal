@@ -95,15 +95,14 @@ export const conditionalEffectsConfig: ConditionalEffectRule[] = [
 ];
 
 export const createContradictingBranch = (
-  prefix: string,
   contras: (string | [string, TreeNodeConfig[]] | TreeNodeConfig)[]
 ): TreeNodeConfig[] => {
   // Extract just the keys for anti-array generation
   const contraKeys = contras.map((contra) => {
     if (typeof contra === "string") return contra;
     if (Array.isArray(contra)) return contra[0];
-    // For TreeNodeConfig objects, extract the key by removing the prefix
-    return contra.key.replace(`${prefix}_`, "");
+    // For TreeNodeConfig objects, extract the key directly
+    return contra.key;
   });
 
   return contras.map((contra, index) => {
@@ -113,9 +112,7 @@ export const createContradictingBranch = (
         ...contra,
         metadata: {
           ...contra.metadata,
-          anti: contraKeys
-            .filter((_, i) => i !== index)
-            .map((otherKey) => `${prefix}_${otherKey}`),
+          anti: contraKeys.filter((_, i) => i !== index),
         },
       };
     }
@@ -125,12 +122,10 @@ export const createContradictingBranch = (
       typeof contra === "string" ? [contra, undefined] : contra;
 
     return {
-      key: `${prefix}_${key}`,
+      key,
       title: `${capitalize(key)}`,
       metadata: {
-        anti: contraKeys
-          .filter((_, i) => i !== index)
-          .map((otherKey) => `${prefix}_${otherKey}`),
+        anti: contraKeys.filter((_, i) => i !== index),
       },
       children,
     };
@@ -138,27 +133,25 @@ export const createContradictingBranch = (
 };
 
 // Helper function to create Fixed Range Confluence children
-export const createFixedRangeConfluenceChildren = (prefix: string) => [
+export const createFixedRangeConfluenceChildren = (): TreeNodeConfig[] => [
   {
-    key: `${prefix}_vah`,
+    key: "vah",
     title: "VAH",
   },
   {
-    key: `${prefix}_poc`,
+    key: "poc",
     title: "POC",
   },
   {
-    key: `${prefix}_val`,
+    key: "val",
     title: "VAL",
   },
 ];
 
-export const createDiscountPremiumPricing = (
-  prefix: string
-): TreeNodeConfig[] =>
-  createContradictingBranch(prefix, [
+export const createDiscountPremiumPricing = (): TreeNodeConfig[] =>
+  createContradictingBranch([
     {
-      key: `${prefix}_extreme_premium`,
+      key: "extreme_premium",
       title: "Extreme Premium",
       metadata: {
         icon: ChevronsUp,
@@ -166,7 +159,7 @@ export const createDiscountPremiumPricing = (
       },
     },
     {
-      key: `${prefix}_premium`,
+      key: "premium",
       title: "Premium",
       metadata: {
         icon: ChevronUp,
@@ -174,7 +167,7 @@ export const createDiscountPremiumPricing = (
       },
     },
     {
-      key: `${prefix}_discount`,
+      key: "discount",
       title: "Discount",
       metadata: {
         icon: ChevronDown,
@@ -182,7 +175,7 @@ export const createDiscountPremiumPricing = (
       },
     },
     {
-      key: `${prefix}_extreme_discount`,
+      key: "extreme_discount",
       title: "Extreme Discount",
       metadata: {
         icon: ChevronsDown,
@@ -192,48 +185,46 @@ export const createDiscountPremiumPricing = (
   ]);
 
 // Helper function to create Wyckoff children
-export const createWyckoffChildren = (prefix: string): TreeNodeConfig[] => [
+export const createWyckoffChildren = (): TreeNodeConfig[] => [
   {
-    key: `${prefix}_accumulation_model_1`,
+    key: "model_1",
     title: "Model 1",
     metadata: {
-      anti: [`${prefix}_accumulation_model_2`],
+      anti: ["model_2"],
     },
   },
   {
-    key: `${prefix}_accumulation_model_2`,
+    key: "model_2",
     title: "Model 2",
     metadata: {
-      anti: [`${prefix}_accumulation_model_1`],
+      anti: ["model_1"],
     },
   },
 ];
 // Helper function to create liquidity children
-export const createLiquidityChildren = (prefix: string) => [
+export const createLiquidityChildren = (): TreeNodeConfig[] => [
   {
-    key: `${prefix}_liquidity_fueled`,
+    key: "fueled",
     title: "Fueled",
   },
   {
-    key: `${prefix}_liquidity_wicked`,
+    key: "wicked",
     title: "Wicked",
   },
 ];
 
 // Helper function to create OBIM children for Supply/Demand
 export const createSupplyDemandOBIMChildren = (
-  prefix: string
+  isSupply: boolean,
+  isDemand: boolean
 ): TreeNodeConfig[] => {
-  const isSupply = prefix.includes("supply");
-  const isDemand = prefix.includes("demand");
-
   return [
     {
-      key: `${prefix}_obim_confirmations`,
+      key: "confirmations",
       title: "Confirmations",
       children: [
         {
-          key: `${prefix}_obim_confirmations_bos_break`,
+          key: "bos_break",
           title: "BOS Break",
           metadata: {
             icon: CloudLightning,
@@ -246,11 +237,11 @@ export const createSupplyDemandOBIMChildren = (
       },
     },
     {
-      key: `${prefix}_obim_extension`,
+      key: "extension",
       title: "Extension",
       children: [
         {
-          key: `${prefix}_obim_extension_fvg`,
+          key: "fvg",
           title: "FVG",
           metadata: {
             imageUrl: isSupply
@@ -261,7 +252,7 @@ export const createSupplyDemandOBIMChildren = (
           },
         },
         {
-          key: `${prefix}_obim_extension_25_percent`,
+          key: "wick_25_percent",
           title: "Wick 25%",
           metadata: {
             imageUrl: isSupply
@@ -274,19 +265,19 @@ export const createSupplyDemandOBIMChildren = (
       ],
     },
     {
-      key: `${prefix}_obim_inducement`,
+      key: "inducement",
       title: "Inducement",
     },
     {
-      key: `${prefix}_obim_pivot`,
+      key: "pivot",
       title: "Pivot",
       children: [
         {
-          key: `${prefix}_obim_pivot_ep`,
+          key: "ep",
           title: "EP",
         },
         {
-          key: `${prefix}_obim_pivot_dp`,
+          key: "dp",
           title: "DP",
           metadata: {
             imageUrl: extremumDPImg,
@@ -295,65 +286,62 @@ export const createSupplyDemandOBIMChildren = (
       ],
     },
     {
-      key: `${prefix}_obim_fixed_range_confluence`,
+      key: "fixed_range_confluence",
       title: "Fixed Range Confluence",
-      children: createFixedRangeConfluenceChildren(
-        `${prefix}_obim_fixed_range_confluence`
-      ),
+      children: createFixedRangeConfluenceChildren(),
     },
     {
-      key: `${prefix}_obim_liquidity`,
+      key: "liquidity",
       title: "Liquidity",
-      children: createLiquidityChildren(`${prefix}_obim`),
+      children: createLiquidityChildren(),
     },
   ];
 };
 
 // Helper function to create OBIM children with timeframe layer
 export const createOBIMWithTimeframes = (
-  prefix: string,
+  isSupply: boolean,
+  isDemand: boolean,
   availableTimeframes: string[] = []
 ) => {
   if (availableTimeframes.length === 0) {
     // Fallback to direct children if no timeframes provided
-    return createSupplyDemandOBIMChildren(prefix);
+    return createSupplyDemandOBIMChildren(isSupply, isDemand);
   }
 
   return createTimeframeNodes({
-    prefix: `${prefix}_obim`,
+    prefix: "obim",
     availableTimeframes,
-    createChildren: (timeframePrefix) =>
-      createSupplyDemandOBIMChildren(timeframePrefix),
+    createChildren: () => createSupplyDemandOBIMChildren(isSupply, isDemand),
   });
 };
 
 // Helper function to create Wyckoff children with timeframe layer
 export const createWyckoffWithTimeframes = (
-  prefix: string,
   availableTimeframes: string[] = []
 ) => {
   if (availableTimeframes.length === 0) {
     // Fallback to direct children if no timeframes provided
-    return createWyckoffChildren(prefix);
+    return createWyckoffChildren();
   }
 
   return createTimeframeNodes({
-    prefix: `${prefix}_wyckoff`,
+    prefix: "wyckoff",
     availableTimeframes,
-    createChildren: (timeframePrefix) => createWyckoffChildren(timeframePrefix),
+    createChildren: () => createWyckoffChildren(),
     icon: Clock,
     iconClassName: "text-muted-foreground",
   });
 };
 
 // Helper function to create Range children for Demand
-export const createDemandRangeChildren = (prefix: string): TreeNodeConfig[] => [
+export const createDemandRangeChildren = (): TreeNodeConfig[] => [
   {
-    key: `${prefix}_range_confirmations`,
+    key: "confirmations",
     title: "Confirmations",
     children: [
       {
-        key: `${prefix}_range_confirmations_midpoint`,
+        key: "midpoint",
         title: "Midpoint",
         metadata: {
           icon: DotIcon,
@@ -366,48 +354,44 @@ export const createDemandRangeChildren = (prefix: string): TreeNodeConfig[] => [
     },
   },
   {
-    key: `${prefix}_range_inducement`,
+    key: "inducement",
     title: "Inducement",
   },
   {
-    key: `${prefix}_range_fixed_range_confluence`,
+    key: "fixed_range_confluence",
     title: "Fixed Range Confluence",
-    children: createFixedRangeConfluenceChildren(
-      `${prefix}_range_fixed_range_confluence`
-    ),
+    children: createFixedRangeConfluenceChildren(),
   },
 ];
 
 // Helper function to create Range children with timeframe layer
 export const createRangeWithTimeframes = (
-  prefix: string,
   availableTimeframes: string[] = []
 ) => {
   if (availableTimeframes.length === 0) {
     // Fallback to direct children if no timeframes provided
-    return createDemandRangeChildren(prefix);
+    return createDemandRangeChildren();
   }
 
   return createTimeframeNodes({
-    prefix: `${prefix}_range`,
+    prefix: "range",
     availableTimeframes,
-    createChildren: (timeframePrefix) =>
-      createDemandRangeChildren(timeframePrefix),
+    createChildren: () => createDemandRangeChildren(),
   });
 };
 
 // Helper function to create Range children for Supply
-export const createSupplyRangeChildren = (prefix: string): TreeNodeConfig[] => [
+export const createSupplyRangeChildren = (): TreeNodeConfig[] => [
   {
-    key: `${prefix}_range_inducement`,
+    key: "inducement",
     title: "Inducement",
   },
   {
-    key: `${prefix}_range_b2s`,
+    key: "b2s",
     title: "B2S",
   },
   {
-    key: `${prefix}_range_chain`,
+    key: "chain",
     title: "Chain",
     metadata: {
       inputField: customDrives(),
@@ -417,23 +401,21 @@ export const createSupplyRangeChildren = (prefix: string): TreeNodeConfig[] => [
 
 // Helper function to create Supply Range children with timeframe layer
 export const createSupplyRangeWithTimeframes = (
-  prefix: string,
   availableTimeframes: string[] = []
 ) => {
   if (availableTimeframes.length === 0) {
     // Fallback to direct children if no timeframes provided
-    return createSupplyRangeChildren(prefix);
+    return createSupplyRangeChildren();
   }
 
   return createTimeframeNodes({
-    prefix: `${prefix}_range`,
+    prefix: "range",
     availableTimeframes,
-    createChildren: (timeframePrefix) =>
-      createSupplyRangeChildren(timeframePrefix),
+    createChildren: () => createSupplyRangeChildren(),
   });
 };
 
-export const createFVGChildren = (prefix: string): TreeNodeConfig[] => [
+export const createFVGChildren = (): TreeNodeConfig[] => [
   {
     key: "child1",
     title: "child",
@@ -473,12 +455,9 @@ export const customDrives = () => {
   };
 };
 
-export const createFVG = (
-  prefix: string,
-  availableTimeframes: string[]
-): TreeNodeConfig[] => [
+export const createFVG = (availableTimeframes: string[]): TreeNodeConfig[] => [
   {
-    key: `${prefix}_fvg`,
+    key: "fvg",
     title: "FVG",
     metadata: {
       isAddable: true,
@@ -487,9 +466,9 @@ export const createFVG = (
         `${originalKey}_#${instanceNumber}`,
     },
     children: createTimeframeNodes({
-      prefix: `${prefix}_obim`,
+      prefix: "fvg",
       availableTimeframes,
-      createChildren: (timeframePrefix) => createFVGChildren(timeframePrefix),
+      createChildren: () => createFVGChildren(),
     }),
   },
 ];

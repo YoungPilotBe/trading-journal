@@ -78,11 +78,11 @@ export const TimeframeBadge = ({
 
   // Find the node in the tree using TreeNode class methods
   const node = trees
-    .find((tree) => tree.findNode(fieldName))
-    ?.findNode(fieldName);
+    .find((tree) => tree.findNodeByPath(fieldName))
+    ?.findNodeByPath(fieldName);
   const hasAntiSelection = Boolean(node?.antiKeys.length);
-  const isSelected = treeState.selectedNodes.has(fieldName);
-  const isExpanded = treeState.expandedKeys.has(fieldName);
+  const isSelected = treeState.selectedPaths.has(fieldName);
+  const isExpanded = treeState.expandedPaths.has(fieldName);
 
   // Determine the actual toggle state based on node type
   const isToggled = isBranch

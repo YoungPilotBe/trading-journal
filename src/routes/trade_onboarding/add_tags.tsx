@@ -4,7 +4,7 @@ import {
   createTreeStateFromSnapshot,
   type ITreeState,
 } from "@/tree/tree.utils.new";
-import { TreeProvider } from "@/tree/TreeContext.new";
+import { TreeProvider, useTreeManagers } from "@/tree/TreeContext.new";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
@@ -73,8 +73,8 @@ function RouteComponent() {
         snapshotId: snapshot._id,
         tags: newState.tags,
         tags_config: {
-          expandedKeys: Array.from(newState.expandedKeys),
-          selectedNodes: Array.from(newState.selectedNodes),
+          expandedKeys: Array.from(newState.expandedPaths),
+          selectedNodes: Array.from(newState.selectedPaths),
         },
       });
     },
@@ -109,9 +109,15 @@ function RouteComponent() {
             onTreeStateChange={handleStateChange}
           >
             <Tree className="overflow-y-auto h-full" />
+            <DebugTree />
           </TreeProvider>
         </div>
       </div>
     </div>
   );
+}
+
+function DebugTree() {
+  const { treeState } = useTreeManagers();
+  return <code>{JSON.stringify(treeState.getState(), null, 2)}</code>;
 }
