@@ -268,7 +268,12 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
           metadata: {
             icon: Activity,
             iconClassName: "",
+            isAddable: true,
+            addButtonLabel: "Swing",
+            addablePrefix: (originalKey, instanceNumber) =>
+              `${originalKey}_#${instanceNumber}`,
           },
+
           children: createTimeframeNodes({
             prefix: "swing",
             availableTimeframes: availableTimeframes.map((tf) => tf.toString()),
@@ -319,10 +324,16 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
         {
           key: "fractal",
           title: "Fractal",
+
           metadata: {
             icon: GitBranch,
             iconClassName: "",
+            isAddable: true,
+            addButtonLabel: "Fractal",
+            addablePrefix: (originalKey, instanceNumber) =>
+              `${originalKey}_#${instanceNumber}`,
           },
+
           children: createTimeframeNodes({
             prefix: "fractal",
             availableTimeframes: availableTimeframes.map((tf) => tf.toString()),
@@ -460,8 +471,6 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
             imageUrl: rangeDemandZoneImg,
             isAddable: true,
             addButtonLabel: "Add Range",
-            // Custom prefix function for dynamic instances
-            // Generates keys like: demand_range_#1, demand_range_#2, etc.
             addablePrefix: (originalKey, instanceNumber) =>
               `${originalKey}_#${instanceNumber}`,
           },
@@ -476,8 +485,6 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
             imageUrl: bullishDemandZoneImg,
             isAddable: true,
             addButtonLabel: "Add OBIM",
-            // Custom prefix function for dynamic instances
-            // Generates keys like: supply_range_#1, supply_range_#2, etc.
             addablePrefix: (originalKey, instanceNumber) =>
               `${originalKey}_#${instanceNumber}`,
           },
@@ -485,10 +492,14 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
         },
         {
           key: "demand_wyckoff",
-          title: "Wyckoff",
+          title: "Wyckoff Acc.",
           metadata: {
             icon: Target,
             iconClassName: "",
+            isAddable: true,
+            addButtonLabel: "Wyckoff Acc.",
+            addablePrefix: (originalKey, instanceNumber) =>
+              `${originalKey}_#${instanceNumber}`,
           },
           children: createWyckoffWithTimeframes(
             "demand",
@@ -531,15 +542,23 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
             icon: Target,
             iconClassName: "",
             imageUrl: bearishSupplyZoneImg,
+            isAddable: true,
+            addButtonLabel: "Add OBIM",
+            addablePrefix: (originalKey, instanceNumber) =>
+              `${originalKey}_#${instanceNumber}`,
           },
           children: createOBIMWithTimeframes("supply", availableTimeframes),
         },
         {
           key: "supply_wyckoff",
-          title: "Wyckoff",
+          title: "Wyckoff Dis.",
           metadata: {
             icon: Target,
             iconClassName: "",
+            isAddable: true,
+            addButtonLabel: "Wyckoff Dis.",
+            addablePrefix: (originalKey, instanceNumber) =>
+              `${originalKey}_#${instanceNumber}`,
           },
           children: createWyckoffWithTimeframes(
             "supply",

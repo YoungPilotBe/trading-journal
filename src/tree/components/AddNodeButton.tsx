@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
-import { useTreeActions } from "./TreeContext.new";
+import { useTreeActions } from "../TreeContext.new";
 
 interface AddNodeButtonProps {
   templateNodeKey: string;
@@ -33,7 +33,7 @@ export const AddNodeButton = ({
         className
       )}
     >
-      <Plus className="w-3 h-3 flex-shrink-0" />
+      <Plus className="w-3 h-3 flex-shrink-0 text-emerald-500" />
       <span className="font-mono leading-none">{label}</span>
     </button>
   );

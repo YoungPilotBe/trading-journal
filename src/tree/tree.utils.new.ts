@@ -61,8 +61,6 @@ export const createTimeframeNodes = (
     availableTimeframes,
     createChildren,
     generateAntiKeys,
-    icon = Clock,
-    iconClassName = "text-muted-foreground",
     preventMultipleSelection = true,
   } = config;
 
@@ -88,9 +86,8 @@ export const createTimeframeNodes = (
       key: timeframePrefix,
       title: timeframe,
       metadata: {
-        icon,
-        iconClassName,
         anti: antiKeys,
+        isTimeframe: true,
       },
       children: childrenConfigs.map((config) => new TreeNode(config)),
     });

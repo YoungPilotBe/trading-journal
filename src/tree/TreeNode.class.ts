@@ -34,6 +34,7 @@ export interface TreeNodeMetadata {
   iconClassName?: string;
   isDir?: boolean;
   isConfirmation?: boolean;
+  isTimeframe?: boolean;
   description?: string;
   imageUrl?: string;
   imageClassName?: string;
@@ -347,13 +348,17 @@ export class TreeNode {
       );
     }
 
-    // Clone children with updated keys (propagate metadataOverrides to children)
+    // Clone children with updated keys
+    // NOTE: Do NOT propagate destroyOnUntoggle to children - only the root instance should be destroyable
     const clonedChildren = this._children.map((child) => {
       const childKeySuffix = child.key.replace(this.key + "_", "");
+      const childMetadataOverrides = metadataOverrides
+        ? { ...metadataOverrides, destroyOnUntoggle: undefined }
+        : undefined;
       return child.clone(
         `${newKey}_${childKeySuffix}`,
         undefined,
-        metadataOverrides
+        childMetadataOverrides
       );
     });
 

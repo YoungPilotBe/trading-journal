@@ -108,7 +108,7 @@ function RouteComponent() {
             initialTreeState={initialTreeState}
             onTreeStateChange={handleStateChange}
           >
-            <Tree />
+            <Tree className="overflow-y-auto h-full" />
           </TreeProvider>
         </div>
       </div>

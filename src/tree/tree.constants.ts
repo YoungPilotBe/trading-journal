@@ -5,15 +5,11 @@ import bullishOBIM25Img from "@/assets/bullish_order_block_imbalance_25_percent.
 import extremumDPImg from "@/assets/extremum_decision_point.png";
 import { capitalize } from "lodash";
 import {
-  CheckCircle,
   ChevronDown,
   ChevronUp,
   ChevronsDown,
   ChevronsUp,
   Clock,
-  Target,
-  TrendingDown,
-  TrendingUp,
 } from "lucide-react";
 import { z } from "zod";
 import type { TreeNodeConfig } from "./tree.utils.new";
@@ -196,106 +192,18 @@ export const createDiscountPremiumPricing = (
 // Helper function to create Wyckoff children
 export const createWyckoffChildren = (prefix: string): TreeNodeConfig[] => [
   {
-    key: `${prefix}_accumulation`,
-    title: "Accumulation",
+    key: `${prefix}_accumulation_model_1`,
+    title: "Model 1",
     metadata: {
-      icon: TrendingUp,
-      iconClassName: "text-emerald-500",
-      anti: [`${prefix}_distribution`],
+      anti: [`${prefix}_accumulation_model_2`],
     },
-    children: [
-      {
-        key: `${prefix}_accumulation_model_1`,
-        title: "Model 1",
-        metadata: {
-          icon: Target,
-          iconClassName: "text-emerald-500/70",
-          anti: [`${prefix}_accumulation_model_2`],
-        },
-        children: [
-          {
-            key: `${prefix}_accumulation_model_1_confirmations`,
-            title: "Confirmations",
-            metadata: {
-              icon: CheckCircle,
-              iconClassName: "text-emerald-500/50",
-            },
-            children: [], // No children for confirmations in this case
-          },
-        ],
-      },
-      {
-        key: `${prefix}_accumulation_model_2`,
-        title: "Model 2",
-        metadata: {
-          icon: Target,
-          iconClassName: "text-emerald-500/70",
-          anti: [`${prefix}_accumulation_model_1`],
-        },
-        children: [
-          {
-            key: `${prefix}_accumulation_model_2_confirmations`,
-            title: "Confirmations",
-            metadata: {
-              icon: CheckCircle,
-              iconClassName: "text-emerald-500/50",
-            },
-            children: [], // No children for confirmations in this case
-          },
-        ],
-      },
-    ],
   },
   {
-    key: `${prefix}_distribution`,
-    title: "Distribution",
+    key: `${prefix}_accumulation_model_2`,
+    title: "Model 2",
     metadata: {
-      icon: TrendingDown,
-      iconClassName: "text-rose-500",
-      anti: [`${prefix}_accumulation`],
+      anti: [`${prefix}_accumulation_model_1`],
     },
-    children: [
-      {
-        key: `${prefix}_distribution_model_1`,
-        title: "Model 1",
-        metadata: {
-          icon: Target,
-          iconClassName: "text-rose-500/70",
-          anti: [`${prefix}_distribution_model_2`],
-        },
-        children: [
-          {
-            key: `${prefix}_distribution_model_1_confirmations`,
-            title: "Confirmations",
-            metadata: {
-              icon: CheckCircle,
-              iconClassName: "text-rose-500/50",
-            },
-            children: [], // No children for confirmations in this case
-          },
-        ],
-      },
-      {
-        key: `${prefix}_distribution_model_2`,
-        title: "Model 2",
-        metadata: {
-          icon: Target,
-          iconClassName: "text-rose-500/70",
-          anti: [`${prefix}_distribution_model_1`],
-        },
-        children: [
-          {
-            key: `${prefix}_distribution_model_2_confirmations`,
-            title: "Confirmations",
-            metadata: {
-              icon: CheckCircle,
-              iconClassName: "text-rose-500/50",
-            },
-            children: [], // No children for confirmations in this case
-          },
-        ],
-      },
-    ],
   },
 ];
 // Helper function to create liquidity children
@@ -424,17 +332,6 @@ export const createDemandRangeChildren = (prefix: string): TreeNodeConfig[] => [
   {
     key: `${prefix}_range_inducement`,
     title: "Inducement",
-  },
-  {
-    key: `${prefix}_range_s2b`,
-    title: "S2B",
-  },
-  {
-    key: `${prefix}_range_chain`,
-    title: "Chain",
-    metadata: {
-      inputField: customDrives(),
-    },
   },
   {
     key: `${prefix}_range_fixed_range_confluence`,

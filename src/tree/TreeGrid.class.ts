@@ -7,8 +7,7 @@
  * - Flattening tree structure into a 2D grid for rendering
  */
 
-import type { LucideIcon } from "lucide-react";
-import type { InputFieldConfig } from "./TreeNode.class";
+import type { TreeNodeMetadata } from "./TreeNode.class";
 import { TreeNode } from "./TreeNode.class";
 
 /**
@@ -23,15 +22,8 @@ export interface GridCell {
   isExpanded: boolean;
   isLeaf: boolean;
   isSelected: boolean;
-  icon?: LucideIcon;
-  iconClassName?: string;
-  isDir?: boolean;
-  isConfirmation?: boolean;
-  inputField?: InputFieldConfig;
   parentKey?: string;
-  description?: string;
-  imageUrl?: string;
-  imageClassName?: string;
+  metadata: TreeNodeMetadata;
   // Dynamic node creation
   isAddButton?: boolean;
   addButtonLabel?: string;
@@ -134,17 +126,8 @@ export class TreeGrid {
         isExpanded,
         isLeaf,
         isSelected,
-        icon: node.metadata.icon,
-        iconClassName: node.metadata.iconClassName,
-        isDir:
-          node.metadata.isDir ||
-          node.title.includes("_+_") ||
-          node.key.includes("_+_"),
-        isConfirmation: node.metadata.isConfirmation,
         parentKey,
-        description: node.metadata.description,
-        imageUrl: node.metadata.imageUrl,
-        imageClassName: node.metadata.imageClassName,
+        metadata: node.metadata,
       };
 
       let currentRowIndex = rowIndex;
@@ -190,10 +173,11 @@ export class TreeGrid {
                 isExpanded: false,
                 isLeaf: true,
                 isSelected: false,
+                parentKey: node.key,
+                metadata: child.metadata,
                 isAddButton: true,
                 addButtonLabel: child.metadata.addButtonLabel,
                 templateNodeKey: child.key,
-                parentKey: node.key,
               };
               currentRowIndex++;
             }
@@ -248,10 +232,11 @@ export class TreeGrid {
                   isExpanded: false,
                   isLeaf: true,
                   isSelected: false,
+                  parentKey: node.key,
+                  metadata: templateNode.metadata,
                   isAddButton: true,
                   addButtonLabel: templateNode.metadata.addButtonLabel,
                   templateNodeKey: templateNode.key,
-                  parentKey: node.key,
                 };
               }
             }
@@ -283,8 +268,8 @@ export class TreeGrid {
           isExpanded: false,
           isLeaf: true,
           isSelected: false,
-          inputField: node.metadata.inputField,
           parentKey: node.key,
+          metadata: node.metadata,
         };
       }
 

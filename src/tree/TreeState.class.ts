@@ -495,4 +495,32 @@ export class TreeState {
 
     return undefined;
   }
+
+  /**
+   * Get selected timeframes for a specific node type (e.g., "swing", "fractal")
+   * Returns an array of timeframe labels that have selected descendants
+   */
+  getSelectedTimeframesForNodeType(nodeType: string): string[] {
+    const selectedTimeframes = new Set<string>();
+
+    this.trees.forEach((tree) => {
+      const allNodes = tree.getAllDescendants();
+      const targetNodes = allNodes.filter((n) => n.key.includes(nodeType));
+
+      targetNodes.forEach((targetNode) => {
+        targetNode.children.forEach((timeframeChild) => {
+          // Check if this timeframe has any selected descendants
+          const hasSelectedDescendants = timeframeChild.children.some(
+            (descendant) => this.selectedNodes.has(descendant.key)
+          );
+
+          if (hasSelectedDescendants) {
+            selectedTimeframes.add(timeframeChild.title);
+          }
+        });
+      });
+    });
+
+    return Array.from(selectedTimeframes);
+  }
 }

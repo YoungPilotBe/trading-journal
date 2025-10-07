@@ -11,8 +11,8 @@ import {
   useTreeActions,
   useTreeManagers,
   useTreeStateValue,
-} from "./TreeContext.new";
-import { TREE_ICON_BASE_CLASS } from "./tree.constants";
+} from "../TreeContext.new";
+import { TREE_ICON_BASE_CLASS } from "../tree.constants";
 
 const toggleBadgeVariants = cva(
   // Base styles
