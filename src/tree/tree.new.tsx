@@ -55,7 +55,7 @@ export const Tree = ({ ...divProps }: Props) => {
   const currentState = useTreeStateValue();
 
   // Get max depth for grid columns
-  const maxDepth = useMemo(() => treeGrid.getMaxDepth(), [treeGrid]);
+  const maxDepth = useMemo(() => treeGrid.getMaxDepth() + 1, [treeGrid]);
 
   // Flatten tree to grid
   const gridRows = useMemo(

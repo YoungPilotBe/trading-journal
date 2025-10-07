@@ -8,7 +8,7 @@ import { TreeProvider, useTreeManagers } from "@/tree/TreeContext.new";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { z } from "zod";
 import { api } from "../../../convex/_generated/api";
 
@@ -119,5 +119,12 @@ function RouteComponent() {
 
 function DebugTree() {
   const { treeState } = useTreeManagers();
-  return <code>{JSON.stringify(treeState.getState(), null, 2)}</code>;
+
+  const state = useMemo(() => treeState.getState(), [treeState]);
+
+  return (
+    <div className="flex flex-col items-start">
+      <code>{JSON.stringify(state, null, 2)}</code>
+    </div>
+  );
 }

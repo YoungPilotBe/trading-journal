@@ -408,8 +408,8 @@ export class TreeState {
       this.selectedPaths.delete(descendant.path);
     });
 
-    // Remove the node from the tree by key (all instances share same key)
-    parent.removeChild(instanceNode.key);
+    // Remove the node from the tree by path (not key, as instances and template share the same key)
+    parent.removeChildByPath(instancePath);
 
     this.tags = this.convertSelectionToJson();
     return this.getState();

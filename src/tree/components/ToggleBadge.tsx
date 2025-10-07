@@ -190,7 +190,7 @@ export const ToggleBadge = ({
   // If there's a description or image, wrap with tooltip
   if (description || imageUrl) {
     return (
-      <Tooltip>
+      <Tooltip delayDuration={500}>
         <TooltipTrigger asChild>{buttonElement}</TooltipTrigger>
         <TooltipContent
           side="right"

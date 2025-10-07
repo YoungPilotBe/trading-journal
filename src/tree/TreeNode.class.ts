@@ -256,6 +256,19 @@ export class TreeNode {
   }
 
   /**
+   * Remove a child node by path (more precise than by key)
+   */
+  removeChildByPath(path: string): boolean {
+    const index = this._children.findIndex((c) => c.path === path);
+    if (index !== -1) {
+      this._children[index]._parent = null;
+      this._children.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Add a sibling node (before or after this node)
    */
   addSibling(node: TreeNode, position: "before" | "after" = "after"): boolean {
@@ -292,7 +305,13 @@ export class TreeNode {
     metadataOverrides?: Partial<TreeNodeMetadata>,
     instanceNumber?: number
   ): TreeNode {
-    const updatedMetadata = { ...this.metadata, ...metadataOverrides };
+    // If this is a dynamic instance, ensure it's not addable itself
+    const updatedMetadata = {
+      ...this.metadata,
+      ...metadataOverrides,
+      // Dynamic instances should never be addable themselves - only the template is addable
+      ...(instanceNumber !== undefined ? { isAddable: false } : {}),
+    };
 
     // Anti-selection keys remain as simple sibling keys (no path transformation needed)
     // They will be resolved to full paths at runtime by looking at siblings

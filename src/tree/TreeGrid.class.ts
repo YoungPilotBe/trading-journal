@@ -194,29 +194,32 @@ export class TreeGrid {
             node.path
           );
 
-          // Check if current child is an addable dynamic instance and if we should add a button after it
-          if (child.metadata.isAddable && isDynamicInstance(child.path)) {
+          // Check if current child is a dynamic instance and if we should add a button after it
+          if (isDynamicInstance(child.path)) {
             const currentBaseKey = child.key;
-            const nextChild = i < children.length - 1 ? children[i + 1] : null;
 
-            // Add button if:
-            // 1. There's no next child (we're at the end), OR
-            // 2. Next child has a different key (different group)
-            const shouldAddButton =
-              !nextChild ||
-              nextChild.key !== currentBaseKey ||
-              !isDynamicInstance(nextChild.path);
+            // Find the template node for this group to check if it's addable
+            const templateNode = children.find(
+              (c) =>
+                c.metadata.isAddable &&
+                c.key === currentBaseKey &&
+                !isDynamicInstance(c.path)
+            );
 
-            if (shouldAddButton) {
-              // Find the template node for this group
-              const templateNode = children.find(
-                (c) =>
-                  c.metadata.isAddable &&
-                  c.key === currentBaseKey &&
-                  !isDynamicInstance(c.path)
-              );
+            // Only add button if the template exists and is addable
+            if (templateNode) {
+              const nextChild =
+                i < children.length - 1 ? children[i + 1] : null;
 
-              if (templateNode) {
+              // Add button if:
+              // 1. There's no next child (we're at the end), OR
+              // 2. Next child has a different key (different group)
+              const shouldAddButton =
+                !nextChild ||
+                nextChild.key !== currentBaseKey ||
+                !isDynamicInstance(nextChild.path);
+
+              if (shouldAddButton) {
                 currentRowIndex++;
                 if (!rows[currentRowIndex]) {
                   rows[currentRowIndex] = new Array(this.maxDepth).fill(null);
