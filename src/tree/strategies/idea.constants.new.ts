@@ -79,14 +79,18 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
               {
                 key: "bullish",
                 title: "Bullish",
-                icon: TrendingUp,
-                iconClassName: "text-emerald-500",
+                metadata: {
+                  icon: TrendingUp,
+                  iconClassName: "text-emerald-500",
+                },
               },
               {
                 key: "bearish",
                 title: "Bearish",
-                icon: TrendingDown,
-                iconClassName: "text-rose-500",
+                metadata: {
+                  icon: TrendingDown,
+                  iconClassName: "text-rose-500",
+                },
               },
             ]),
             constructNode("range", "Range", {
@@ -115,14 +119,18 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
                 {
                   key: "bullish",
                   title: "Bullish",
-                  icon: TrendingUp,
-                  iconClassName: "text-emerald-500",
+                  metadata: {
+                    icon: TrendingUp,
+                    iconClassName: "text-emerald-500",
+                  },
                 },
                 {
                   key: "bearish",
                   title: "Bearish",
-                  icon: TrendingDown,
-                  iconClassName: "text-rose-500",
+                  metadata: {
+                    icon: TrendingDown,
+                    iconClassName: "text-rose-500",
+                  },
                 },
               ]),
               constructNode("range", "Range", {
@@ -149,14 +157,18 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
                 {
                   key: "protected_high",
                   title: "High",
-                  icon: ArrowUp,
-                  inputField: customPrice(),
+                  metadata: {
+                    icon: ArrowUp,
+                    inputField: customPrice(),
+                  },
                 },
                 {
                   key: "protected_low",
                   title: "Low",
-                  icon: ArrowDown,
-                  inputField: customPrice(),
+                  metadata: {
+                    icon: ArrowDown,
+                    inputField: customPrice(),
+                  },
                 },
               ]),
             }),
@@ -166,14 +178,18 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
                 {
                   key: "weak_high",
                   title: "High",
-                  icon: ArrowUp,
-                  inputField: customPrice(),
+                  metadata: {
+                    icon: ArrowUp,
+                    inputField: customPrice(),
+                  },
                 },
                 {
                   key: "weak_low",
                   title: "Low",
-                  icon: ArrowDown,
-                  inputField: customPrice(),
+                  metadata: {
+                    icon: ArrowDown,
+                    inputField: customPrice(),
+                  },
                 },
               ]),
             }),

@@ -31,7 +31,7 @@ export { TreeState, type ITreeState } from "./TreeState.class";
 export interface TimeframeNodeConfig {
   prefix: string;
   availableTimeframes: string[];
-  createChildren: (timeframePrefix: string) => TreeNodeConfig[];
+  createChildren?: (timeframePrefix: string) => TreeNodeConfig[];
   generateAntiKeys?: (timeframe: string, allTimeframes: string[]) => string[];
   icon?: LucideIcon;
   iconClassName?: string;
@@ -80,7 +80,9 @@ export const createTimeframeNodes = (
             .map((tf) => `${prefix}_${tf}`)
       : [];
 
-    const childrenConfigs = createChildren(timeframePrefix);
+    const childrenConfigs =
+      createChildren?.(timeframePrefix).map((config) => new TreeNode(config)) ??
+      undefined;
 
     return new TreeNode({
       key: timeframePrefix,
@@ -89,7 +91,7 @@ export const createTimeframeNodes = (
         anti: antiKeys,
         isTimeframe: true,
       },
-      children: childrenConfigs.map((config) => new TreeNode(config)),
+      children: childrenConfigs,
     });
   });
 };

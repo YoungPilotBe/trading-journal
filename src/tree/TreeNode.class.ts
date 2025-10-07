@@ -39,8 +39,6 @@ export interface TreeNodeMetadata {
   imageUrl?: string;
   imageClassName?: string;
   inputField?: InputFieldConfig;
-
-  // Dynamic node creation properties
   isAddable?: boolean; // If true, users can add multiple instances of this node
   addButtonLabel?: string; // Label for the add button (defaults to "+ Add {title}")
   maxInstances?: number; // Maximum number of instances allowed (undefined = unlimited)

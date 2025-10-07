@@ -163,7 +163,7 @@ export const Tree = ({ ...divProps }: Props) => {
           key={rowIndex}
           className="grid gap-2"
           style={{
-            gridTemplateColumns: `repeat(${maxDepth}, minmax(120px, 150px))`,
+            gridTemplateColumns: `repeat(${maxDepth}, 90px)`,
           }}
         >
           {row.map((cell, colIndex) => (

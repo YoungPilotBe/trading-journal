@@ -141,7 +141,7 @@ export const ConfirmationBadge = ({
   // If there's a description or image, wrap with tooltip
   if (description || imageUrl) {
     return (
-      <Tooltip>
+      <Tooltip delayDuration={500}>
         <TooltipTrigger asChild>{badgeElement}</TooltipTrigger>
         <TooltipContent
           side="right"

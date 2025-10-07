@@ -7,8 +7,16 @@ import { constructAntiBranch } from "../utils/node-creators";
  */
 export const createDiscountPremiumPricing = (): TreeNodeConfig[] =>
   constructAntiBranch([
-    { key: "extreme_premium", title: "Extreme Premium", icon: ChevronsUp },
-    { key: "premium", title: "Premium", icon: ChevronUp },
-    { key: "discount", title: "Discount", icon: ChevronDown },
-    { key: "extreme_discount", title: "Extreme Discount", icon: ChevronsDown },
+    {
+      key: "extreme_premium",
+      title: "Extreme Premium",
+      metadata: { icon: ChevronsUp },
+    },
+    { key: "premium", title: "Premium", metadata: { icon: ChevronUp } },
+    { key: "discount", title: "Discount", metadata: { icon: ChevronDown } },
+    {
+      key: "extreme_discount",
+      title: "Extreme Discount",
+      metadata: { icon: ChevronsDown },
+    },
   ]);
