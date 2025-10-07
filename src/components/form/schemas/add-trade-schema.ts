@@ -5,6 +5,14 @@ import { z } from "zod";
 // Define the valid timeframes as a union type
 const timeframeSchema = z.enum(TIMEFRAMES);
 const timeframesSchema = timeframeSchema.array();
+export const emotionSchema = z.enum([
+  "fear",
+  "greed",
+  "impulsive",
+  "calm",
+  "revenge",
+]);
+
 // Base schema object for all trade setups
 const baseTradeSetupObject = {
   asset: z.string(),
@@ -14,6 +22,7 @@ const baseTradeSetupObject = {
   direction: z.enum(["long", "short"]),
   riskReward: z.number().nullable(),
   timeframes: timeframesSchema,
+  emotion: emotionSchema,
 };
 
 // Object for when status is 'closed' - result is required
@@ -60,6 +69,7 @@ export const createSnapshotSchema = z.object({
   ]),
   imageId: z.custom<Id<"tradingview_images">>(),
   result: z.enum(["win", "loss", "breakeven"]).optional(),
+  emotion: emotionSchema.nullable(),
 });
 
 // Schema for createTradeSetup mutation - only the fields it needs
@@ -79,6 +89,7 @@ export const createTradeSetupSchema = z.object({
     "closed",
   ]),
   result: z.enum(["win", "loss", "breakeven"]).optional(),
+  emotion: emotionSchema.nullable(),
   imageId: z.custom<Id<"tradingview_images">>(),
 });
 
@@ -91,6 +102,7 @@ export const updateTradeSetupSchema = z.object({
   direction: z.enum(["long", "short"]).optional(),
   trade_template: z.custom<Id<"trade_templates">>().optional(),
   riskReward: z.number().nullable().optional(),
+  emotion: emotionSchema.nullable(),
   timeframes: timeframesSchema.optional(),
 });
 

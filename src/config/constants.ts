@@ -1,5 +1,13 @@
 // src/config/constants.ts
 import { Doc } from "convex/_generated/dataModel";
+import {
+  Heart,
+  LucideIcon,
+  ShieldAlert,
+  Target,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 
 export type StatusContext = {
   isNew: boolean;
@@ -110,5 +118,44 @@ export const statusOptions: {
     label: "Canceled",
     color: "border-pink-400/70 bg-pink-500/5 text-pink-300/80",
     disabled: createChronologicalChecker("canceled"),
+  },
+] as const;
+
+// Emotion options based on emotionUnion
+export const emotionOptions: {
+  value: Doc<"snapshots">["emotion"];
+  label: string;
+  color: string;
+  icon: LucideIcon;
+}[] = [
+  {
+    value: "fear",
+    label: "Fear",
+    color: "border-red-400/70 bg-red-500/5 text-red-300/80",
+    icon: ShieldAlert,
+  },
+  {
+    value: "greed",
+    label: "Greed",
+    color: "border-yellow-400/70 bg-yellow-500/5 text-yellow-300/80",
+    icon: TrendingUp,
+  },
+  {
+    value: "impulsive",
+    label: "Impulsive",
+    color: "border-orange-400/70 bg-orange-500/5 text-orange-300/80",
+    icon: Zap,
+  },
+  {
+    value: "calm",
+    label: "Calm",
+    color: "border-blue-400/70 bg-blue-500/5 text-blue-300/80",
+    icon: Heart,
+  },
+  {
+    value: "revenge",
+    label: "Revenge",
+    color: "border-purple-400/70 bg-purple-500/5 text-purple-300/80",
+    icon: Target,
   },
 ] as const;

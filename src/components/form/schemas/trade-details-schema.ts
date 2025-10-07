@@ -1,5 +1,6 @@
 import { Doc, Id } from "convex/_generated/dataModel";
 import { z } from "zod";
+import { emotionSchema } from "./add-trade-schema";
 
 // Define base schema with common fields
 const baseSchema = z.object({
@@ -18,6 +19,7 @@ const baseSchema = z.object({
     "closed",
   ]),
   result: z.enum(["win", "loss", "breakeven"]).optional().nullable(),
+  emotion: emotionSchema.nullable(),
 });
 
 // Extend with trade_template field that's specific to trade details
@@ -51,5 +53,6 @@ export const createTradeDetailsDefaultValues = (
     riskReward: existingData?.existingTradeSetup?.riskReward || null,
     timeframes: existingData?.existingTradeSetup?.timeframes || ["4h"],
     result: existingData?.existingTradeSetup?.result || null,
+    emotion: existingData?.existingSnapshot?.emotion || null,
   };
 };

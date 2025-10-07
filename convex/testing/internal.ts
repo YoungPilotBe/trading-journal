@@ -24,6 +24,7 @@ export const createTestDataSet = internalMutation({
           ...args,
           status: snapshots[0].status as Doc<"snapshots">["status"],
           imageId: snapshots[0].imageId as Id<"tradingview_images">,
+          emotion: "fear",
         }
       );
 
@@ -41,6 +42,7 @@ export const createTestDataSet = internalMutation({
           status: snapshot.status as Doc<"snapshots">["status"],
           imageId: snapshot.imageId as Id<"tradingview_images">,
           timeframe: snapshot.timeframe,
+          emotion: "fear",
         });
       }
     }

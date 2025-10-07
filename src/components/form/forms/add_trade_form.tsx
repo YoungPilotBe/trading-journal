@@ -13,6 +13,7 @@ import NumberField from "../components/number-field";
 import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
 import Direction from "../features/direction";
+import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
 import SingleTimeframe from "../features/single-timeframe";
 import StatusOptions from "../features/status-options";
@@ -253,6 +254,15 @@ const AddTradeForm = ({
             )}
           />
         )}
+
+        <Controller
+          name="emotion"
+          control={control}
+          disabled={disabledFields?.includes("emotion")}
+          render={({ field }) => (
+            <EmotionOptions field={field} label="Emotion" />
+          )}
+        />
 
         <Controller
           name="timeframes"

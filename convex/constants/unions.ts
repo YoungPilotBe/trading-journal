@@ -21,3 +21,11 @@ export const resultUnion = v.union(
   v.literal("loss"),
   v.literal("breakeven")
 );
+
+export const emotionUnion = v.union(
+  v.literal("fear"),
+  v.literal("greed"),
+  v.literal("impulsive"),
+  v.literal("calm"),
+  v.literal("revenge")
+);

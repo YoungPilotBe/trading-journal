@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
-import { resultUnion, statusUnion } from "../constants/unions";
+import { emotionUnion, resultUnion, statusUnion } from "../constants/unions";
 
 // Update an existing trade setup
 export const updateTradeSetup = mutation({
@@ -12,6 +12,7 @@ export const updateTradeSetup = mutation({
     title: v.optional(v.union(v.string(), v.null())),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     status: v.optional(statusUnion),
+    emotion: v.union(emotionUnion, v.null()),
     trade_template: v.optional(v.union(v.id("trade_templates"), v.null())),
     riskReward: v.optional(v.union(v.number(), v.null())),
     result: v.optional(resultUnion),
@@ -19,13 +20,20 @@ export const updateTradeSetup = mutation({
     timeframe: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { id, snapshotId, title, timeframe, imageId, ...updates } = args;
+    const { id, snapshotId, title, timeframe, imageId, emotion, ...updates } =
+      args;
 
     await ctx.db.patch(id, {
       ...updates,
       updatedAt: Date.now(),
       trade_template: args.trade_template ? args.trade_template : undefined,
     });
+
+    if (emotion) {
+      await ctx.db.patch(snapshotId, {
+        emotion,
+      });
+    }
 
     if (title) {
       await ctx.db.patch(id, {

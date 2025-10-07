@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { statusUnion } from "./constants/unions";
+import { emotionUnion, statusUnion } from "./constants/unions";
 
 export default defineSchema({
   tradingview_images: defineTable({
@@ -111,6 +111,8 @@ export default defineSchema({
 
     // Timestamp when this snapshot was created
     createdAt: v.number(),
+
+    emotion: v.optional(emotionUnion),
   })
     .index("by_trade_setup", ["tradeSetupId"])
     .index("by_created_at", ["createdAt"])

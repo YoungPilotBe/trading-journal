@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import NumberField from "../components/number-field";
 import TextField from "../components/text-field";
 import Direction from "../features/direction";
+import EmotionOptions from "../features/emotion-selector";
 import NotesSelector from "../features/notes-selector";
 import Result from "../features/result";
 import StatusOptions from "../features/status-options";
@@ -258,6 +259,15 @@ const TradeDetailsForm = ({
             )}
           />
         )}
+        {/* Status */}
+        <Controller
+          name="emotion"
+          disabled={isPending}
+          control={control}
+          render={({ field }) => (
+            <EmotionOptions field={field} label="Emotion" />
+          )}
+        />
 
         {/* Timeframes */}
         <Controller

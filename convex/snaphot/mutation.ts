@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { api, internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
-import { resultUnion, statusUnion } from "../constants/unions";
+import { emotionUnion, resultUnion, statusUnion } from "../constants/unions";
 
 export const updateSnapshot = mutation({
   args: {
@@ -32,11 +32,12 @@ export const createSnapshot = mutation({
     status: statusUnion,
     imageId: v.id("tradingview_images"),
     result: v.optional(resultUnion),
+    emotion: v.union(emotionUnion, v.null()),
     timeframe: v.string(),
   },
   handler: async (
     ctx,
-    { imageId, tradeSetupId, status, result, timeframe }
+    { imageId, tradeSetupId, status, result, timeframe, emotion }
   ) => {
     const now = Date.now();
 
@@ -45,6 +46,7 @@ export const createSnapshot = mutation({
       status: status,
       imageId: imageId,
       timeframe,
+      emotion: emotion ?? undefined,
       createdAt: now,
     });
 
@@ -54,6 +56,7 @@ export const createSnapshot = mutation({
         snapshotId,
         result,
         imageId,
+        emotion,
       });
     }
 
