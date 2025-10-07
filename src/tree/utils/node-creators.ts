@@ -1,6 +1,7 @@
 import { LucideIcon } from "lucide-react";
 import { z } from "zod";
 import type { TreeNodeConfig } from "../tree.utils.new";
+import { TreeNode } from "../TreeNode.class";
 
 // Type for input field schemas
 export interface InputFieldSchema {
@@ -78,6 +79,16 @@ export const constructAntiBranch = (
 };
 
 /**
+ * Helper to recursively convert TreeNode to TreeNodeConfig
+ */
+const treeNodeToConfig = (node: TreeNode): TreeNodeConfig => ({
+  key: node.key,
+  title: node.title,
+  metadata: node.metadata,
+  children: node.children.map(treeNodeToConfig),
+});
+
+/**
  * Helper to create timeframe-based children
  */
 export const createTimeframedChildren = (
@@ -90,28 +101,14 @@ export const createTimeframedChildren = (
   }
 
   // createTimeframeNodes returns TreeNode[], but we need TreeNodeConfig[]
-  // So we need to convert them back to config format
+  // So we need to convert them back to config format recursively
   const nodes = createTimeframeNodes({
     prefix,
     availableTimeframes,
     createChildren: () => childrenFn(),
   });
 
-  return nodes.map((node) => ({
-    key: node.key,
-    title: node.title,
-    metadata: node.metadata,
-    children: node.children.map((child) => ({
-      key: child.key,
-      title: child.title,
-      metadata: child.metadata,
-      children: child.children.map((grandchild) => ({
-        key: grandchild.key,
-        title: grandchild.title,
-        metadata: grandchild.metadata,
-      })),
-    })),
-  }));
+  return nodes.map(treeNodeToConfig);
 };
 
 // Import here to avoid circular dependency
