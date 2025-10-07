@@ -37,6 +37,7 @@ import {
 import type { Timeframe } from "../../config/timeframe-order";
 import {
   createDiscountPremiumPricing,
+  createFVG,
   createOBIMWithTimeframes,
   createRangeWithTimeframes,
   createSupplyRangeWithTimeframes,
@@ -506,6 +507,7 @@ export const createIdeaStrategyTree: StrategyFactory<IdeaStrategyConfig> = (
             availableTimeframes.map((tf) => tf.toString())
           ),
         },
+        ...createFVG("demand", availableTimeframes),
       ],
     }),
     new TreeNode({

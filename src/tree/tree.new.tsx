@@ -28,6 +28,7 @@
 
 import { useMemo } from "react";
 import { AddNodeButton } from "./components/AddNodeButton";
+import { ConfirmationBadge } from "./components/ConfirmationBadge";
 import { InputField } from "./components/InputField";
 import { TimeframeBadge } from "./components/TimeframeBadge";
 import { ToggleBadge } from "./components/ToggleBadge";
@@ -40,7 +41,13 @@ import {
 
 interface Props extends React.InputHTMLAttributes<HTMLDivElement> {}
 
-type CellType = "addButton" | "inputField" | "timeframe" | "leaf" | "branch";
+type CellType =
+  | "addButton"
+  | "inputField"
+  | "timeframe"
+  | "confirmation"
+  | "leaf"
+  | "branch";
 
 export const Tree = ({ ...divProps }: Props) => {
   // Get tree managers and state from context
@@ -65,6 +72,7 @@ export const Tree = ({ ...divProps }: Props) => {
     if (cell.isAddButton && cell.templateNodeKey) return "addButton";
     if (cell.metadata.inputField && cell.parentKey) return "inputField";
     if (cell.metadata.isTimeframe) return "timeframe";
+    if (cell.metadata.isConfirmation) return "confirmation";
     if (cell.isLeaf) return "leaf";
     return "branch";
   };
@@ -100,6 +108,15 @@ export const Tree = ({ ...divProps }: Props) => {
       })(),
       timeframe: (
         <TimeframeBadge
+          label={cell.content}
+          fieldName={cell.nodeKey}
+          isBranch={!cell.isLeaf}
+          {...cell}
+          {...cell.metadata}
+        />
+      ),
+      confirmation: (
+        <ConfirmationBadge
           label={cell.content}
           fieldName={cell.nodeKey}
           isBranch={!cell.isLeaf}
@@ -147,7 +164,7 @@ export const Tree = ({ ...divProps }: Props) => {
           key={rowIndex}
           className="grid gap-2"
           style={{
-            gridTemplateColumns: `repeat(${maxDepth}, minmax(100px, 150px))`,
+            gridTemplateColumns: `repeat(${maxDepth}, minmax(120px, 150px))`,
           }}
         >
           {row.map((cell, colIndex) => (

@@ -10,6 +10,8 @@ import {
   ChevronsDown,
   ChevronsUp,
   Clock,
+  CloudLightning,
+  DotIcon,
 } from "lucide-react";
 import { z } from "zod";
 import type { TreeNodeConfig } from "./tree.utils.new";
@@ -227,6 +229,23 @@ export const createSupplyDemandOBIMChildren = (
 
   return [
     {
+      key: `${prefix}_obim_confirmations`,
+      title: "Confirmations",
+      children: [
+        {
+          key: `${prefix}_obim_confirmations_bos_break`,
+          title: "BOS Break",
+          metadata: {
+            icon: CloudLightning,
+            isConfirmation: true,
+          },
+        },
+      ],
+      metadata: {
+        isConfirmation: true,
+      },
+    },
+    {
       key: `${prefix}_obim_extension`,
       title: "Extension",
       children: [
@@ -243,7 +262,7 @@ export const createSupplyDemandOBIMChildren = (
         },
         {
           key: `${prefix}_obim_extension_25_percent`,
-          title: "25%",
+          title: "Wick 25%",
           metadata: {
             imageUrl: isSupply
               ? bearishOBIM25Img
@@ -330,6 +349,23 @@ export const createWyckoffWithTimeframes = (
 // Helper function to create Range children for Demand
 export const createDemandRangeChildren = (prefix: string): TreeNodeConfig[] => [
   {
+    key: `${prefix}_range_confirmations`,
+    title: "Confirmations",
+    children: [
+      {
+        key: `${prefix}_range_confirmations_midpoint`,
+        title: "Midpoint",
+        metadata: {
+          icon: DotIcon,
+          isConfirmation: true,
+        },
+      },
+    ],
+    metadata: {
+      isConfirmation: true,
+    },
+  },
+  {
     key: `${prefix}_range_inducement`,
     title: "Inducement",
   },
@@ -377,13 +413,6 @@ export const createSupplyRangeChildren = (prefix: string): TreeNodeConfig[] => [
       inputField: customDrives(),
     },
   },
-  {
-    key: `${prefix}_range_fixed_range_confluence`,
-    title: "Fixed Range Confluence",
-    children: createFixedRangeConfluenceChildren(
-      `${prefix}_range_fixed_range_confluence`
-    ),
-  },
 ];
 
 // Helper function to create Supply Range children with timeframe layer
@@ -403,6 +432,17 @@ export const createSupplyRangeWithTimeframes = (
       createSupplyRangeChildren(timeframePrefix),
   });
 };
+
+export const createFVGChildren = (prefix: string): TreeNodeConfig[] => [
+  {
+    key: "child1",
+    title: "child",
+  },
+  {
+    key: "child2",
+    title: "child",
+  },
+];
 
 export const customPrice = () => {
   return {
@@ -432,3 +472,24 @@ export const customDrives = () => {
     ],
   };
 };
+
+export const createFVG = (
+  prefix: string,
+  availableTimeframes: string[]
+): TreeNodeConfig[] => [
+  {
+    key: `${prefix}_fvg`,
+    title: "FVG",
+    metadata: {
+      isAddable: true,
+      addButtonLabel: "Add FVG",
+      addablePrefix: (originalKey, instanceNumber) =>
+        `${originalKey}_#${instanceNumber}`,
+    },
+    children: createTimeframeNodes({
+      prefix: `${prefix}_obim`,
+      availableTimeframes,
+      createChildren: (timeframePrefix) => createFVGChildren(timeframePrefix),
+    }),
+  },
+];
