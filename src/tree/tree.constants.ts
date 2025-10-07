@@ -16,8 +16,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { z } from "zod";
-import type { TreeNode } from "./tree.utils";
-import { createTimeframeNode } from "./tree.utils";
+import type { TreeNodeConfig } from "./tree.utils.new";
+import { createTimeframeNodes } from "./tree.utils.new";
 
 // Base icon className for all tree icons
 export const TREE_ICON_BASE_CLASS = "w-3 h-3 flex-shrink-0";
@@ -98,37 +98,42 @@ export const conditionalEffectsConfig: ConditionalEffectRule[] = [
 
 export const createContradictingBranch = (
   prefix: string,
-  contras: (string | [string, TreeNode[]] | TreeNode)[]
-): NonNullable<TreeNode["children"]> => {
+  contras: (string | [string, TreeNodeConfig[]] | TreeNodeConfig)[]
+): TreeNodeConfig[] => {
   // Extract just the keys for anti-array generation
   const contraKeys = contras.map((contra) => {
     if (typeof contra === "string") return contra;
     if (Array.isArray(contra)) return contra[0];
-    // For TreeNode objects, extract the key by removing the prefix
+    // For TreeNodeConfig objects, extract the key by removing the prefix
     return contra.key.replace(`${prefix}_`, "");
   });
 
   return contras.map((contra, index) => {
-    // If it's already a complete TreeNode, use it but ensure anti array is set
+    // If it's already a complete TreeNodeConfig, use it but ensure anti array is set
     if (typeof contra === "object" && !Array.isArray(contra)) {
       return {
         ...contra,
-        anti: contraKeys
-          .filter((_, i) => i !== index)
-          .map((otherKey) => `${prefix}_${otherKey}`),
+        metadata: {
+          ...contra.metadata,
+          anti: contraKeys
+            .filter((_, i) => i !== index)
+            .map((otherKey) => `${prefix}_${otherKey}`),
+        },
       };
     }
 
-    // Handle string or [string, TreeNode[]] tuple
+    // Handle string or [string, TreeNodeConfig[]] tuple
     const [key, children] =
       typeof contra === "string" ? [contra, undefined] : contra;
 
     return {
       key: `${prefix}_${key}`,
       title: `${capitalize(key)}`,
-      anti: contraKeys
-        .filter((_, i) => i !== index)
-        .map((otherKey) => `${prefix}_${otherKey}`),
+      metadata: {
+        anti: contraKeys
+          .filter((_, i) => i !== index)
+          .map((otherKey) => `${prefix}_${otherKey}`),
+      },
       children,
     };
   });
@@ -150,55 +155,71 @@ export const createFixedRangeConfluenceChildren = (prefix: string) => [
   },
 ];
 
-export const createDiscountPremiumPricing = (prefix: string) =>
+export const createDiscountPremiumPricing = (
+  prefix: string
+): TreeNodeConfig[] =>
   createContradictingBranch(prefix, [
     {
       key: `${prefix}_extreme_premium`,
       title: "Extreme Premium",
-      icon: ChevronsUp,
-      iconClassName: "",
+      metadata: {
+        icon: ChevronsUp,
+        iconClassName: "",
+      },
     },
     {
       key: `${prefix}_premium`,
       title: "Premium",
-      icon: ChevronUp,
-      iconClassName: "",
+      metadata: {
+        icon: ChevronUp,
+        iconClassName: "",
+      },
     },
     {
       key: `${prefix}_discount`,
       title: "Discount",
-      icon: ChevronDown,
-      iconClassName: "",
+      metadata: {
+        icon: ChevronDown,
+        iconClassName: "",
+      },
     },
     {
       key: `${prefix}_extreme_discount`,
       title: "Extreme Discount",
-      icon: ChevronsDown,
-      iconClassName: "",
+      metadata: {
+        icon: ChevronsDown,
+        iconClassName: "",
+      },
     },
   ]);
 
 // Helper function to create Wyckoff children
-export const createWyckoffChildren = (prefix: string): TreeNode[] => [
+export const createWyckoffChildren = (prefix: string): TreeNodeConfig[] => [
   {
     key: `${prefix}_accumulation`,
     title: "Accumulation",
-    icon: TrendingUp,
-    iconClassName: "text-emerald-500",
-    anti: [`${prefix}_distribution`],
+    metadata: {
+      icon: TrendingUp,
+      iconClassName: "text-emerald-500",
+      anti: [`${prefix}_distribution`],
+    },
     children: [
       {
         key: `${prefix}_accumulation_model_1`,
         title: "Model 1",
-        icon: Target,
-        iconClassName: "text-emerald-500/70",
-        anti: [`${prefix}_accumulation_model_2`],
+        metadata: {
+          icon: Target,
+          iconClassName: "text-emerald-500/70",
+          anti: [`${prefix}_accumulation_model_2`],
+        },
         children: [
           {
             key: `${prefix}_accumulation_model_1_confirmations`,
             title: "Confirmations",
-            icon: CheckCircle,
-            iconClassName: "text-emerald-500/50",
+            metadata: {
+              icon: CheckCircle,
+              iconClassName: "text-emerald-500/50",
+            },
             children: [], // No children for confirmations in this case
           },
         ],
@@ -206,15 +227,19 @@ export const createWyckoffChildren = (prefix: string): TreeNode[] => [
       {
         key: `${prefix}_accumulation_model_2`,
         title: "Model 2",
-        icon: Target,
-        iconClassName: "text-emerald-500/70",
-        anti: [`${prefix}_accumulation_model_1`],
+        metadata: {
+          icon: Target,
+          iconClassName: "text-emerald-500/70",
+          anti: [`${prefix}_accumulation_model_1`],
+        },
         children: [
           {
             key: `${prefix}_accumulation_model_2_confirmations`,
             title: "Confirmations",
-            icon: CheckCircle,
-            iconClassName: "text-emerald-500/50",
+            metadata: {
+              icon: CheckCircle,
+              iconClassName: "text-emerald-500/50",
+            },
             children: [], // No children for confirmations in this case
           },
         ],
@@ -224,22 +249,28 @@ export const createWyckoffChildren = (prefix: string): TreeNode[] => [
   {
     key: `${prefix}_distribution`,
     title: "Distribution",
-    icon: TrendingDown,
-    iconClassName: "text-rose-500",
-    anti: [`${prefix}_accumulation`],
+    metadata: {
+      icon: TrendingDown,
+      iconClassName: "text-rose-500",
+      anti: [`${prefix}_accumulation`],
+    },
     children: [
       {
         key: `${prefix}_distribution_model_1`,
         title: "Model 1",
-        icon: Target,
-        iconClassName: "text-rose-500/70",
-        anti: [`${prefix}_distribution_model_2`],
+        metadata: {
+          icon: Target,
+          iconClassName: "text-rose-500/70",
+          anti: [`${prefix}_distribution_model_2`],
+        },
         children: [
           {
             key: `${prefix}_distribution_model_1_confirmations`,
             title: "Confirmations",
-            icon: CheckCircle,
-            iconClassName: "text-rose-500/50",
+            metadata: {
+              icon: CheckCircle,
+              iconClassName: "text-rose-500/50",
+            },
             children: [], // No children for confirmations in this case
           },
         ],
@@ -247,15 +278,19 @@ export const createWyckoffChildren = (prefix: string): TreeNode[] => [
       {
         key: `${prefix}_distribution_model_2`,
         title: "Model 2",
-        icon: Target,
-        iconClassName: "text-rose-500/70",
-        anti: [`${prefix}_distribution_model_1`],
+        metadata: {
+          icon: Target,
+          iconClassName: "text-rose-500/70",
+          anti: [`${prefix}_distribution_model_1`],
+        },
         children: [
           {
             key: `${prefix}_distribution_model_2_confirmations`,
             title: "Confirmations",
-            icon: CheckCircle,
-            iconClassName: "text-rose-500/50",
+            metadata: {
+              icon: CheckCircle,
+              iconClassName: "text-rose-500/50",
+            },
             children: [], // No children for confirmations in this case
           },
         ],
@@ -276,7 +311,9 @@ export const createLiquidityChildren = (prefix: string) => [
 ];
 
 // Helper function to create OBIM children for Supply/Demand
-export const createSupplyDemandOBIMChildren = (prefix: string) => {
+export const createSupplyDemandOBIMChildren = (
+  prefix: string
+): TreeNodeConfig[] => {
   const isSupply = prefix.includes("supply");
   const isDemand = prefix.includes("demand");
 
@@ -288,20 +325,24 @@ export const createSupplyDemandOBIMChildren = (prefix: string) => {
         {
           key: `${prefix}_obim_extension_fvg`,
           title: "FVG",
-          imageUrl: isSupply
-            ? bearishOBIMImg
-            : isDemand
-              ? bullishOBIMImg
-              : undefined,
+          metadata: {
+            imageUrl: isSupply
+              ? bearishOBIMImg
+              : isDemand
+                ? bullishOBIMImg
+                : undefined,
+          },
         },
         {
           key: `${prefix}_obim_extension_25_percent`,
           title: "25%",
-          imageUrl: isSupply
-            ? bearishOBIM25Img
-            : isDemand
-              ? bullishOBIM25Img
-              : undefined,
+          metadata: {
+            imageUrl: isSupply
+              ? bearishOBIM25Img
+              : isDemand
+                ? bullishOBIM25Img
+                : undefined,
+          },
         },
       ],
     },
@@ -320,7 +361,9 @@ export const createSupplyDemandOBIMChildren = (prefix: string) => {
         {
           key: `${prefix}_obim_pivot_dp`,
           title: "DP",
-          imageUrl: extremumDPImg,
+          metadata: {
+            imageUrl: extremumDPImg,
+          },
         },
       ],
     },
@@ -349,7 +392,7 @@ export const createOBIMWithTimeframes = (
     return createSupplyDemandOBIMChildren(prefix);
   }
 
-  return createTimeframeNode({
+  return createTimeframeNodes({
     prefix: `${prefix}_obim`,
     availableTimeframes,
     createChildren: (timeframePrefix) =>
@@ -367,7 +410,7 @@ export const createWyckoffWithTimeframes = (
     return createWyckoffChildren(prefix);
   }
 
-  return createTimeframeNode({
+  return createTimeframeNodes({
     prefix: `${prefix}_wyckoff`,
     availableTimeframes,
     createChildren: (timeframePrefix) => createWyckoffChildren(timeframePrefix),
@@ -377,29 +420,30 @@ export const createWyckoffWithTimeframes = (
 };
 
 // Helper function to create Range children for Demand
-export const createDemandRangeChildren = (prefix: string) =>
-  [
-    {
-      key: `${prefix}_range_inducement`,
-      title: "Inducement",
-    },
-    {
-      key: `${prefix}_range_s2b`,
-      title: "S2B",
-    },
-    {
-      key: `${prefix}_range_chain`,
-      title: "Chain",
+export const createDemandRangeChildren = (prefix: string): TreeNodeConfig[] => [
+  {
+    key: `${prefix}_range_inducement`,
+    title: "Inducement",
+  },
+  {
+    key: `${prefix}_range_s2b`,
+    title: "S2B",
+  },
+  {
+    key: `${prefix}_range_chain`,
+    title: "Chain",
+    metadata: {
       inputField: customDrives(),
     },
-    {
-      key: `${prefix}_range_fixed_range_confluence`,
-      title: "Fixed Range Confluence",
-      children: createFixedRangeConfluenceChildren(
-        `${prefix}_range_fixed_range_confluence`
-      ),
-    },
-  ] satisfies TreeNode[];
+  },
+  {
+    key: `${prefix}_range_fixed_range_confluence`,
+    title: "Fixed Range Confluence",
+    children: createFixedRangeConfluenceChildren(
+      `${prefix}_range_fixed_range_confluence`
+    ),
+  },
+];
 
 // Helper function to create Range children with timeframe layer
 export const createRangeWithTimeframes = (
@@ -411,7 +455,7 @@ export const createRangeWithTimeframes = (
     return createDemandRangeChildren(prefix);
   }
 
-  return createTimeframeNode({
+  return createTimeframeNodes({
     prefix: `${prefix}_range`,
     availableTimeframes,
     createChildren: (timeframePrefix) =>
@@ -420,7 +464,7 @@ export const createRangeWithTimeframes = (
 };
 
 // Helper function to create Range children for Supply
-export const createSupplyRangeChildren = (prefix: string) => [
+export const createSupplyRangeChildren = (prefix: string): TreeNodeConfig[] => [
   {
     key: `${prefix}_range_inducement`,
     title: "Inducement",
@@ -432,7 +476,9 @@ export const createSupplyRangeChildren = (prefix: string) => [
   {
     key: `${prefix}_range_chain`,
     title: "Chain",
-    inputField: customDrives(),
+    metadata: {
+      inputField: customDrives(),
+    },
   },
   {
     key: `${prefix}_range_fixed_range_confluence`,
@@ -453,7 +499,7 @@ export const createSupplyRangeWithTimeframes = (
     return createSupplyRangeChildren(prefix);
   }
 
-  return createTimeframeNode({
+  return createTimeframeNodes({
     prefix: `${prefix}_range`,
     availableTimeframes,
     createChildren: (timeframePrefix) =>

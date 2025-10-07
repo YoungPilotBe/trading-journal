@@ -3,23 +3,87 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useFieldEffect, useTreeToggle } from "@/tree/TreeContext";
-import { findNodeByKeyArray } from "@/tree/tree.utils";
-import { clsx } from "clsx";
-import { ChevronRight, LucideIcon, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { cva, type VariantProps } from "class-variance-authority";
+import { ChevronRight, type LucideIcon, Settings } from "lucide-react";
+import {
+  useFieldEffect,
+  useTreeActions,
+  useTreeManagers,
+  useTreeStateValue,
+} from "./TreeContext.new";
 import { TREE_ICON_BASE_CLASS } from "./tree.constants";
+
+const toggleBadgeVariants = cva(
+  // Base styles
+  "px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border duration-200 flex items-center flex-shrink-0",
+  {
+    variants: {
+      layout: {
+        dir: "ml-auto w-fit justify-end",
+        normal: "w-full justify-center text-center line-clamp-2 leading-tight",
+      },
+      variant: {
+        default: "",
+        confirmation: "",
+      },
+      state: {
+        toggled: "",
+        untoggled: "",
+        disabled: "opacity-50 cursor-not-allowed",
+      },
+    },
+    compoundVariants: [
+      // Default variant - toggled
+      {
+        variant: "default",
+        state: "toggled",
+        class:
+          "bg-primary/20 border-primary text-primary shadow-md font-semibold",
+      },
+      // Default variant - untoggled
+      {
+        variant: "default",
+        state: "untoggled",
+        class:
+          "bg-gradient-to-t from-muted/20 to-muted/10 border-muted/50 text-muted-foreground hover:from-muted hover:to-accent cursor-pointer",
+      },
+      // Confirmation variant - toggled
+      {
+        variant: "confirmation",
+        state: "toggled",
+        class:
+          "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-md font-semibold",
+      },
+      // Confirmation variant - untoggled
+      {
+        variant: "confirmation",
+        state: "untoggled",
+        class:
+          "bg-emerald-500/20 border-emerald-500 text-emerald-700 shadow-md font-semibold opacity-50",
+      },
+    ],
+    defaultVariants: {
+      layout: "normal",
+      variant: "default",
+      state: "untoggled",
+    },
+  }
+);
 
 interface SimplifiedToggleBadgeProps
   extends Omit<
-    React.ButtonHTMLAttributes<HTMLButtonElement>,
-    "onChange" | "onClick"
-  > {
+      React.ButtonHTMLAttributes<HTMLButtonElement>,
+      "onChange" | "onClick"
+    >,
+    VariantProps<typeof toggleBadgeVariants> {
   label: string;
   badgeStyle?: string;
   fieldName: string;
   icon?: LucideIcon;
   iconClassName?: string;
   isDir?: boolean;
+  isConfirmation?: boolean;
   isBranch?: boolean;
   description?: string;
   imageUrl?: string;
@@ -33,18 +97,25 @@ export const ToggleBadge = ({
   icon,
   iconClassName = "",
   isDir = false,
+  isConfirmation = false,
   isBranch = false,
   description,
   imageUrl,
   imageClassName = "",
+  className,
   ...buttonProps
 }: SimplifiedToggleBadgeProps) => {
+  // Get context values using new hooks
   const effect = useFieldEffect(fieldName);
-  const { toggleNode, strategy, treeState } = useTreeToggle();
+  const { trees } = useTreeManagers();
+  const treeState = useTreeStateValue();
+  const { toggleNode } = useTreeActions();
 
-  // Get current state from context
-  const node = findNodeByKeyArray(strategy, fieldName);
-  const hasAntiSelection = Boolean(node?.anti?.length);
+  // Find the node in the tree using TreeNode class methods
+  const node = trees
+    .find((tree) => tree.findNode(fieldName))
+    ?.findNode(fieldName);
+  const hasAntiSelection = Boolean(node?.antiKeys.length);
   const isSelected = treeState.selectedNodes.has(fieldName);
   const isExpanded = treeState.expandedKeys.has(fieldName);
 
@@ -66,7 +137,7 @@ export const ToggleBadge = ({
 
     const IconComponent = icon;
     return (
-      <IconComponent className={clsx(TREE_ICON_BASE_CLASS, iconClassName)} />
+      <IconComponent className={cn(TREE_ICON_BASE_CLASS, iconClassName)} />
     );
   };
 
@@ -75,36 +146,26 @@ export const ToggleBadge = ({
       type="button"
       onClick={handleToggle}
       {...buttonProps}
-      className={clsx(
-        // Base styles matching button badge variant - fixed dimensions
-        isDir
-          ? "ml-auto w-fit h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border duration-200 flex items-center justify-end flex-shrink-0"
-          : "w-full h-fit px-1 py-0.5 gap-2 rounded-sm text-xs font-thin border duration-200 flex items-center justify-center flex-shrink-0",
-        // Text handling
-        !isDir && "text-center line-clamp-2 leading-tight",
-        // State-based styles
-        {
-          // Toggled state - bright and obvious
-          "bg-primary/20 border-primary text-primary shadow-md font-semibold":
-            isToggled,
-          // Non-toggled state - muted version
-          "bg-gradient-to-t from-muted/20 to-muted/10 border-muted/50 text-muted-foreground hover:from-muted hover:to-accent":
-            !isToggled,
-          // Disabled/readonly state
-          "opacity-50 cursor-not-allowed": buttonProps.disabled,
-          // Interactive cursor
-          "cursor-pointer": !buttonProps.disabled,
-        },
-        // Custom badgeStyle overrides
-        isToggled && badgeStyle,
-        buttonProps.className
-      )}
+      className={toggleBadgeVariants({
+        layout: isDir ? "dir" : "normal",
+        variant: isConfirmation ? "confirmation" : "default",
+        state: buttonProps.disabled
+          ? "disabled"
+          : isToggled
+            ? "toggled"
+            : "untoggled",
+        className: cn(
+          // Custom badgeStyle overrides (only apply if not confirmation variant)
+          isToggled && !isConfirmation && badgeStyle,
+          className
+        ),
+      })}
     >
       {isDir ? (
         // Directory style - just arrow on the right
         <>
-          <Settings className={clsx(TREE_ICON_BASE_CLASS)} />
-          <ChevronRight className={clsx(TREE_ICON_BASE_CLASS)} />
+          <Settings className={cn(TREE_ICON_BASE_CLASS)} />
+          <ChevronRight className={cn(TREE_ICON_BASE_CLASS)} />
         </>
       ) : (
         // Normal badge style
@@ -115,7 +176,7 @@ export const ToggleBadge = ({
           </div>
           {effect && (
             <div
-              className={clsx("size-1 rounded-full flex-shrink-0", {
+              className={cn("size-1 rounded-full flex-shrink-0", {
                 "bg-sky-500": effect === "positive",
                 "bg-red-500": effect === "negative",
               })}
@@ -143,7 +204,7 @@ export const ToggleBadge = ({
                 <img
                   src={imageUrl}
                   alt={label}
-                  className={clsx(
+                  className={cn(
                     "object-contain absolute inset-0 w-full h-full p-2",
                     imageClassName
                   )}

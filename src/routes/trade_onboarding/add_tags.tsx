@@ -1,14 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { Timeframe } from "@/config/timeframe-order";
-import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
-import { TreeProvider, useTreeState } from "@/tree/TreeContext";
-import { getStrategyFactory } from "@/tree/strategies";
-import { IdeaStrategyConfig } from "@/tree/strategies/idea.constants";
-import { Tree } from "@/tree/tree";
-import { createTreeStateFromSnapshot } from "@/tree/tree.utils";
-import { convexQuery } from "@convex-dev/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createIdeaStrategyTree } from "@/tree/strategies/idea.constants.new";
+import Tree from "@/tree/tree.new";
+import {
+  createTreeStateFromSnapshot,
+  type ITreeState,
+} from "@/tree/tree.utils.new";
+import { TreeProvider } from "@/tree/TreeContext.new";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
+import { useCallback } from "react";
 import { z } from "zod";
 import { api } from "../../../convex/_generated/api";
 
@@ -58,75 +58,57 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
   },
 });
 
-// Component that uses tree state from context
-function TreeContent() {
-  const { snapshotId } = Route.useSearch();
-  const navigate = useNavigate();
-  const { mutateAsync: updateSnapshot, isPending } = useUpdateSnapshot();
-  const treeState = useTreeState();
-
-  // Save both tags and complete tree state configuration
-  const handleSubmit = async () => {
-    await updateSnapshot({
-      snapshotId: snapshotId as Id<"snapshots">,
-      tags: treeState?.tags || {},
-      tags_config: treeState
-        ? {
-            expandedKeys: Array.from(treeState.expandedKeys),
-            selectedNodes: Array.from(treeState.selectedNodes),
-          }
-        : undefined,
-    });
-
-    navigate({ to: "/dashboard" });
-  };
-
-  return (
-    <>
-      <Tree className="overflow-y-auto flex-1" />
-
-      <Button
-        className="absolute bottom-0 right-0 translate-x-full duration-500 ease-out font-mono tracking-wide leading-3"
-        onClick={handleSubmit}
-        disabled={isPending}
-      >
-        {isPending ? "Saving..." : "Update"}
-      </Button>
-    </>
-  );
-}
-
 function RouteComponent() {
   const { tradeSetup, snapshot, previousSnapshot } = Route.useLoaderData();
-  if (!snapshot || !tradeSetup) return;
 
-  // Create initial tree state from snapshot data
+  // Mutation to save tree state (must be before conditional return)
+  const updateSnapshot = useConvexMutation(api.snaphot.mutation.updateSnapshot);
+
+  // Handle tree state changes - save to database (must be before conditional return)
+  const handleStateChange = useCallback(
+    (newState: ITreeState) => {
+      if (!snapshot) return;
+
+      updateSnapshot({
+        snapshotId: snapshot._id,
+        tags: newState.tags,
+        tags_config: {
+          expandedKeys: Array.from(newState.expandedKeys),
+          selectedNodes: Array.from(newState.selectedNodes),
+        },
+      });
+    },
+    [snapshot, updateSnapshot]
+  );
+
+  // Conditional returns must come after all hooks
+  if (!snapshot || !tradeSetup) return null;
+
+  // Initialize tree state from snapshot data
   const initialTreeState = createTreeStateFromSnapshot(
     snapshot,
     previousSnapshot
   );
 
-  // Get strategy factory based on trade status
-  const strategyFactory = getStrategyFactory(snapshot.status);
-
-  // Create strategy config with timeframes
-  const strategyConfig: IdeaStrategyConfig = {
-    availableTimeframes: (tradeSetup?.timeframes || []) as Timeframe[],
-  };
+  // Create strategy trees with available timeframes
+  // Dynamic instances will be automatically hydrated by TreeProvider
+  const trees = createIdeaStrategyTree({
+    availableTimeframes: ["1m", "5m", "15m"],
+  });
 
   return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Right-side form panel - similar to add_trade layout */}
-      <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto ">
+      <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto">
         <div className="flex flex-col items-start space-y-2 mt-2 h-full">
           <span className="text-white font-light font-mono">Tags</span>
           <TreeProvider
             tradeSetup={tradeSetup}
+            trees={trees}
             initialTreeState={initialTreeState}
-            strategyFactory={strategyFactory}
-            strategyConfig={strategyConfig}
+            onTreeStateChange={handleStateChange}
           >
-            <TreeContent />
+            <Tree />
           </TreeProvider>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { clsx } from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import type { InputFieldConfig } from "./tree.utils";
+import { InputFieldConfig } from "./TreeNode.class";
 
 interface InputFieldProps
   extends Omit<

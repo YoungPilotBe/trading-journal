@@ -2,7 +2,6 @@ import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-d
 import { DeleteTradeTemplateDialog } from "@/components/dialog/delete-trade-template-dialog";
 import NotesDialog from "@/components/dialog/notes-dialog";
 import { StatusChangeConfirmationDialog } from "@/components/dialog/status-change-confirmation-dialog";
-import { TagsComparisonDialog } from "@/components/dialog/tags-comparison-dialog";
 import { ComponentType } from "react";
 
 // Base dialog props that all dialogs must have
@@ -33,10 +32,10 @@ export const DIALOGS = {
     key: "STATUS_CHANGE_CONFIRMATION" as const,
     component: StatusChangeConfirmationDialog,
   },
-  TAGS_COMPARISON: {
-    key: "TAGS_COMPARISON" as const,
-    component: TagsComparisonDialog,
-  },
+  // TAGS_COMPARISON: {
+  //   key: "TAGS_COMPARISON" as const,
+  //   component: <></>,
+  // },
 } as const;
 
 export type DialogKey = keyof typeof DIALOGS;
