@@ -307,7 +307,7 @@ const TradingJournal = () => {
                 data-state={row.getIsSelected() && "selected"}
                 className={
                   row.original.latestStatus === "canceled"
-                    ? "relative opacity-80 after:absolute after:top-1/2 after:left-0 after:right-0 after:h-[0.5px] after:bg-muted-foreground after:transform after:-translate-y-1/2"
+                    ? "relative opacity-40 after:bg-muted-foreground "
                     : ""
                 }
               >

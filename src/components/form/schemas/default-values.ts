@@ -22,6 +22,9 @@ interface ExistingValuesData {
 export const createAddTradeSetupDefaultValues = (
   existingValues?: ExistingValuesData
 ): AddTradeSetupSchema => {
+  const status = existingValues?.existingSnapshot?.status || "idea";
+  const result = existingValues?.existingTradeSetup?.result;
+
   const baseData = {
     asset: existingValues?.imageData?.asset || "",
     creationTime: existingValues?.imageData?._creationTime
@@ -38,30 +41,27 @@ export const createAddTradeSetupDefaultValues = (
       existingValues?.imageData?.timeframe as Timeframe
     ),
     riskReward: existingValues?.existingTradeSetup?.riskReward || null,
-  };
+    emotion: existingValues?.existingSnapshot?.emotion || "calm",
+  } as const;
 
-  // If there's an existing trade setup with a result, return closed status
-  if (
-    existingValues?.existingTradeSetup?.result &&
-    existingValues.existingSnapshot?.status
-  ) {
+  // If status is closed and result exists, return closed schema
+  if (status === "closed" && result) {
     return {
       ...baseData,
-      status: existingValues.existingSnapshot?.status,
-      result: existingValues.existingTradeSetup.result,
+      status: "closed",
+      result,
     };
   }
 
-  // Return non-closed status
+  // Otherwise return non-closed schema (no result field)
   return {
     ...baseData,
-    status:
-      (existingValues?.existingSnapshot?.status as
-        | "idea"
-        | "watching"
-        | "executed"
-        | "reviewed"
-        | "canceled") || "idea",
+    status: status as
+      | "idea"
+      | "watching"
+      | "executed"
+      | "reviewed"
+      | "canceled",
   };
 };
 

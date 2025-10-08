@@ -4,7 +4,7 @@ import { TreeNode } from "../TreeNode.class";
 
 // Type for input field schemas
 export interface InputFieldSchema {
-  schema: z.ZodType<string>;
+  schema: z.ZodType<number>;
   placeholder: string;
   custom: Array<{
     key: string;

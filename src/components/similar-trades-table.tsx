@@ -305,11 +305,11 @@ const SimilarTradesTable = ({
 
                 if (!snapshotId || !targetSnapshotId) return;
 
-                openDialog("TAGS_COMPARISON", {
-                  currentSnapshotId: snapshotId,
-                  targetSnapshotId,
-                  similarityPercentage,
-                });
+                // openDialog("TAGS_COMPARISON", {
+                //   currentSnapshotId: snapshotId,
+                //   targetSnapshotId,
+                //   similarityPercentage,
+                // });
               }}
               disabled={!targetSnapshotId || !snapshotId}
               className="text-xs font-mono text-muted-foreground hover:text-primary hover:underline transition-colors disabled:cursor-not-allowed disabled:hover:no-underline disabled:hover:text-muted-foreground"
