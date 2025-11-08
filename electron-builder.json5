@@ -25,24 +25,18 @@
     artifactName: "${productName}-Mac-${version}-Installer.${ext}",
     category: "public.app-category.finance",
   },
-  win: {
-    target: [
-      {
-        target: "nsis",
-        arch: ["x64"],
-      },
-    ],
-    artifactName: "${productName}-Windows-${version}-Setup.${ext}",
+  linux: {
+    target: {
+      target: "appimage",
+      arch: ["armv7l"],
+    },
+    artifactName: "${productName}-Linux-${version}.${ext}",
+    category: "Office",
   },
   nsis: {
     oneClick: false,
     perMachine: false,
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false,
-  },
-  linux: {
-    target: ["AppImage"],
-    artifactName: "${productName}-Linux-${version}.${ext}",
-    category: "Office",
   },
 }
