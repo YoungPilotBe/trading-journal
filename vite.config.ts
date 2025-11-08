@@ -55,6 +55,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __DEV__: mode === "development",
       __PROD__: mode === "production",
+      __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
     },
 
     // Build configuration
