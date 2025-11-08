@@ -18,11 +18,13 @@ function LayoutComponent() {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
-                <Link to="/dashboard" className="flex flex-row gap-2">
+                <Link to="/dashboard" className="flex flex-row gap-2 items-end">
                   <h1 className="text-xl font-semibold text-primary">
                     Trading Journal
                   </h1>
-                  v{__APP_VERSION__}
+                  <small className=" text-[8px] text-muted-foreground">
+                    v{__APP_VERSION__}
+                  </small>
                 </Link>
               </div>
               <div className="flex flex-row items-center space-x-8">
