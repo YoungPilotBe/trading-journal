@@ -23,8 +23,6 @@ const config: ForgeConfig = {
         name: "trading-journal",
         owner: "YoungPilotBe",
       },
-      // TODO!
-      authToken: process.env.GITHUB_TOKEN,
       draft: true,
       generateReleaseNotes: true,
     }),
