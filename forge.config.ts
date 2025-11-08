@@ -25,6 +25,7 @@ const config: ForgeConfig = {
       },
       draft: true,
       generateReleaseNotes: true,
+      force: true,
     }),
   ],
   plugins: [

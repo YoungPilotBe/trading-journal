@@ -71,6 +71,17 @@ If you're running without a desktop environment, you'll need X11:
 sudo apt install -y xorg xinit
 ```
 
+### Emoji Not Displaying
+
+If emojis appear as empty boxes or don't display correctly, install emoji fonts:
+
+```bash
+sudo apt update
+sudo apt install -y fonts-noto-color-emoji
+```
+
+After installation, restart the application or reboot your Raspberry Pi for the fonts to take effect.
+
 ## Running on Boot (Optional)
 
 To run Trading Journal automatically on boot, create a systemd service:

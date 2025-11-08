@@ -29,8 +29,7 @@ let win: BrowserWindow | null;
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
-    width: 1200,
-    height: 800,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       // Security: disable node integration for production
@@ -38,6 +37,11 @@ function createWindow() {
       contextIsolation: true,
     },
   });
+
+  win.maximize();
+  win.setFullScreen(true);
+
+  win.show();
 
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
