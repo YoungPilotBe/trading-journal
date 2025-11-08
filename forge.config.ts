@@ -24,7 +24,7 @@ const config: ForgeConfig = {
         owner: "YoungPilotBe",
       },
       // TODO!
-      authToken: process.env.GH_TOKEN,
+      authToken: process.env.GITHUB_TOKEN,
       draft: true,
       generateReleaseNotes: true,
     }),
