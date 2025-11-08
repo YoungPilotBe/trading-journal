@@ -30,6 +30,13 @@
       target: "appimage",
       arch: ["arm64"],
     },
+    publish: {
+      provider: "github",
+      host: "github.com",
+      owner: "YoungPilotBe",
+      repo: "trading-journal",
+      releaseType: "draft",
+    },
     artifactName: "${productName}-Linux-${version}.${ext}",
     category: "Office",
   },

@@ -12,8 +12,8 @@
     "build": "npm run build:web && npm run build:electron",
     "build:web": "tsc && vite build",
     "build:electron": "electron-builder",
-    "build:rasp": "npm run build:web -- --mode production && npx electron-builder --linux --publish never",
-    "build:prod": "npm run build:web -- --mode production && npx electron-builder --publish never",
+    "build:rasp": "npm run build:web -- --mode production && npx electron-builder --linux --publish always",
+    "build:prod": "npm run build:web -- --mode production && npx electron-builder --publish always",
     "build:dev": "npm run build:web -- --mode development && npm run build:electron",
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy",
@@ -21,6 +21,15 @@
     "preview": "vite preview",
     "db:flush": "npx convex dev --reset",
     "set-version": "npm version --no-git-tag-version"
+  },
+  "build": {
+    "publish": {
+      "provider": "github",
+      "host": "github.com",
+      "owner": "YoungPilotBe",
+      "repo": "trading-journal",
+      "releaseType": "draft"
+    }
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.42",
@@ -44,7 +53,7 @@
     "@rjsf/shadcn": "^6.0.0-beta.10",
     "@rjsf/utils": "^6.0.0-beta.10",
     "@rjsf/validator-ajv8": "^6.0.0-beta.10",
-    "@tailwindcss/postcss": "^4.1.13",
+    "@tailwindcss/postcss": "^4 .1.13",
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-form": "^1.19.5",
     "@tanstack/react-query": "^5.87.1",
