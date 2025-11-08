@@ -4,11 +4,6 @@
   appId: "com.tradingjournal.app",
   asar: true,
   productName: "Trading Journal",
-  publish: {
-    provider: "github",
-    owner: "YoungPilotBe",
-    repo: "trading-journal",
-  },
   directories: {
     output: "release/${version}",
   },

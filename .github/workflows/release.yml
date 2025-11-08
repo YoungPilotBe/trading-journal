@@ -3,15 +3,63 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-    
+  create-release:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.VERSION }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Trading Journal v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## Trading Journal v${{ steps.get_version.outputs.VERSION }}
+
+            ### Downloads
+            - **Linux (Raspberry Pi 5 - arm64)**: `Trading Journal-Linux-${{ steps.get_version.outputs.VERSION }}.AppImage`
+            - **macOS (Apple Silicon)**: `Trading Journal-Mac-${{ steps.get_version.outputs.VERSION }}-Installer.dmg`
+
+            ### Installation
+
+            #### Raspberry Pi 5 (Linux arm64)
+            ```bash
+            chmod +x Trading\ Journal-Linux-${{ steps.get_version.outputs.VERSION }}.AppImage
+            ./Trading\ Journal-Linux-${{ steps.get_version.outputs.VERSION }}.AppImage
+            ```
+
+            #### macOS
+            1. Download the DMG file
+            2. Open and drag Trading Journal to Applications
+            3. Launch from Applications
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+
+    permissions:
+      contents: write
+
     strategy:
       matrix:
         include:
@@ -19,29 +67,51 @@ jobs:
             platform: linux
           - os: macos-latest
             platform: mac
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      
+          node-version: "20"
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build for Linux
         if: matrix.platform == 'linux'
         run: npm run build:rasp
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Build for Mac
         if: matrix.platform == 'mac'
         run: npm run build:prod
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Upload Linux Release Assets
+        if: matrix.platform == 'linux'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          files: |
+            release/${{ needs.create-release.outputs.version }}/*.AppImage
+            release/${{ needs.create-release.outputs.version }}/latest-linux*.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Mac Release Assets
+        if: matrix.platform == 'mac'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          files: |
+            release/${{ needs.create-release.outputs.version }}/*.dmg
+            release/${{ needs.create-release.outputs.version }}/*.blockmap
+            release/${{ needs.create-release.outputs.version }}/latest-mac.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
