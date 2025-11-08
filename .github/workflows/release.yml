@@ -84,14 +84,19 @@ jobs:
       - name: Build for Linux
         if: matrix.platform == 'linux'
         run: npm run build:rasp
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build for Mac
         if: matrix.platform == 'mac'
         run: npm run build:prod
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List built files (debug)
+        run: |
+          echo "Contents of release directory:"
+          ls -la release/ || echo "No release directory"
+          if [ -d "release" ]; then
+            echo "All files in release:"
+            find release -type f
+          fi
 
       - name: Upload Linux Release Assets
         if: matrix.platform == 'linux'
@@ -99,8 +104,8 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           files: |
-            release/${{ needs.create-release.outputs.version }}/*.AppImage
-            release/${{ needs.create-release.outputs.version }}/latest-linux*.yml
+            release/**/*.AppImage
+            release/**/latest-linux*.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -110,8 +115,8 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           files: |
-            release/${{ needs.create-release.outputs.version }}/*.dmg
-            release/${{ needs.create-release.outputs.version }}/*.blockmap
-            release/${{ needs.create-release.outputs.version }}/latest-mac.yml
+            release/**/*.dmg
+            release/**/*.blockmap
+            release/**/latest-mac.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
