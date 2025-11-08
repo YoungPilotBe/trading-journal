@@ -1,7 +1,7 @@
 {
   "name": "trading-journal",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "generate-routes": "tsr generate",
@@ -20,7 +20,10 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "db:flush": "npx convex dev --reset",
-    "set-version": "npm version --no-git-tag-version"
+    "set-version": "npm version --no-git-tag-version",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "build": {
     "publish": {
@@ -72,6 +75,7 @@
     "convex-helpers": "^0.1.104",
     "culori": "^4.0.2",
     "date-fns": "^4.1.0",
+    "electron-squirrel-startup": "^1.0.1",
     "framer-motion": "^12.23.12",
     "gsap": "^3.13.0",
     "lodash": "^4.17.21",
@@ -92,6 +96,15 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.10.2",
+    "@electron-forge/maker-deb": "^7.10.2",
+    "@electron-forge/maker-rpm": "^7.10.2",
+    "@electron-forge/maker-squirrel": "^7.10.2",
+    "@electron-forge/maker-zip": "^7.10.2",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
+    "@electron-forge/plugin-fuses": "^7.10.2",
+    "@electron-forge/publisher-github": "^7.10.2",
+    "@electron/fuses": "^1.8.0",
     "@faker-js/faker": "^10.0.0",
     "@tanstack/react-devtools": "^0.7.1",
     "@tanstack/react-form-devtools": "^0.1.5",
@@ -105,7 +118,6 @@
     "@typescript-eslint/parser": "^7.1.1",
     "@vitejs/plugin-react": "^4.2.1",
     "electron": "^30.0.1",
-    "electron-builder": "^24.13.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
