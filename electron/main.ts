@@ -34,6 +34,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
       // Security: disable node integration for production
       nodeIntegration: false,
+      zoomFactor: 1.1,
       contextIsolation: true,
     },
   });
