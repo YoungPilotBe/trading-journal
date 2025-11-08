@@ -28,7 +28,7 @@
   linux: {
     target: {
       target: "appimage",
-      arch: ["armv7l"],
+      arch: ["arm64"],
     },
     artifactName: "${productName}-Linux-${version}.${ext}",
     category: "Office",

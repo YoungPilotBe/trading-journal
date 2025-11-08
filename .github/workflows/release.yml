@@ -1,0 +1,131 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: mac
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Update package.json version
+        run: |
+          npm version ${{ steps.get_version.outputs.VERSION }} --no-git-tag-version
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build for Linux
+        if: matrix.platform == 'linux'
+        run: npm run build:rasp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build for Mac
+        if: matrix.platform == 'mac'
+        run: npm run build:prod
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload Linux artifacts
+        if: matrix.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            release/${{ steps.get_version.outputs.VERSION }}/*.AppImage
+            release/${{ steps.get_version.outputs.VERSION }}/latest-linux*.yml
+          retention-days: 5
+      
+      - name: Upload Mac artifacts
+        if: matrix.platform == 'mac'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-artifacts
+          path: |
+            release/${{ steps.get_version.outputs.VERSION }}/*.dmg
+            release/${{ steps.get_version.outputs.VERSION }}/*.dmg.blockmap
+            release/${{ steps.get_version.outputs.VERSION }}/latest-mac.yml
+          retention-days: 5
+  
+  create-release:
+    needs: release
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## Trading Journal v${{ steps.get_version.outputs.VERSION }}
+            
+            ### Downloads
+            - **Linux (Raspberry Pi 5 - arm64)**: Trading Journal-Linux-${{ steps.get_version.outputs.VERSION }}.AppImage
+            - **macOS (Apple Silicon)**: Trading Journal-Mac-${{ steps.get_version.outputs.VERSION }}-Installer.dmg
+            
+            ### Installation
+            
+            #### Raspberry Pi 5 (Linux arm64)
+            1. Download the AppImage file
+            2. Make it executable: `chmod +x Trading\ Journal-Linux-${{ steps.get_version.outputs.VERSION }}.AppImage`
+            3. Run it: `./Trading\ Journal-Linux-${{ steps.get_version.outputs.VERSION }}.AppImage`
+            
+            #### macOS
+            1. Download the DMG file
+            2. Open the DMG and drag Trading Journal to Applications
+            3. Launch from Applications
+            
+            ---
+            *Built automatically from tag ${{ github.ref }}*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/linux-artifacts/*
+            artifacts/mac-artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
