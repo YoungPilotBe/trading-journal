@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup";
 import { cn } from "@/lib/utils";
 import { type PageVariants } from "@/types/animations";
+import { isRasp } from "@/utils/env-utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
@@ -145,7 +146,8 @@ export const AnimatedImageLayout = forwardRef<
               alt={alt}
               className={cn(
                 `object-contain rounded-2xl w-full h-auto max-w-[90vw] max-h-[60vh] sm:max-w-[80vw] sm:max-h-[70vh] lg:max-w-6xl lg:max-h-[80vh] transition-all duration-200 ${imageClassName}`,
-                isRootPage && " group-hover:blur-xs"
+                isRootPage && " group-hover:blur-xs",
+                isRasp && "blur-xs"
               )}
               onLoad={onImageLoad}
               initial={{ opacity: 0 }}
@@ -161,7 +163,7 @@ export const AnimatedImageLayout = forwardRef<
             />
 
             {/* Hover Overlay with Buttons - Only show on root page */}
-            {isRootPage && (
+            {(isRootPage || isRasp) && (
               <>
                 <div className="absolute inset-0 flex flex-row rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto p-2 gap-2">
                   {/* Add Trade Button - Left Half */}
