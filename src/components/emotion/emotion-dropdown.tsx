@@ -13,6 +13,7 @@ import { emotionOptions } from "@/config/constants";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { Doc, Id } from "convex/_generated/dataModel";
+import { PlusIcon } from "lucide-react";
 
 type EmotionDropdownProps = {
   value?: Doc<"snapshots">["emotion"];
@@ -56,7 +57,7 @@ const EmotionDropdown = ({
     );
   }
 
-  const SelectedIcon = selectedOption?.icon;
+  const SelectedIcon = selectedOption?.icon || PlusIcon;
 
   return (
     <DropdownMenu>

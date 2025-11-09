@@ -18,7 +18,6 @@ import { toast } from "sonner";
 import NumberField from "../components/number-field";
 import TextField from "../components/text-field";
 import Direction from "../features/direction";
-import NotesSelector from "../features/notes-selector";
 import Result from "../features/result";
 import StatusOptions from "../features/status-options";
 import TemplateSelector from "../features/template-selector";
@@ -198,23 +197,6 @@ const TradeDetailsForm = ({
               field={field}
               label="Template"
               disabled={isPending || isSubmitting}
-            />
-          )}
-        />
-
-        {/* Notes Selector */}
-        <Controller
-          name="notes"
-          control={control}
-          disabled={isPending}
-          render={({ field }) => (
-            <NotesSelector
-              field={field}
-              label="Notes"
-              disabled={isPending || isSubmitting}
-              snapshotId={snapshotId}
-              tradeSetupId={tradeSetupId}
-              snapshot={snapshot}
             />
           )}
         />

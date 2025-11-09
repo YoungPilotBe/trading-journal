@@ -1,42 +1,22 @@
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useDialog } from "@/contexts/dialog-context";
 import { useGetNotesTradeSetup } from "@/hooks/notes/use-get-notes-trade-setup";
 import { Doc, Id } from "convex/_generated/dataModel";
-import { FileTextIcon, Loader2, PlusIcon } from "lucide-react";
-import {
-  ControllerRenderProps,
-  FieldPath,
-  FieldValues,
-  useFormState,
-} from "react-hook-form";
+import { FileTextIcon, Loader2 } from "lucide-react";
 
-type Props<T extends FieldValues> = {
-  field: ControllerRenderProps<T, FieldPath<T>>;
-  label: string;
+type Props = {
   disabled?: boolean;
   snapshotId: Id<"snapshots">;
   tradeSetupId: Id<"trade_setups">;
   snapshot?: Doc<"snapshots"> | null;
 };
 
-const NotesSelector = <T extends FieldValues>({
-  field,
-  label,
+const NotesSelector = ({
   disabled,
   snapshotId,
   tradeSetupId,
   snapshot,
-}: Props<T>) => {
+}: Props) => {
   const { openDialog } = useDialog();
-
-  const { errors } = useFormState({ name: field.name });
-  const error = errors[field.name]?.message;
-  const hasError = !!error;
 
   const { data: notes, isLoading: isLoadingNotes } = useGetNotesTradeSetup({
     snapshotId,
@@ -51,50 +31,40 @@ const NotesSelector = <T extends FieldValues>({
   };
 
   return (
-    <div className="grid grid-cols-[30%_1fr_2.25rem] items-center font-mono">
-      <label className="text-xs text-muted" htmlFor={field.name}>
-        {label}
-      </label>
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          size="badge"
-          className="text-[10px] justify-between hover:bg-accent hover:text-accent-foreground transition-colors gap-1"
-          disabled={disabled || isLoadingNotes}
-          onClick={handleOpenNotesDialog}
-        >
-          {isLoadingNotes ? (
-            <span className="flex items-center gap-1">
-              <Loader2 className="size-2 text-muted-foreground animate-spin" />
-            </span>
-          ) : notes ? (
-            <div className="flex flex-row items-center gap-1">
-              <FileTextIcon className="size-3" />
-              {notes.length} Note{notes.length !== 1 ? "s" : ""}
-            </div>
-          ) : (
-            <>
-              <PlusIcon className="size-2" />
-              Add Notes
-            </>
-          )}
-        </Button>
-      </div>
-      <div className="flex items-center justify-center">
-        {hasError ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse starting:size-0 transition-all" />
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p className="text-xs">{String(error)}</p>
-            </TooltipContent>
-          </Tooltip>
+    <div className="relative inline-block">
+      <button
+        type="button"
+        disabled={disabled || isLoadingNotes}
+        onClick={handleOpenNotesDialog}
+        className={`flex flex-row items-center justify-between gap-2 px-3 py-2 border font-mono text-xs rounded-sm transition-all whitespace-nowrap ${
+          disabled || isLoadingNotes
+            ? "opacity-50 cursor-not-allowed"
+            : "cursor-pointer"
+        } ${
+          notes && notes.length > 0
+            ? "border-blue-400/70 bg-blue-500/5 text-blue-300/80"
+            : "border-muted text-muted-foreground hover:border-muted-foreground/50"
+        }`}
+      >
+        {isLoadingNotes ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="size-3 animate-spin" />
+          </div>
+        ) : notes && notes.length > 0 ? (
+          <div className="flex items-center gap-2">
+            <FileTextIcon className="size-3" />
+          </div>
         ) : (
-          <div className="w-2 h-2" /> // Placeholder to maintain consistent spacing
+          <div className="flex items-center gap-2">
+            <FileTextIcon className="size-3" />
+          </div>
         )}
-      </div>
+      </button>
+      {notes && notes.length > 0 && (
+        <div className="absolute -top-1 -right-1 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-blue-500 text-white font-mono text-[8px] font-semibold border border-background">
+          {notes.length}
+        </div>
+      )}
     </div>
   );
 };
