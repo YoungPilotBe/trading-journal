@@ -7,6 +7,7 @@ export const updateSnapshot = mutation({
   args: {
     snapshotId: v.id("snapshots"),
     status: v.optional(statusUnion),
+    emotion: v.optional(emotionUnion),
     tags: v.optional(v.any()),
     tags_config: v.optional(v.any()),
   },

@@ -1,3 +1,8 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { emotionOptions } from "@/config/constants";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { Doc, Id } from "convex/_generated/dataModel";
@@ -10,6 +15,7 @@ type EmotionOptionProps = {
   originalEmotion?: Doc<"snapshots">["emotion"];
   disabled?: boolean;
   onClick?: (emotion: Doc<"snapshots">["emotion"]) => void;
+  hideText?: boolean;
 };
 
 const EmotionOption = ({
@@ -19,6 +25,7 @@ const EmotionOption = ({
   originalEmotion,
   disabled = false,
   onClick,
+  hideText = false,
 }: EmotionOptionProps) => {
   // Fetch snapshot data if snapshotId is provided
   const { data: snapshot, isLoading } = useGetSnapshot(
@@ -69,6 +76,13 @@ const EmotionOption = ({
 
   const Icon = option.icon;
 
+  const buttonContent = (
+    <>
+      <Icon className="size-3" />
+      {!hideText && option.label}
+    </>
+  );
+
   const buttonElement = onClick ? (
     <button
       type="button"
@@ -78,17 +92,26 @@ const EmotionOption = ({
         shouldShowDisabled ? "opacity-50 cursor-not-allowed" : ""
       } ${getButtonClassName()}`}
     >
-      <Icon className="size-3" />
-      {option.label}
+      {buttonContent}
     </button>
   ) : (
     <div
       className={`flex flex-row items-center gap-1 px-1 py-0.5 border font-mono text-xs rounded-sm whitespace-nowrap ${getButtonClassName()}`}
     >
-      <Icon className="size-3" />
-      {option.label}
+      {buttonContent}
     </div>
   );
+
+  if (hideText) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{buttonElement}</TooltipTrigger>
+        <TooltipContent>
+          <p>{option.label}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   return <Fragment>{buttonElement}</Fragment>;
 };

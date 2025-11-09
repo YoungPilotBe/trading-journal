@@ -1,4 +1,5 @@
 import TradeDetailsForm from "@/components/form/forms/trade-details-form";
+import ImageSidebar from "@/components/image-sidebar";
 import ResultBadge from "@/components/result-badge";
 import SimilarTradesTable from "@/components/similar-trades-table";
 import SnapshotHistory from "@/components/snapshot-history";
@@ -173,6 +174,10 @@ function RouteComponent() {
             tradeSetupId={tradeSetupId as Id<"trade_setups">}
           />
         </div>
+        <ImageSidebar
+          snapshotId={snapshotId as Id<"snapshots">}
+          tradeSetupId={tradeSetupId as Id<"trade_setups">}
+        />
       </div>
       <SimilarTradesTable
         tradeSetupId={tradeSetupId as Id<"trade_setups">}

@@ -26,6 +26,7 @@ const baseSchema = z.object({
 export const tradeDetailsSchema = baseSchema.extend({
   trade_template: z.custom<Id<"trade_templates">>().optional(),
   notes: z.array(z.any()).optional(),
+  emotion: emotionSchema.nullable().optional(),
 });
 
 export type TradeDetailsSchema = z.infer<typeof tradeDetailsSchema>;
@@ -53,6 +54,5 @@ export const createTradeDetailsDefaultValues = (
     riskReward: existingData?.existingTradeSetup?.riskReward || null,
     timeframes: existingData?.existingTradeSetup?.timeframes || ["4h"],
     result: existingData?.existingTradeSetup?.result || null,
-    emotion: existingData?.existingSnapshot?.emotion || null,
   };
 };

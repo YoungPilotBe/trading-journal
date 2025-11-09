@@ -1,4 +1,4 @@
-import IEmotionOptions from "@/components/emotion-options";
+import IEmotionOptions from "@/components/emotion/emotion-options";
 import {
   Tooltip,
   TooltipContent,
