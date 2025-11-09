@@ -87,14 +87,14 @@ export function SnapshotImage({
               search={{ tradeSetupId, snapshotId: previousSnapshot._id }}
               replace
               className={clsx(
-                "absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10",
+                "absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 border border-muted-foreground hover:border-white text-muted-foreground hover:text-white rounded-full",
                 {
                   "!opacity-100": isRasp,
                 }
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 " />
             </Link>
           )}
 
@@ -104,7 +104,7 @@ export function SnapshotImage({
               search={{ tradeSetupId, snapshotId: nextSnapshot._id }}
               preload="render"
               className={clsx(
-                "absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10",
+                "absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 border border-muted-foreground hover:border-white text-muted-foreground hover:text-white rounded-full",
                 {
                   "!opacity-100": isRasp,
                 }

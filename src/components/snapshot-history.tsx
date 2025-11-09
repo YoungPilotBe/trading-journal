@@ -1,21 +1,14 @@
 import { useGetSnapshotByTradeSetupId } from "@/hooks/snapshots/use-get-snapshot-by-trade-setup";
+import {
+  SnapshotWithPosition,
+  useSnapshotNavigation,
+  useSnapshotPositions,
+} from "@/hooks/snapshots/use-snapshot-navigation";
 import { cn } from "@/lib/utils";
-import { isRasp } from "@/utils/env-utils";
-import { useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
-import { Doc, Id } from "convex/_generated/dataModel";
+import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
-import { useCallback, useMemo, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-
-// Constants
-const TIMELINE_CONFIG = {
-  MIN_SPACING_PERCENT: 5,
-  TIMELINE_RANGE: 90, // 5% to 95%
-  TIMELINE_START: 5,
-  TIMELINE_END: 95,
-  SINGLE_SNAPSHOT_POSITION: 50,
-} as const;
 
 // Types
 interface Props {
@@ -23,161 +16,6 @@ interface Props {
   snapshotId: Id<"snapshots">;
   image?: "preview";
   className?: string;
-}
-
-type SnapshotWithPosition = Doc<"snapshots"> & {
-  position: number;
-};
-
-// Custom Hooks
-function useSnapshotNavigation({
-  tradeSetupId,
-  snapshotId,
-  image,
-}: {
-  tradeSetupId: Id<"trade_setups">;
-  snapshotId: Id<"snapshots">;
-  image?: "preview";
-}) {
-  const navigate = useNavigate();
-  const [loadingSnapshotId, setLoadingSnapshotId] =
-    useState<Id<"snapshots"> | null>(null);
-
-  const handleSnapshotClick = useCallback(
-    async (targetSnapshotId: Id<"snapshots">) => {
-      if (targetSnapshotId === snapshotId) return;
-
-      setLoadingSnapshotId(targetSnapshotId);
-
-      try {
-        console.log(`Navigating to snapshot ${targetSnapshotId}`);
-
-        await navigate({
-          to: "/dashboard/setup",
-          search: { tradeSetupId, snapshotId: targetSnapshotId, image },
-        });
-
-        console.log(`Successfully navigated to snapshot ${targetSnapshotId}`);
-      } catch (error) {
-        console.error("Failed to load snapshot:", error);
-      } finally {
-        setLoadingSnapshotId(null);
-      }
-    },
-    [snapshotId, navigate, tradeSetupId, image]
-  );
-
-  return { handleSnapshotClick, loadingSnapshotId };
-}
-
-function useSnapshotPositions(snapshots: Doc<"snapshots">[] | undefined) {
-  return useMemo(() => {
-    if (!snapshots || snapshots.length === 0) return [];
-
-    // Single snapshot - center it
-    if (snapshots.length === 1) {
-      return [
-        { ...snapshots[0], position: TIMELINE_CONFIG.SINGLE_SNAPSHOT_POSITION },
-      ];
-    }
-
-    const earliestTime = Math.min(...snapshots.map((s) => s.createdAt));
-    const latestTime = Math.max(...snapshots.map((s) => s.createdAt));
-    const timeRange = latestTime - earliestTime;
-
-    // Same creation time - distribute evenly
-    if (timeRange === 0) {
-      return distributeSnapshotsEvenly(snapshots);
-    }
-
-    // Different creation times - position based on timeline
-    return positionSnapshotsByTime(snapshots, earliestTime, timeRange);
-  }, [snapshots]);
-}
-
-// Helper functions for positioning
-function distributeSnapshotsEvenly(
-  snapshots: Doc<"snapshots">[]
-): SnapshotWithPosition[] {
-  const evenSpacing = TIMELINE_CONFIG.TIMELINE_RANGE / (snapshots.length - 1);
-  const actualSpacing = Math.max(
-    TIMELINE_CONFIG.MIN_SPACING_PERCENT,
-    evenSpacing
-  );
-
-  return snapshots.map((snapshot, index) => ({
-    ...snapshot,
-    position: TIMELINE_CONFIG.TIMELINE_START + index * actualSpacing,
-  }));
-}
-
-function positionSnapshotsByTime(
-  snapshots: Doc<"snapshots">[],
-  earliestTime: number,
-  timeRange: number
-): SnapshotWithPosition[] {
-  // Calculate initial positions based on time
-  let positions = snapshots.map((snapshot) => {
-    const timeFromStart = snapshot.createdAt - earliestTime;
-    const position =
-      (timeFromStart / timeRange) * TIMELINE_CONFIG.TIMELINE_RANGE +
-      TIMELINE_CONFIG.TIMELINE_START;
-    return { ...snapshot, position };
-  });
-
-  // Sort by position for spacing adjustments
-  positions.sort((a, b) => a.position - b.position);
-
-  // Ensure minimum spacing between dots
-  positions = adjustSpacing(positions);
-
-  // Handle overflow beyond timeline end
-  positions = handleOverflow(positions);
-
-  // Restore chronological order
-  return positions.sort((a, b) => a.createdAt - b.createdAt);
-}
-
-function adjustSpacing(
-  positions: SnapshotWithPosition[]
-): SnapshotWithPosition[] {
-  for (let i = 1; i < positions.length; i++) {
-    const prevPosition = positions[i - 1].position;
-    const currentPosition = positions[i].position;
-
-    if (currentPosition - prevPosition < TIMELINE_CONFIG.MIN_SPACING_PERCENT) {
-      positions[i].position =
-        prevPosition + TIMELINE_CONFIG.MIN_SPACING_PERCENT;
-    }
-  }
-  return positions;
-}
-
-function handleOverflow(
-  positions: SnapshotWithPosition[]
-): SnapshotWithPosition[] {
-  if (
-    positions[positions.length - 1].position <= TIMELINE_CONFIG.TIMELINE_END
-  ) {
-    return positions;
-  }
-
-  // Compress proportionally to fit within timeline
-  const compressionRatio =
-    (TIMELINE_CONFIG.TIMELINE_RANGE -
-      (positions.length - 1) * TIMELINE_CONFIG.MIN_SPACING_PERCENT) /
-    TIMELINE_CONFIG.TIMELINE_RANGE;
-
-  return positions.map((snapshot, index) => ({
-    ...snapshot,
-    position:
-      TIMELINE_CONFIG.TIMELINE_START +
-      index * TIMELINE_CONFIG.MIN_SPACING_PERCENT +
-      (snapshot.position -
-        TIMELINE_CONFIG.TIMELINE_START -
-        index * TIMELINE_CONFIG.MIN_SPACING_PERCENT) *
-        compressionRatio,
-  }));
 }
 
 // Sub-components
@@ -267,7 +105,7 @@ const SnapshotHistory = ({
     // <TooltipProvider>
     <div className={cn("w-full h-12 relative px-4 shrink-0", className)}>
       {/* Timeline line */}
-      <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-gradient-to-r from-gray-800 via-gray-500 to-gray-800 transform -translate-y-1/2 mask-x-from-95% shadow-sm" />
+      <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-muted transform -translate-y-1/2 shadow-sm" />
 
       {/* Snapshot dots */}
       {sortedSnapshots.map((snapshot) => {
@@ -280,18 +118,19 @@ const SnapshotHistory = ({
             className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${snapshot.position}%` }}
           >
-            <Tooltip defaultOpen={!isRasp}>
+            <Tooltip>
               <TooltipTrigger
-                className={`absolute top-1/2 size-3 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg before:absolute before:inset-0 before:rounded-full before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${
+                className={`absolute top-1/2 size-3 rounded-full items-center justify-center flex transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg before:absolute before:inset-0 before:rounded-full before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${
                   isCurrentSnapshot
-                    ? "bg-emerald-500 size-4 border-green-500 shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 before:bg-green-500/20 before:shadow-lg before:shadow-green-500/50"
+                    ? "border border-emerald-500 bg-background size-4 border-green-500 shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 before:bg-green-500/20 before:shadow-lg before:shadow-green-500/50"
                     : isLoading
-                      ? "bg-muted border-blue-500 shadow-lg animate-pulse hover:shadow-xl"
-                      : "bg-gray-500 border hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-400/30 before:bg-emerald-400/20 before:shadow-lg before:shadow-emerald-400/30"
+                      ? "border border-blue-500 bg-background shadow-lg animate-pulse hover:shadow-xl"
+                      : "bg-background border hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-400/30 before:bg-emerald-400/20 before:shadow-lg before:shadow-emerald-400/30"
                 }`}
                 onClick={() => handleSnapshotClick(snapshot._id)}
                 disabled={isLoading || isCurrentSnapshot}
               />
+
               <SnapshotTooltipContent
                 snapshot={snapshot}
                 isCurrentSnapshot={isCurrentSnapshot}
