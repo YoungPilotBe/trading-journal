@@ -34,13 +34,15 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
       // Security: disable node integration for production
       nodeIntegration: false,
-      zoomFactor: 1.1,
+      zoomFactor: process.env.__IS_RASP__ ? 1.1 : 1,
       contextIsolation: true,
     },
   });
 
-  win.maximize();
-  win.setFullScreen(true);
+  if (process.env.__IS_RASP__) {
+    win.maximize();
+    win.setFullScreen(true);
+  }
 
   win.show();
 

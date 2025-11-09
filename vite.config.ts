@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), "");
 
+  // Check if this is a Raspberry Pi build
+  const isRaspberryPi = process.env.BUILD_TARGET === "raspberry-pi";
+
   // Validate required environment variables
   if (!env.VITE_CONVEX_URL) {
     console.warn(`Warning: VITE_CONVEX_URL not found in .env.${mode} file`);
@@ -56,6 +59,7 @@ export default defineConfig(({ mode }) => {
       __DEV__: mode === "development",
       __PROD__: mode === "production",
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+      __IS_RASP__: isRaspberryPi,
     },
 
     // Build configuration

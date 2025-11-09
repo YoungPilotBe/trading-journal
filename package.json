@@ -11,7 +11,7 @@
     "convex:pull-external-types": "npx convex-helpers ts-api-spec --output-file convex/_external_types/tradingview_image_alert_types",
     "build": "npm run build:web",
     "build:web": "tsc && vite build",
-    "build:rasp": "npm run build:web -- --mode production && npx electron-builder --linux --publish always",
+    "build:rasp": "BUILD_TARGET=raspberry-pi npm run build:web -- --mode production && npx electron-builder --linux --publish always",
     "build:prod": "npm run build:web -- --mode production && npx electron-builder --publish always",
     "build:dev": "npm run build:web -- --mode development && npm run build:electron",
     "convex:dev": "npx convex dev",
@@ -23,7 +23,7 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "publish:pi": "npm run build && electron-forge publish -a arm64 -p linux",
+    "publish:pi": "BUILD_TARGET=raspberry-pi npm run build && electron-forge publish -a arm64 -p linux",
     "publish": "electron-forge publish"
   },
   "build": {

@@ -2,7 +2,9 @@ import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { useGetSnapshotByTradeSetupId } from "@/hooks/snapshots/use-get-snapshot-by-trade-setup";
 import { useGetImageBySnapshot } from "@/hooks/tradingview_images/use-get-image-by-snapshot";
 import { cn } from "@/lib/utils";
+import { isRasp } from "@/utils/env-utils";
 import { Link, useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect } from "react";
@@ -83,7 +85,12 @@ export function SnapshotImage({
               to="/dashboard/setup"
               search={{ tradeSetupId, snapshotId: previousSnapshot._id }}
               replace
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+              className={clsx(
+                "absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10",
+                {
+                  "!opacity-100": isRasp,
+                }
+              )}
               onClick={(e) => e.stopPropagation()}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -95,7 +102,12 @@ export function SnapshotImage({
               to="/dashboard/setup"
               search={{ tradeSetupId, snapshotId: nextSnapshot._id }}
               preload="render"
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+              className={clsx(
+                "absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 z-10",
+                {
+                  "!opacity-100": isRasp,
+                }
+              )}
               onClick={(e) => e.stopPropagation()}
             >
               <ChevronRight className="h-4 w-4" />
@@ -130,7 +142,12 @@ export function SnapshotImage({
 
           {/* Fullscreen image */}
           <div
-            className="absolute inset-50 animate-in zoom-in-95 duration-300 ease-out"
+            className={clsx(
+              "absolute inset-50 animate-in zoom-in-95 duration-300 ease-out",
+              {
+                "!inset-20": isRasp,
+              }
+            )}
             onClick={(e) => e.stopPropagation()}
           >
             <img
