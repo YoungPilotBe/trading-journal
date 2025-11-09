@@ -30,6 +30,11 @@ export default defineConfig(({ mode }) => {
         main: {
           // Shortcut of `build.lib.entry`.
           entry: "electron/main.ts",
+          vite: {
+            define: {
+              __IS_RASP__: isRaspberryPi,
+            },
+          },
         },
         preload: {
           // Shortcut of `build.rollupOptions.input`.

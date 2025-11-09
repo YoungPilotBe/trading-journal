@@ -21,6 +21,9 @@ declare namespace NodeJS {
   }
 }
 
+// Global variables injected by Vite's define
+declare const __IS_RASP__: boolean
+
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
   ipcRenderer: import('electron').IpcRenderer
