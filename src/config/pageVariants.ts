@@ -8,7 +8,7 @@ export const pageVariants: PageVariants = {
     target: {
       x: 0,
       y: 0,
-      scale: 1,
+      scale: 0.8,
       rotateX: 5,
       rotateY: 0,
       rotateZ: 0,

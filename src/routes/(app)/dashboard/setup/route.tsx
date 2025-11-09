@@ -144,7 +144,19 @@ function RouteComponent() {
                     }
                   >
                     <Trash2Icon className="text-inherit" />
-                    Delete
+                    Delete Snapshot
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive justify-between"
+                    onClick={() =>
+                      openDialog("DELETE_TRADE_SETUP", {
+                        tradeSetupId: tradeSetupId as Id<"trade_setups">,
+                        tradeSetupTitle: tradeSetup?.title || "",
+                      })
+                    }
+                  >
+                    <Trash2Icon className="text-inherit" />
+                    Delete Trade Setup
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -58,18 +58,18 @@ export function SnapshotImage({
       {/* Regular image view */}
       <div
         className={cn(
-          "relative w-full @[110px]:h-full rounded-lg overflow-y-auto h-full group",
+          "relative w-full aspect-video rounded-lg overflow-hidden group",
           className
         )}
       >
         <LoadingSkeleton
           isLoading={isLoading || !image?.url}
-          className="h-full aspect-video"
+          className="w-full h-full absolute inset-0"
         >
           <img
             src={image?.url ?? undefined}
             alt="Trading setup chart"
-            className="w-full h-full object-contain cursor-pointer transition-opacity"
+            className="w-full h-full object-fit cursor-pointer transition-opacity"
             onClick={() =>
               navigate({
                 to: "/dashboard/setup",
@@ -77,7 +77,6 @@ export function SnapshotImage({
                 replace: true,
               })
             }
-            style={{ maxWidth: "100%", maxHeight: "100%" }}
           />
 
           {/* Navigation arrows - only show on hover */}
@@ -145,9 +144,9 @@ export function SnapshotImage({
             {/* Fullscreen image */}
             <div
               className={clsx(
-                "absolute inset-50 animate-in zoom-in-95 duration-300 ease-out",
+                "relative w-full aspect-video max-w-7xl max-h-[85vh] animate-in zoom-in-95 duration-300 ease-out",
                 {
-                  "!inset-20": isRasp,
+                  "max-h-[80vh]": isRasp,
                 }
               )}
               onClick={(e) => e.stopPropagation()}
@@ -161,7 +160,7 @@ export function SnapshotImage({
               <img
                 src={image?.url ?? undefined}
                 alt="Trading setup chart - Fullscreen"
-                className="w-full h-full object-contain rounded-lg"
+                className="w-full h-full object-fit rounded-lg"
               />
 
               {/* Fullscreen navigation arrows */}
@@ -179,7 +178,7 @@ export function SnapshotImage({
                     {
                       "left-0 top-0 bottom-0 w-20 bg-neutral-800/60 hover:bg-neutral-700/50":
                         isRasp,
-                      "left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 p-3 rounded-full":
+                      "left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 p-3 rounded-full border border-muted-foreground hover:border-white text-muted-foreground hover:text-white":
                         !isRasp,
                     }
                   )}
@@ -202,7 +201,7 @@ export function SnapshotImage({
                     {
                       "right-0 top-0 bottom-0 w-20 bg-neutral-800/60 hover:bg-neutral-700/50":
                         isRasp,
-                      "right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 p-3 rounded-full":
+                      "right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 p-3 rounded-full border border-muted-foreground hover:border-white text-muted-foreground hover:text-white rounded-full":
                         !isRasp,
                     }
                   )}

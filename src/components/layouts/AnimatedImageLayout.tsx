@@ -145,7 +145,7 @@ export const AnimatedImageLayout = forwardRef<
               src={src}
               alt={alt}
               className={cn(
-                `object-contain rounded-2xl w-full h-auto max-w-[90vw] max-h-[60vh] sm:max-w-[80vw] sm:max-h-[70vh] lg:max-w-6xl lg:max-h-[80vh] transition-all duration-200 ${imageClassName}`,
+                `object-fit rounded-2xl w-6xl aspect-video transition-all duration-200 ${imageClassName}`,
                 isRootPage && " group-hover:blur-xs",
                 isRasp && "blur-xs"
               )}
