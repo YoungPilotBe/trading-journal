@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect } from "react";
+import SnapshotHistory from "./snapshot-history";
 
 interface SnapshotImageProps {
   snapshotId: Id<"snapshots">;
@@ -118,76 +119,100 @@ export function SnapshotImage({
 
       {/* Fullscreen overlay */}
       {initialFullscreen && (
-        <div
-          className="fixed inset-0 border z-50 bg-black/90  flex items-center justify-center p-4 animate-in fade-in-0 duration-300"
-          onClick={() =>
-            navigate({
-              to: "/dashboard/setup",
-              search: { tradeSetupId, snapshotId },
-            })
-          }
-        >
-          {/* Close button */}
-          <button
+        <>
+          <div
+            className="fixed inset-0 border z-50 bg-black/90  flex items-center justify-center p-4 animate-in fade-in-0 duration-300"
             onClick={() =>
               navigate({
                 to: "/dashboard/setup",
                 search: { tradeSetupId, snapshotId },
               })
             }
-            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-all duration-200 hover:scale-110"
           >
-            <X className="h-6 w-6" />
-          </button>
-
-          {/* Fullscreen image */}
-          <div
-            className={clsx(
-              "absolute inset-50 animate-in zoom-in-95 duration-300 ease-out",
-              {
-                "!inset-20": isRasp,
+            {/* Close button */}
+            <button
+              onClick={() =>
+                navigate({
+                  to: "/dashboard/setup",
+                  search: { tradeSetupId, snapshotId },
+                })
               }
-            )}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={image?.url ?? undefined}
-              alt="Trading setup chart - Fullscreen"
-              className="w-full h-full object-contain rounded-lg"
-            />
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-all duration-200 hover:scale-110"
+            >
+              <X className="h-6 w-6" />
+            </button>
 
-            {/* Fullscreen navigation arrows */}
-            {previousSnapshot && (
-              <Link
-                to="/dashboard/setup"
-                search={{
-                  tradeSetupId,
-                  snapshotId: previousSnapshot._id,
-                  image: "preview",
-                }}
-                preload="render"
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all duration-200 z-10"
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </Link>
-            )}
+            {/* Fullscreen image */}
+            <div
+              className={clsx(
+                "absolute inset-50 animate-in zoom-in-95 duration-300 ease-out",
+                {
+                  "!inset-20": isRasp,
+                }
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SnapshotHistory
+                snapshotId={snapshotId}
+                tradeSetupId={tradeSetupId}
+                image="preview"
+                className="absolute -translate-y-full w-[80%] -translate-x-1/2 left-1/2"
+              />
+              <img
+                src={image?.url ?? undefined}
+                alt="Trading setup chart - Fullscreen"
+                className="w-full h-full object-contain rounded-lg"
+              />
 
-            {nextSnapshot && (
-              <Link
-                to="/dashboard/setup"
-                preload="render"
-                search={{
-                  tradeSetupId,
-                  snapshotId: nextSnapshot._id,
-                  image: "preview",
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-all duration-200 z-10"
-              >
-                <ChevronRight className="h-6 w-6" />
-              </Link>
-            )}
+              {/* Fullscreen navigation arrows */}
+              {previousSnapshot && (
+                <Link
+                  to="/dashboard/setup"
+                  search={{
+                    tradeSetupId,
+                    snapshotId: previousSnapshot._id,
+                    image: "preview",
+                  }}
+                  preload="render"
+                  className={clsx(
+                    "absolute text-white transition-all duration-200 z-10 flex items-center justify-center",
+                    {
+                      "left-0 top-0 bottom-0 w-20 bg-neutral-800/60 hover:bg-neutral-700/50":
+                        isRasp,
+                      "left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 p-3 rounded-full":
+                        !isRasp,
+                    }
+                  )}
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Link>
+              )}
+
+              {nextSnapshot && (
+                <Link
+                  to="/dashboard/setup"
+                  preload="render"
+                  search={{
+                    tradeSetupId,
+                    snapshotId: nextSnapshot._id,
+                    image: "preview",
+                  }}
+                  className={clsx(
+                    "absolute text-white transition-all duration-200 z-10 flex items-center justify-center",
+                    {
+                      "right-0 top-0 bottom-0 w-20 bg-neutral-800/60 hover:bg-neutral-700/50":
+                        isRasp,
+                      "right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 p-3 rounded-full":
+                        !isRasp,
+                    }
+                  )}
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

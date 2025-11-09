@@ -1,5 +1,8 @@
 import { useGetSnapshotByTradeSetupId } from "@/hooks/snapshots/use-get-snapshot-by-trade-setup";
+import { cn } from "@/lib/utils";
+import { isRasp } from "@/utils/env-utils";
 import { useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useCallback, useMemo, useState } from "react";
@@ -18,6 +21,8 @@ const TIMELINE_CONFIG = {
 interface Props {
   tradeSetupId: Id<"trade_setups">;
   snapshotId: Id<"snapshots">;
+  image?: "preview";
+  className?: string;
 }
 
 type SnapshotWithPosition = Doc<"snapshots"> & {
@@ -28,9 +33,11 @@ type SnapshotWithPosition = Doc<"snapshots"> & {
 function useSnapshotNavigation({
   tradeSetupId,
   snapshotId,
+  image,
 }: {
   tradeSetupId: Id<"trade_setups">;
   snapshotId: Id<"snapshots">;
+  image?: "preview";
 }) {
   const navigate = useNavigate();
   const [loadingSnapshotId, setLoadingSnapshotId] =
@@ -47,7 +54,7 @@ function useSnapshotNavigation({
 
         await navigate({
           to: "/dashboard/setup",
-          search: { tradeSetupId, snapshotId: targetSnapshotId },
+          search: { tradeSetupId, snapshotId: targetSnapshotId, image },
         });
 
         console.log(`Successfully navigated to snapshot ${targetSnapshotId}`);
@@ -57,7 +64,7 @@ function useSnapshotNavigation({
         setLoadingSnapshotId(null);
       }
     },
-    [navigate, tradeSetupId, snapshotId]
+    [snapshotId, navigate, tradeSetupId, image]
   );
 
   return { handleSnapshotClick, loadingSnapshotId };
@@ -197,7 +204,9 @@ function SnapshotTooltipContent({
   return (
     <TooltipContent
       sideOffset={20}
-      className="bg-gradient-to-t from-background to-sidebar text-gray-100 border-muted rounded-none"
+      className={clsx(
+        "bg-gradient-to-t from-background to-sidebar text-gray-100 border-muted rounded-none"
+      )}
     >
       {/* Date line */}
       <div className="flex items-center space-x-2 font-mono">
@@ -234,7 +243,12 @@ function SnapshotTooltipContent({
 }
 
 // Main Component
-const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
+const SnapshotHistory = ({
+  snapshotId,
+  tradeSetupId,
+  className,
+  image,
+}: Props) => {
   const { data: snapshots } = useGetSnapshotByTradeSetupId({
     tradeSetupId: tradeSetupId as Id<"trade_setups">,
     sortBy: "createdAt",
@@ -244,13 +258,14 @@ const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
   const { handleSnapshotClick, loadingSnapshotId } = useSnapshotNavigation({
     tradeSetupId,
     snapshotId,
+    image,
   });
 
   const sortedSnapshots = useSnapshotPositions(snapshots);
 
   return (
     // <TooltipProvider>
-    <div className="w-full h-12 relative px-4 shrink-0">
+    <div className={cn("w-full h-12 relative px-4 shrink-0", className)}>
       {/* Timeline line */}
       <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-gradient-to-r from-gray-800 via-gray-500 to-gray-800 transform -translate-y-1/2 mask-x-from-95% shadow-sm" />
 
@@ -265,7 +280,7 @@ const SnapshotHistory = ({ snapshotId, tradeSetupId }: Props) => {
             className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${snapshot.position}%` }}
           >
-            <Tooltip>
+            <Tooltip defaultOpen={!isRasp}>
               <TooltipTrigger
                 className={`absolute top-1/2 size-3 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg before:absolute before:inset-0 before:rounded-full before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${
                   isCurrentSnapshot
