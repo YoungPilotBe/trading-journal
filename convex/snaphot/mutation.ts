@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { api, internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { emotionUnion, resultUnion, statusUnion } from "../constants/unions";
@@ -68,5 +68,41 @@ export const createSnapshot = mutation({
     });
 
     return { tradeSetupId, snapshotId };
+  },
+});
+
+export const deleteSnapshot = mutation({
+  args: {
+    snapshotId: v.id("snapshots"),
+  },
+  handler: async (ctx, { snapshotId }) => {
+    // Get the snapshot being deleted
+    const snapshot = await ctx.db
+      .query("snapshots")
+      .withIndex("by_id", (q) => q.eq("_id", snapshotId))
+      .unique();
+
+    if (!snapshot) throw new ConvexError("No snapshot found to delete");
+
+    // Find the previous snapshot in the same trade setup
+    const previousSnapshot = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", snapshot.tradeSetupId)
+      )
+      .filter((q) => q.lt(q.field("createdAt"), snapshot.createdAt))
+      .order("desc")
+      .first();
+
+    // Delete the current snapshot
+    await ctx.runMutation(internal.snaphot.services.cascadeDeleteSnapshot, {
+      snapshotId: snapshot._id,
+    });
+
+    // Return the previous snapshot ID (or null if there isn't one)
+    return {
+      previousSnapshotId: previousSnapshot?._id ?? null,
+      tradeSetupId: previousSnapshot?.tradeSetupId ?? null,
+    };
   },
 });

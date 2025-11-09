@@ -1,3 +1,4 @@
+import { DeleteSnapshotDialog } from "@/components/dialog/delete-snapshot-dialog";
 import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-dialog";
 import { DeleteTradeTemplateDialog } from "@/components/dialog/delete-trade-template-dialog";
 import NotesDialog from "@/components/dialog/notes-dialog";
@@ -17,6 +18,10 @@ type ExtractDialogPayload<T> =
 
 // Dialog configuration with keys, components, and inferred payload types
 export const DIALOGS = {
+  DELETE_SNAPSHOT: {
+    key: "DELETE_SNAPSHOT" as const,
+    component: DeleteSnapshotDialog,
+  },
   DELETE_TRADE_SETUP: {
     key: "DELETE_TRADE_SETUP" as const,
     component: DeleteTradeSetupDialog,

@@ -17,6 +17,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useDialog } from "@/contexts/dialog-context";
@@ -112,7 +113,7 @@ function RouteComponent() {
                   <MoreVertical className="h-4 w-4" />
                   <span className="sr-only">Open menu</span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-[200px]">
                   <DropdownMenuItem
                     className="justify-between"
                     onClick={() => {
@@ -134,12 +135,12 @@ function RouteComponent() {
                     <Archive />
                     Archive
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive justify-between"
                     onClick={() =>
-                      openDialog("DELETE_TRADE_SETUP", {
-                        tradeSetupId: tradeSetupId as Id<"trade_setups">,
-                        tradeSetupTitle: tradeSetup?.title || "",
+                      openDialog("DELETE_SNAPSHOT", {
+                        snapshotId,
                       })
                     }
                   >
