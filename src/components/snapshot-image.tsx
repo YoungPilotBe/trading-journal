@@ -9,7 +9,6 @@ import { Id } from "convex/_generated/dataModel";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect } from "react";
 import SnapshotHistory from "./snapshot-history";
-
 interface SnapshotImageProps {
   snapshotId: Id<"snapshots">;
   tradeSetupId: Id<"trade_setups">;
@@ -176,7 +175,7 @@ export function SnapshotImage({
                   className={clsx(
                     "absolute text-white transition-all duration-200 z-10 flex items-center justify-center",
                     {
-                      "left-0 top-0 bottom-0 w-20 bg-neutral-800/60 hover:bg-neutral-700/50":
+                      "left-0 top-0 bottom-0 w-20 bg-neutral-800/60 hover:bg-neutral-700/50 -translate-x-[105%] rounded-l-md":
                         isRasp,
                       "left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 p-3 rounded-full border border-muted-foreground hover:border-white text-muted-foreground hover:text-white":
                         !isRasp,
@@ -199,7 +198,7 @@ export function SnapshotImage({
                   className={clsx(
                     "absolute text-white transition-all duration-200 z-10 flex items-center justify-center",
                     {
-                      "right-0 top-0 bottom-0 w-20 bg-neutral-800/60 hover:bg-neutral-700/50":
+                      "right-0 top-0 bottom-0 w-20 bg-neutral-800/60 hover:bg-neutral-700/50 translate-x-[105%] rounded-r-md":
                         isRasp,
                       "right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 p-3 rounded-full border border-muted-foreground hover:border-white text-muted-foreground hover:text-white rounded-full":
                         !isRasp,
