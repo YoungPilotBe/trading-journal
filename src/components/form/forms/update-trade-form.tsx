@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { statusOptions } from "@/config/constants";
-import { Timeframe } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
 import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
@@ -31,7 +30,6 @@ import StatusOptions from "../features/status-options";
 import TemplateSelector from "../features/template-selector";
 import Timeframes from "../features/timeframes";
 import {
-  OrchestratedTradeSetupSchema,
   TradeDetailsSchema,
   tradeDetailsSchema,
   updateSnapshotSchema,
@@ -204,7 +202,14 @@ const UpdateTradeForm = ({ tradeSetup, snapshot, imageId }: Props) => {
           name="timeframe"
           control={control}
           render={({ field }) => (
-            <SingleTimeframe field={field} label="Timeframe" />
+            <SingleTimeframe
+              field={
+                field as unknown as Parameters<
+                  typeof SingleTimeframe
+                >[0]["field"]
+              }
+              label="Timeframe"
+            />
           )}
         />
         <TextField
@@ -239,11 +244,7 @@ const UpdateTradeForm = ({ tradeSetup, snapshot, imageId }: Props) => {
           name="direction"
           control={control}
           render={({ field }) => (
-            <Direction
-              disabled={isPending}
-              field={field}
-              label="Direction"
-            />
+            <Direction disabled={isPending} field={field} label="Direction" />
           )}
         />
 
@@ -291,10 +292,11 @@ const UpdateTradeForm = ({ tradeSetup, snapshot, imageId }: Props) => {
         <Controller
           name="timeframes"
           control={control}
-          disabled={isPending}
           render={({ field }) => (
             <Timeframes
-              field={field}
+              field={
+                field as unknown as Parameters<typeof Timeframes>[0]["field"]
+              }
               label="Timeframes"
               singleTimeframe={timeframe}
             />
@@ -309,11 +311,7 @@ const UpdateTradeForm = ({ tradeSetup, snapshot, imageId }: Props) => {
         {/* Submit Buttons */}
         {isDirty ? (
           <div className="flex flex-row gap-2">
-            <Button
-              type="button"
-              className="flex-1"
-              onClick={() => reset()}
-            >
+            <Button type="button" className="flex-1" onClick={() => reset()}>
               Cancel
             </Button>
             <Button
@@ -343,4 +341,3 @@ const UpdateTradeForm = ({ tradeSetup, snapshot, imageId }: Props) => {
 };
 
 export default UpdateTradeForm;
-
