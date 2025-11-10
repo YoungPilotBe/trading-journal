@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useDialog } from "@/contexts/dialog-context";
-import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { preloadSetupRouteData } from "@/lib/preloadRoutes";
@@ -70,9 +69,6 @@ function RouteComponent() {
   });
 
   // Get previous statuses for chronological validation
-  const { data: previousStatuses = [] } = useGetPreviousStatuses({
-    tradeSetupId: tradeSetupId as Id<"trade_setups">,
-  });
 
   return (
     <>
@@ -166,11 +162,8 @@ function RouteComponent() {
 
             {/* Form */}
             <TradeDetailsForm
-              tradeSetupId={tradeSetupId as Id<"trade_setups">}
-              snapshotId={snapshotId as Id<"snapshots">}
-              tradeSetup={tradeSetup}
-              snapshot={snapshot}
-              previousStatuses={previousStatuses}
+              tradeSetupId={tradeSetupId}
+              snapshotId={snapshotId}
             />
           </div>
         </div>

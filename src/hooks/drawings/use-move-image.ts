@@ -70,6 +70,49 @@ export function useMoveImage(drawing?: Doc<"drawings">) {
     await updateImage({ id: drawing._id, offsetY: imageOffsetY });
   }
 
+  // Touch event handlers for mobile/tablet devices
+  function handleTouchStart(e: React.TouchEvent) {
+    if (!isMoveMode) return;
+    // Prevent default to stop page scrolling when in move mode
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartY.current = e.touches[0].clientY;
+    dragStartOffset.current = imageOffsetY;
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!isDragging || !imageRef.current || !containerRef.current) return;
+    
+    // Prevent default to stop page scrolling
+    e.preventDefault();
+
+    // Mark that user has manually dragged
+    hasUserDragged.current = true;
+
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    const newOffset = dragStartOffset.current + deltaY;
+
+    // Calculate bounds
+    const imageHeight = imageRef.current.offsetHeight;
+    const containerHeight = containerRef.current.offsetHeight;
+    const maxOffset = 0; // Can't drag down beyond top
+    const minOffset = -(imageHeight - containerHeight); // Can't drag up beyond bottom
+
+    // Clamp the offset within bounds
+    const clampedOffset = Math.max(minOffset, Math.min(maxOffset, newOffset));
+    setImageOffsetY(clampedOffset);
+  }
+
+  async function handleTouchEnd() {
+    setIsDragging(false);
+
+    // Only save to database if drawing exists and user has dragged
+    if (!drawing?._id || !hasUserDragged.current) return;
+
+    // Save the current offset to the database
+    await updateImage({ id: drawing._id, offsetY: imageOffsetY });
+  }
+
   async function resetPosition() {
     hasUserDragged.current = false;
     setImageOffsetY(0);
@@ -97,6 +140,9 @@ export function useMoveImage(drawing?: Doc<"drawings">) {
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
     // Actions
     resetPosition,
     toggleMoveMode,

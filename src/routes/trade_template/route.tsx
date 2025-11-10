@@ -78,6 +78,9 @@ function RouteComponent() {
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
     resetPosition,
     toggleMoveMode,
   } = useMoveImage(drawingData ?? undefined);
@@ -238,6 +241,9 @@ function RouteComponent() {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             style={{
               cursor: isMoveMode ? "ns-resize" : "default",
             }}

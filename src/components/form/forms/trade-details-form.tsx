@@ -3,7 +3,10 @@ import { Separator } from "@/components/ui/separator";
 import { statusOptions } from "@/config/constants";
 import { Timeframe } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
+import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
+import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
+import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Doc, Id } from "convex/_generated/dataModel";
@@ -31,44 +34,30 @@ import {
 interface Props {
   tradeSetupId: Id<"trade_setups">;
   snapshotId: Id<"snapshots">;
-  tradeSetup?: Doc<"trade_setups"> | null;
-  snapshot?: Doc<"snapshots"> | null;
-  previousStatuses?: Doc<"snapshots">["status"][];
-  onSuccess?: () => void;
 }
 
-const TradeDetailsForm = ({
-  tradeSetupId,
-  snapshotId,
-  tradeSetup,
-  snapshot,
-  previousStatuses = [],
-  onSuccess,
-}: Props) => {
+const TradeDetailsForm = ({ tradeSetupId, snapshotId }: Props) => {
   const { openDialog } = useDialog();
+
+  const { data: tradeSetup } = useGetTradeSetup({
+    id: tradeSetupId as Id<"trade_setups">,
+  });
+
+  const { data: snapshot } = useGetSnapshot({
+    id: snapshotId as Id<"snapshots">,
+  });
+
+  const { data: previousStatuses = [] } = useGetPreviousStatuses({
+    tradeSetupId: tradeSetupId as Id<"trade_setups">,
+  });
 
   const {
     mutateAsync: updateTradeSetup,
     isPending: isPendingTradeSetupUpdate,
-  } = useUpdateTradeSetup({
-    onSuccess: () => {
-      onSuccess?.();
-      toast.success("Trade setup updated");
-    },
-    onError: () => {
-      toast.error("Something went wrong");
-    },
-  });
+  } = useUpdateTradeSetup({});
 
   const { mutateAsync: updateSnapshot, isPending: isPendingSnapshotUpdate } =
-    useUpdateSnapshot({
-      onSuccess: () => {
-        onSuccess?.();
-      },
-      onError: () => {
-        toast.error("Something went wrong");
-      },
-    });
+    useUpdateSnapshot({});
 
   const form = useForm<TradeDetailsSchema>({
     resolver: zodResolver(tradeDetailsSchema),
@@ -93,13 +82,12 @@ const TradeDetailsForm = ({
 
   const isPending = isPendingSnapshotUpdate || isPendingTradeSetupUpdate;
 
-  // Track original status
-  const originalStatus = snapshot?.status;
-  const hasExistingTags =
-    snapshot?.tags && Object.keys(snapshot.tags).length > 0;
-
   // Handle status change with confirmation if tags exist
   const handleStatusChange = (newStatus: Doc<"snapshots">["status"]) => {
+    const originalStatus = snapshot?.status;
+    const hasExistingTags =
+      snapshot?.tags && Object.keys(snapshot.tags).length > 0;
+
     // Check if selected status is disabled
     const selectedStatusOption = statusOptions.find(
       (option) => option.value === newStatus
