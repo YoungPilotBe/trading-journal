@@ -16,7 +16,7 @@ import { useGetTradeTemplates } from "@/hooks/trade_templates/use-get-trade-temp
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Doc, Id } from "convex/_generated/dataModel";
-import { PlusIcon, X } from "lucide-react";
+import { ChevronRight, PlusIcon, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import ResultBadge from "./result-badge";
 import { LoadingSkeleton } from "./ui/loading-skeleton";
@@ -82,12 +82,15 @@ const TradeSetupHeader = () => {
           <div className="w-8 h-7 bg-muted/20 rounded animate-pulse" />
         </div>
         {/* Cards skeleton */}
-        <div className="w-full grid grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index} className="animate-pulse h-28 bg-background">
-              <CardContent className="h-full bg-muted/20 rounded" />
-            </Card>
-          ))}
+        <div className="w-full flex gap-4">
+          <div className="flex-1 grid grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Card key={index} className="animate-pulse h-28 bg-background">
+                <CardContent className="h-full bg-muted/20 rounded" />
+              </Card>
+            ))}
+          </div>
+          <div className="w-24 h-28 bg-muted/20 rounded animate-pulse" />
         </div>
       </div>
     );
@@ -170,17 +173,31 @@ const TradeSetupHeader = () => {
       </div>
 
       {/* Cards */}
-      <div className="w-full grid grid-cols-4 gap-4">
-        {data?.map((setup) => (
-          <Link
-            key={setup._id}
-            to="/dashboard/setup"
-            search={{ tradeSetupId: setup._id, snapshotId: setup.snapshot._id }}
-            className="group"
-          >
-            <TradeSetupCard setup={setup} />
-          </Link>
-        ))}
+      <div className="w-full flex gap-4">
+        <div className="flex-1 grid grid-cols-4 gap-4">
+          {data?.map((setup) => (
+            <Link
+              key={setup._id}
+              to="/dashboard/setup"
+              search={{
+                tradeSetupId: setup._id,
+                snapshotId: setup.snapshot._id,
+              }}
+              className="group"
+            >
+              <TradeSetupCard setup={setup} />
+            </Link>
+          ))}
+        </div>
+
+        {/* View All Card */}
+        <Link to="/dashboard/setups" className="group">
+          <Card className="h-full w-24 bg-muted/20 border-muted transition-all duration-200 hover:border-muted-foreground/50 hover:shadow-lg hover:bg-muted/30">
+            <CardContent className="h-full flex items-center justify-center p-4">
+              <ChevronRight className="h-8 w-8 text-muted-foreground transition-colors group-hover:text-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

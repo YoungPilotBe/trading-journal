@@ -5,9 +5,13 @@ import { cn } from "@/lib/utils";
 
 interface SeparatorProps
   extends React.ComponentProps<typeof SeparatorPrimitive.Root> {
-  text?: string;
+  text?: React.ReactNode;
   textPosition?: "left" | "right" | "center";
   textClassName?: string;
+  leftText?: React.ReactNode;
+  rightText?: React.ReactNode;
+  leftTextClassName?: string;
+  rightTextClassName?: string;
 }
 
 function Separator({
@@ -17,10 +21,98 @@ function Separator({
   text,
   textPosition = "center",
   textClassName,
+  leftText,
+  rightText,
+  leftTextClassName,
+  rightTextClassName,
   ...props
 }: SeparatorProps) {
+  // Handle left and right text combination
+  if (leftText && rightText) {
+    if (orientation === "vertical") {
+      console.warn(
+        "Separator with left and right text only supports horizontal orientation"
+      );
+    }
+    return (
+      <div className={cn("flex items-center w-full", className)} {...props}>
+        <small
+          className={cn(
+            "text-muted-foreground font-mono px-2 shrink-0",
+            leftTextClassName
+          )}
+        >
+          {leftText}
+        </small>
+        <SeparatorPrimitive.Root
+          data-slot="separator"
+          decorative={decorative}
+          orientation="horizontal"
+          className="bg-border h-px flex-1"
+        />
+        <small
+          className={cn(
+            "text-muted-foreground font-mono px-2 shrink-0",
+            rightTextClassName
+          )}
+        >
+          {rightText}
+        </small>
+      </div>
+    );
+  }
+
+  // Handle only leftText or only rightText
+  if (leftText && !rightText && !text) {
+    if (orientation === "vertical") {
+      console.warn("Separator with text only supports horizontal orientation");
+    }
+    return (
+      <div className={cn("flex items-center w-full", className)} {...props}>
+        <small
+          className={cn(
+            "text-muted-foreground font-mono px-2 shrink-0",
+            leftTextClassName
+          )}
+        >
+          {leftText}
+        </small>
+        <SeparatorPrimitive.Root
+          data-slot="separator"
+          decorative={decorative}
+          orientation="horizontal"
+          className="bg-border h-px flex-1"
+        />
+      </div>
+    );
+  }
+
+  if (rightText && !leftText && !text) {
+    if (orientation === "vertical") {
+      console.warn("Separator with text only supports horizontal orientation");
+    }
+    return (
+      <div className={cn("flex items-center w-full", className)} {...props}>
+        <SeparatorPrimitive.Root
+          data-slot="separator"
+          decorative={decorative}
+          orientation="horizontal"
+          className="bg-border h-px flex-1"
+        />
+        <small
+          className={cn(
+            "text-muted-foreground font-mono px-2 shrink-0",
+            rightTextClassName
+          )}
+        >
+          {rightText}
+        </small>
+      </div>
+    );
+  }
+
   // If no text is provided, render the simple separator
-  if (!text) {
+  if (!text && !leftText && !rightText) {
     return (
       <SeparatorPrimitive.Root
         data-slot="separator"

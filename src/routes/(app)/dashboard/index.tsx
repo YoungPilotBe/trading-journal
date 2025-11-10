@@ -3,7 +3,8 @@ import TradeSetupHeader from "@/components/trade-setup-header";
 import TradingJournal from "@/components/trading-journal";
 import { Separator } from "@/components/ui/separator";
 import Portal from "@/portals/portal";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/(app)/dashboard/")({
   component: RouteComponent,
@@ -16,18 +17,30 @@ function RouteComponent() {
       <TradeSetupHeader />
       <Separator
         className="my-5"
-        text="Active Trades"
-        textPosition="left"
-        textClassName="text-[10px] text-white"
+        leftText="Active Trades"
+        rightTextClassName="text-[10px] text-white"
+        leftTextClassName="text-[10px] text-white"
+        rightText={
+          <Link
+            className="flex flex-row gap-2 items-center"
+            to={"/dashboard/setups"}
+            search={{ status: ["idea", "watching", "executed", "closed"] }}
+          >
+            All Trades
+            <ChevronRight className="size-2" />
+          </Link>
+        }
       />
-      <TradingJournal status={["idea", "watching", "executed", "closed"]} />
+      <TradingJournal
+        pageSize={10}
+        status={["idea", "watching", "executed", "closed"]}
+      />
       <Separator
         className="my-5"
         text="Completed Trades"
         textPosition="left"
         textClassName="text-[10px] text-white"
       />
-      <TradingJournal status={["canceled", "reviewed"]} />
     </>
   );
 }

@@ -19,6 +19,7 @@ import { Route as Trade_onboardingAdd_templateRouteImport } from './routes/trade
 import { Route as Trade_onboardingAdd_tagsRouteImport } from './routes/trade_onboarding/add_tags'
 import { Route as appDashboardRouteRouteImport } from './routes/(app)/dashboard/route'
 import { Route as appDashboardIndexRouteImport } from './routes/(app)/dashboard/index'
+import { Route as appDashboardSetupsRouteImport } from './routes/(app)/dashboard/setups'
 import { Route as appDashboardSetupRouteRouteImport } from './routes/(app)/dashboard/setup/route'
 import { Route as appDashboardTrade_templatesIndexRouteImport } from './routes/(app)/dashboard/trade_templates/index'
 
@@ -76,6 +77,11 @@ const appDashboardIndexRoute = appDashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => appDashboardRouteRoute,
 } as any)
+const appDashboardSetupsRoute = appDashboardSetupsRouteImport.update({
+  id: '/setups',
+  path: '/setups',
+  getParentRoute: () => appDashboardRouteRoute,
+} as any)
 const appDashboardSetupRouteRoute = appDashboardSetupRouteRouteImport.update({
   id: '/setup',
   path: '/setup',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/dashboard/setup': typeof appDashboardSetupRouteRoute
+  '/dashboard/setups': typeof appDashboardSetupsRoute
   '/dashboard/': typeof appDashboardIndexRoute
   '/dashboard/trade_templates': typeof appDashboardTrade_templatesIndexRoute
 }
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/dashboard/setup': typeof appDashboardSetupRouteRoute
+  '/dashboard/setups': typeof appDashboardSetupsRoute
   '/dashboard': typeof appDashboardIndexRoute
   '/dashboard/trade_templates': typeof appDashboardTrade_templatesIndexRoute
 }
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/(app)/dashboard/setup': typeof appDashboardSetupRouteRoute
+  '/(app)/dashboard/setups': typeof appDashboardSetupsRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
   '/(app)/dashboard/trade_templates/': typeof appDashboardTrade_templatesIndexRoute
 }
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/dashboard/setup'
+    | '/dashboard/setups'
     | '/dashboard/'
     | '/dashboard/trade_templates'
   fileRoutesByTo: FileRoutesByTo
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/dashboard/setup'
+    | '/dashboard/setups'
     | '/dashboard'
     | '/dashboard/trade_templates'
   id:
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/(app)/dashboard/setup'
+    | '/(app)/dashboard/setups'
     | '/(app)/dashboard/'
     | '/(app)/dashboard/trade_templates/'
   fileRoutesById: FileRoutesById
@@ -254,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardIndexRouteImport
       parentRoute: typeof appDashboardRouteRoute
     }
+    '/(app)/dashboard/setups': {
+      id: '/(app)/dashboard/setups'
+      path: '/setups'
+      fullPath: '/dashboard/setups'
+      preLoaderRoute: typeof appDashboardSetupsRouteImport
+      parentRoute: typeof appDashboardRouteRoute
+    }
     '/(app)/dashboard/setup': {
       id: '/(app)/dashboard/setup'
       path: '/setup'
@@ -292,12 +311,14 @@ const Trade_onboardingRouteRouteWithChildren =
 
 interface appDashboardRouteRouteChildren {
   appDashboardSetupRouteRoute: typeof appDashboardSetupRouteRoute
+  appDashboardSetupsRoute: typeof appDashboardSetupsRoute
   appDashboardIndexRoute: typeof appDashboardIndexRoute
   appDashboardTrade_templatesIndexRoute: typeof appDashboardTrade_templatesIndexRoute
 }
 
 const appDashboardRouteRouteChildren: appDashboardRouteRouteChildren = {
   appDashboardSetupRouteRoute: appDashboardSetupRouteRoute,
+  appDashboardSetupsRoute: appDashboardSetupsRoute,
   appDashboardIndexRoute: appDashboardIndexRoute,
   appDashboardTrade_templatesIndexRoute: appDashboardTrade_templatesIndexRoute,
 }

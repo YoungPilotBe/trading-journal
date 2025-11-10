@@ -30,6 +30,12 @@ import ResultBadge from "./result-badge";
 
 import type { FunctionArgs } from "convex/server";
 import { api } from "../../convex/_generated/api";
+
+interface Props
+  extends FunctionArgs<typeof api.trade_setup.queries.getTradingJournalData> {
+  pageSize: number;
+}
+
 // Types
 type JournalEntry = {
   id: Id<"trade_setups">;
@@ -83,18 +89,16 @@ const TableRowSkeleton = () => (
   </TableRow>
 );
 
-const TradingJournal = (
-  props: FunctionArgs<typeof api.trade_setup.queries.getTradingJournalData>
-) => {
+const TradingJournal = ({ pageSize, ...args }: Props) => {
   // State for filters and sorting
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize,
   });
 
   // Fetch all data (no limit for client-side pagination)
-  const { data: journalData, isLoading } = useGetTradingJournalData(props);
+  const { data: journalData, isLoading } = useGetTradingJournalData(args);
 
   // Define columns
   const columns = useMemo(
@@ -319,11 +323,6 @@ const TradingJournal = (
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className={
-                  row.original.latestStatus === "canceled"
-                    ? "relative opacity-40 after:bg-muted-foreground "
-                    : ""
-                }
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
