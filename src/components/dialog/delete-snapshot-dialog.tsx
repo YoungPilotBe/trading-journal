@@ -16,7 +16,7 @@ interface DeleteSnapshotDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   snapshotId: Id<"snapshots">;
-  onSuccess?: (previousSnapshotId: Id<"snapshots"> | null) => void; // Optional callback with previous snapshot ID
+  onSuccess?: (previousSnapshotId: Id<"snapshots">) => void; // Optional callback with previous snapshot ID (always defined on success)
 }
 
 export function DeleteSnapshotDialog({
@@ -29,17 +29,12 @@ export function DeleteSnapshotDialog({
   const { mutateAsync: deleteSnapshot, isPending: isDeleting } =
     useDeleteSnapshot({
       onSuccess: ({ previousSnapshotId, tradeSetupId }) => {
-        if (!previousSnapshotId) {
-          navigate({
-            from: "/dashboard",
-            to: "/dashboard",
-          });
-        }
+        // Navigate to the previous snapshot
         navigate({
           from: "/dashboard/setup",
           search: {
-            snapshotId: previousSnapshotId as Id<"snapshots">,
-            tradeSetupId: tradeSetupId as Id<"trade_setups">,
+            snapshotId: previousSnapshotId,
+            tradeSetupId: tradeSetupId,
           },
           to: "/dashboard/setup",
         });

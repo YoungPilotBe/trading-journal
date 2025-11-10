@@ -53,8 +53,6 @@ export const updateTradeSetup = mutation({
       );
     }
 
-    console.log();
-
     const imgId =
       imageId ??
       (

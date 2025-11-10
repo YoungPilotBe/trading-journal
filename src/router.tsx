@@ -8,6 +8,8 @@ import {
 } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 import { ConvexProvider } from "convex/react";
+import { ConvexError } from "convex/values";
+import { toast } from "sonner";
 import { routeTree } from "./routeTree.gen";
 
 export function createRouter() {
@@ -37,6 +39,15 @@ export function createRouter() {
       queries: {
         queryKeyHashFn: convexQueryClient.hashFn(),
         queryFn: convexQueryClient.queryFn(),
+      },
+      mutations: {
+        onError: (error) => {
+          if (error instanceof ConvexError) {
+            toast.error(error.data);
+          } else {
+            toast.error(error.message);
+          }
+        },
       },
     },
   });

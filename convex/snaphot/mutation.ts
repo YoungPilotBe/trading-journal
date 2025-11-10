@@ -94,15 +94,22 @@ export const deleteSnapshot = mutation({
       .order("desc")
       .first();
 
+    // Prevent deletion of the last snapshot
+    if (!previousSnapshot) {
+      throw new ConvexError(
+        "Cannot delete the last snapshot. A trade setup must have at least one snapshot."
+      );
+    }
+
     // Delete the current snapshot
     await ctx.runMutation(internal.snaphot.services.cascadeDeleteSnapshot, {
       snapshotId: snapshot._id,
     });
 
-    // Return the previous snapshot ID (or null if there isn't one)
+    // Return the previous snapshot ID
     return {
-      previousSnapshotId: previousSnapshot?._id ?? null,
-      tradeSetupId: previousSnapshot?.tradeSetupId ?? null,
+      previousSnapshotId: previousSnapshot._id,
+      tradeSetupId: previousSnapshot.tradeSetupId,
     };
   },
 });
