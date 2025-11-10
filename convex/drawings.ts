@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 // Generate upload URL for drawings
@@ -71,5 +71,21 @@ export const deleteDrawing = mutation({
     await ctx.db.delete(args.id);
 
     return { success: true, deletedId: args.id };
+  },
+});
+
+export const updateDrawing = mutation({
+  args: {
+    id: v.id("drawings"),
+    offsetY: v.number(),
+  },
+  handler: async (ctx, { id, ...args }) => {
+    const image = await ctx.db.get(id);
+
+    if (!image) {
+      throw new ConvexError("Image not found");
+    }
+
+    await ctx.db.patch(id, args);
   },
 });

@@ -15,11 +15,12 @@ import {
 import { BlockNoteEditorComponent, useBlockNoteEditor } from "@/editor";
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { MoveIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 
 import AutoSavePortal from "@/components/portals/auto-save-portal";
 import { useDialog } from "@/contexts/dialog-context";
+import { useMoveImage } from "@/hooks/drawings/use-move-image";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
 import { useUploadDrawing } from "@/hooks/drawings/useUploadDrawing";
 import { useCreateTradeTemplate } from "@/hooks/trade_templates/create_trade_template";
@@ -61,8 +62,25 @@ function RouteComponent() {
   const { data: existingTemplate, isLoading } = useGetTradeTemplate({
     id: templateId as Id<"trade_templates">,
   });
+  const { data: drawingData } = useGetDrawing({
+    id: existingTemplate?.drawingId,
+  });
 
   const { openDialog } = useDialog();
+
+  // Image movement hook
+  const {
+    imageOffsetY,
+    isMoveMode,
+    isDragging,
+    imageRef,
+    containerRef,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    resetPosition,
+    toggleMoveMode,
+  } = useMoveImage(drawingData ?? undefined);
 
   const { mutateAsync: createTradeTemplate, isPending: isCreatingTemplate } =
     useCreateTradeTemplate({
@@ -79,9 +97,6 @@ function RouteComponent() {
     useUploadDrawing();
 
   // Get drawing data if template has a drawing
-  const { data: drawingData } = useGetDrawing({
-    id: existingTemplate?.drawingId,
-  });
 
   const autoSave = useDebouncedCallback(() => {
     handleSave();
@@ -144,15 +159,13 @@ function RouteComponent() {
 
       try {
         // Upload the file directly at its original size
-        await uploadDrawing({
+        const { drawingId } = await uploadDrawing({
           file: file,
-        }).then(({ drawingId }) => {
-          handleSave(drawingId);
         });
 
-        console.log("Drawing uploaded successfully");
+        await handleSave(drawingId);
+        await resetPosition();
       } catch (uploadError) {
-        console.error("Error uploading drawing:", uploadError);
         alert("Failed to upload drawing");
       }
     };
@@ -218,17 +231,60 @@ function RouteComponent() {
       {/* Header Section */}
       <div className="xl:rounded-t-xl bg-card flex-1 flex flex-col">
         <div className="mb-8 space-y-4 flex-shrink-0">
-          <div className="h-[300px] w-full mx-auto relative overflow-hidden">
+          <div
+            ref={containerRef}
+            className="h-[300px] w-full mx-auto relative overflow-hidden"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            style={{
+              cursor: isMoveMode ? "ns-resize" : "default",
+            }}
+          >
             {drawingData?.url ? (
               <>
                 {/* Display the uploaded image */}
                 <img
+                  ref={imageRef}
                   src={drawingData.url}
                   alt="Trade template drawing"
-                  className="w-full h-full object-contain py-4"
+                  className={clsx(
+                    "w-full py-4 transition-all duration-200",
+                    isMoveMode && "brightness-50"
+                  )}
+                  style={{
+                    minHeight: "100%",
+                    objectFit: "cover",
+                    transform: `translateY(${imageOffsetY}px)`,
+                    transition: isDragging ? "none" : "transform 0.2s ease",
+                  }}
+                  onDragStart={(e) => e.preventDefault()}
+                  draggable={false}
                 />
+
+                {/* Move mode overlay with instructions */}
+                {isMoveMode && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-white px-6 py-3 rounded-lg backdrop-blur-sm">
+                      <p className="text-sm font-medium">Drag Up / Down</p>
+                    </div>
+                  </div>
+                )}
                 {/* Button overlay - always visible on top */}
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={clsx(
+                      "flex items-center gap-2 bg-white/90 backdrop-blur-sm",
+                      isMoveMode && "bg-primary text-primary-foreground"
+                    )}
+                    onClick={toggleMoveMode}
+                  >
+                    <MoveIcon className="w-4 h-4" />
+                    Move
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"

@@ -1,14 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { useDeleteTradeSetup } from "@/hooks/trade-setup/use-delete-trade-setup";
 import { cn } from "@/lib/utils";
 import { type PageVariants } from "@/types/animations";
 import { isRasp } from "@/utils/env-utils";
-import { useConvexMutation } from "@convex-dev/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { motion } from "framer-motion";
 import { forwardRef, useCallback, useState } from "react";
-import { api } from "../../../convex/_generated/api";
 
 interface AnimatedImageLayoutProps {
   imageId: Id<"tradingview_images">;
@@ -55,7 +52,6 @@ export const AnimatedImageLayout = forwardRef<
 >(
   (
     {
-      imageId,
       src,
       asset,
       alt,
@@ -75,13 +71,8 @@ export const AnimatedImageLayout = forwardRef<
       searchParams,
     } = useImageAnimation(pageVariants);
     const navigate = useNavigate();
-    const deleteImage = useConvexMutation(
-      api.tradingview_images.mutations.deleteImage
-    );
 
     const targetStyle = getCurrentTarget();
-
-    const { mutateAsync: deleteTradeSetup } = useDeleteTradeSetup();
 
     // Navigation handlers
     const handleAddTradeClick = useCallback(() => {
@@ -108,17 +99,6 @@ export const AnimatedImageLayout = forwardRef<
         });
       }
     }, [asset, navigate, searchParams.imageId]);
-
-    const handleCancel = async () => {
-      if (searchParams.tradeSetupId) {
-        await deleteTradeSetup({
-          tradeSetupId: searchParams.tradeSetupId as Id<"trade_setups">,
-        });
-      } else {
-        await deleteImage({ id: imageId as Id<"tradingview_images"> });
-      }
-      await navigate({ to: "/dashboard" });
-    };
 
     return (
       <>
@@ -216,15 +196,6 @@ export const AnimatedImageLayout = forwardRef<
 
           {children}
         </div>
-        {searchParams.onboarding && (
-          <Button
-            variant="ghost"
-            onClick={handleCancel}
-            className="absolute bottom-40 left-1/2 -translate-x-1/2 starting:opacity-0 starting:translate-y-5 transition-all opacity-100 delay-[1500] duration-500 text-muted-foreground font-mono font-normal tracking-wide"
-          >
-            Cancel
-          </Button>
-        )}
       </>
     );
   }

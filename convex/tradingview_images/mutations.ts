@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { parseFilename } from "../../src/lib/utils";
 import { mutation } from "../_generated/server";
 
@@ -50,7 +50,7 @@ export const deleteImage = mutation({
     const image = await ctx.db.get(args.id);
 
     if (!image) {
-      throw new Error("Image not found");
+      throw new ConvexError("Image not found");
     }
 
     // Delete the file from storage

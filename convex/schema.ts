@@ -26,6 +26,8 @@ export default defineSchema({
     fileSize: v.number(),
     contentType: v.string(),
     uploadedAt: v.number(),
+    offsetY: v.optional(v.number()),
+
     // One-to-one relationship with trade_templates
     tradeTemplateId: v.optional(v.id("trade_templates")),
   })

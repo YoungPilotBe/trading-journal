@@ -3,6 +3,7 @@ import { AnimatedImageLayout } from "@/components/layouts/AnimatedImageLayout";
 import { Button } from "@/components/ui/button";
 import { pageVariants } from "@/config/pageVariants";
 import { useGetImage } from "@/hooks/tradingview_images/get_image";
+import { useDeleteImage } from "@/hooks/tradingview_images/use-delete-image";
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { ChevronLeft } from "lucide-react";
@@ -20,10 +21,18 @@ export const Route = createFileRoute("/trade_onboarding")({
 });
 
 function RouteComponent() {
-  const { imageId } = Route.useSearch();
+  const { imageId, onboarding } = Route.useSearch();
   const { data, isLoading } = useGetImage({
     id: imageId as Id<"tradingview_images">,
   });
+  const navigate = useNavigate();
+
+  const { mutateAsync: deleteImage } = useDeleteImage();
+
+  const handleCancel = async () => {
+    await deleteImage({ id: imageId as Id<"tradingview_images"> });
+    await navigate({ to: "/dashboard" });
+  };
 
   // Early returns for loading and error states
   if (isLoading) {
@@ -60,6 +69,15 @@ function RouteComponent() {
         pageVariants={pageVariants}
         className="mb-8"
       />
+      {onboarding && (
+        <Button
+          variant="ghost"
+          onClick={handleCancel}
+          className="absolute bottom-40 left-1/2 -translate-x-1/2 starting:opacity-0 starting:translate-y-5 transition-all opacity-100 delay-[1500] duration-500 text-muted-foreground font-mono font-normal tracking-wide"
+        >
+          Cancel
+        </Button>
+      )}
 
       <Outlet />
     </div>
