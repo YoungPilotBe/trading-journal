@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { api, internal } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { emotionUnion, resultUnion, statusUnion } from "../constants/unions";
 
@@ -33,14 +34,13 @@ export const createSnapshot = mutation({
     tradeSetupId: v.id("trade_setups"),
     status: statusUnion,
     imageId: v.id("tradingview_images"),
-    result: v.optional(resultUnion),
-    emotion: v.union(emotionUnion, v.null()),
+    emotion: v.optional(emotionUnion),
     timeframe: v.string(),
     riskReward: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (
     ctx,
-    { imageId, tradeSetupId, status, result, timeframe, emotion, riskReward }
+    { imageId, tradeSetupId, status, timeframe, emotion, riskReward }
   ) => {
     const now = Date.now();
 
@@ -54,15 +54,12 @@ export const createSnapshot = mutation({
       createdAt: now,
     });
 
-    if (result) {
-      await ctx.runMutation(api.trade_setup.mutations.updateTradeSetup, {
-        id: tradeSetupId,
-        snapshotId,
-        result,
-        imageId,
-        emotion,
-      });
-    }
+    // if (result) {
+    //   await ctx.runMutation(api.trade_setup.mutations.updateTradeSetup, {
+    //     id: tradeSetupId,
+    //     result,
+    //   });
+    // }
 
     await ctx.db.patch(imageId, {
       snapshotId,
@@ -114,5 +111,62 @@ export const deleteSnapshot = mutation({
       previousSnapshotId: previousSnapshot._id,
       tradeSetupId: previousSnapshot.tradeSetupId,
     };
+  },
+});
+
+export const attachSnapshot = mutation({
+  args: {
+    tradeSetup: v.object({
+      id: v.id("trade_setups"),
+      title: v.optional(v.string()),
+      timeframes: v.optional(v.array(v.string())),
+      result: v.optional(resultUnion),
+    }),
+    snapshot: v.object({
+      timeframe: v.string(),
+      status: statusUnion,
+      emotion: v.optional(emotionUnion),
+      riskReward: v.optional(v.number()),
+      imageId: v.id("tradingview_images"),
+    }),
+  },
+
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
+    snapshotId: Id<"snapshots">;
+    tradeSetupId: Id<"trade_setups">;
+  }> => {
+    // Check if the trade setup exists
+    const tradeSetup = await ctx.runQuery(
+      api.trade_setup.queries.getTradeSetup,
+      {
+        id: args.tradeSetup.id,
+      }
+    );
+
+    if (!tradeSetup)
+      throw new ConvexError("No trade setup found to attach the snapshot too");
+
+    await ctx.runMutation(api.trade_setup.mutations.updateTradeSetup, {
+      ...args.tradeSetup,
+    });
+
+    const snapshot = await ctx.runMutation(
+      api.snaphot.mutation.createSnapshot,
+      {
+        ...args.snapshot,
+        tradeSetupId: tradeSetup._id,
+      }
+    );
+
+    await ctx.runMutation(api.tradingview_images.mutations.updateImage, {
+      id: args.snapshot.imageId,
+      timeframe: args.snapshot.timeframe,
+      snapshotId: snapshot.snapshotId,
+    });
+
+    return snapshot;
   },
 });

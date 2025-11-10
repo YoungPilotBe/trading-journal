@@ -161,10 +161,7 @@ function RouteComponent() {
             </div>
 
             {/* Form */}
-            <TradeDetailsForm
-              tradeSetupId={tradeSetupId}
-              snapshotId={snapshotId}
-            />
+            <TradeDetailsForm tradeSetup={tradeSetup!} snapshot={snapshot!} />
           </div>
         </div>
 

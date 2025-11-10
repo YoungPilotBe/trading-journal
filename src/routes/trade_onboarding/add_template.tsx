@@ -121,10 +121,8 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
 
   async function handleSubmit() {
     await updateTradeSetup({
-      id: search.tradeSetupId as Id<"trade_setups">,
-      snapshotId: search.snapshotId as Id<"snapshots">,
-      imageId: search.imageId as Id<"tradingview_images">,
-      trade_template: template._id as Id<"trade_templates">,
+      id: search.tradeSetupId,
+      trade_template: template._id,
     });
   }
 
@@ -168,26 +166,15 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
 function SkipTemplateOption() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const { mutateAsync: updateTradeSetup, isPending } = useUpdateTradeSetup({
-    onSuccess: () => {
-      navigate({ to: "/trade_onboarding/add_tags", search });
-    },
-  });
 
   async function handleSkip() {
-    await updateTradeSetup({
-      id: search.tradeSetupId as Id<"trade_setups">,
-      snapshotId: search.snapshotId as Id<"snapshots">,
-      imageId: search.imageId as Id<"tradingview_images">,
-      trade_template: undefined, // No template selected
-    });
+    navigate({ to: "/trade_onboarding/add_tags", search });
   }
 
   return (
     <div
       className={clsx(
-        "flex items-center gap-3 p-2 w-full cursor-pointer hover:bg-muted/50 rounded-md transition-colors",
-        isPending && "opacity-50 pointer-events-none"
+        "flex items-center gap-3 p-2 w-full cursor-pointer hover:bg-muted/50 rounded-md transition-colors"
       )}
       onClick={handleSkip}
     >

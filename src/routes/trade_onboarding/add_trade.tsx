@@ -5,15 +5,11 @@ import { Id } from "convex/_generated/dataModel";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  tradeSetupId: z.optional(
-    z.custom<Id<"trade_setups">>((val) => typeof val === "string")
-  ),
   snapshotId: z.optional(
     z.custom<Id<"snapshots">>((val) => typeof val === "string")
   ),
   imageId: z.custom<Id<"tradingview_images">>((val) => typeof val === "string"),
   image: z.optional(z.enum(["preview"])),
-  attach: z.optional(z.boolean()),
   onboarding: z.optional(z.boolean()),
 });
 
@@ -40,7 +36,7 @@ export const Route = createFileRoute("/trade_onboarding/add_trade")({
 });
 
 function RouteComponent() {
-  const { snapshotId, imageId, attach } = Route.useSearch();
+  const { snapshotId, imageId } = Route.useSearch();
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -49,10 +45,6 @@ function RouteComponent() {
         <AddTradeForm
           snapshotId={snapshotId as Id<"snapshots">}
           imageId={imageId}
-          attach={attach}
-          disabledFields={
-            attach ? ["title", "asset", "creationTime", "direction"] : undefined
-          }
         />
       </div>
     </div>

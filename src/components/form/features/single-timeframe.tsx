@@ -6,10 +6,10 @@ import {
 import { Timeframe, TIMEFRAMES } from "@/config/timeframe-order";
 import { useState } from "react";
 import { ControllerRenderProps, useFormState } from "react-hook-form";
-import { AddTradeSetupSchema } from "../schemas/add-trade-schema";
+import { OrchestratedTradeSetupSchema } from "../schemas/add-trade-schema";
 
 type Props = {
-  field: ControllerRenderProps<AddTradeSetupSchema, "timeframe">;
+  field: ControllerRenderProps<OrchestratedTradeSetupSchema, "timeframe">;
   label: string;
   disabled?: boolean;
 } & Omit<

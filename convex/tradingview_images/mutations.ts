@@ -62,3 +62,15 @@ export const deleteImage = mutation({
     return { success: true, deletedId: args.id };
   },
 });
+
+// Mutation for attaching timeframe to a image
+export const updateImage = mutation({
+  args: {
+    id: v.id("tradingview_images"),
+    snapshotId: v.id("snapshots"),
+    timeframe: v.string(),
+  },
+  handler: async (ctx, { id, ...args }) => {
+    return await ctx.db.patch(id, args);
+  },
+});

@@ -90,7 +90,7 @@ export const AnimatedImageLayout = forwardRef<
     const handleAttachTradeClick = useCallback(() => {
       if (searchParams?.imageId) {
         navigate({
-          to: "/trade_onboarding/attach_trade",
+          to: "/trade_onboarding/choose_trade_setup",
           search: {
             imageId: searchParams.imageId as Id<"tradingview_images">,
             asset,

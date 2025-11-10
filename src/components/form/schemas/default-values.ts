@@ -2,10 +2,16 @@ import { TIMEFRAMES } from "@/config/timeframe-order";
 import { Doc } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { addTimeframeToTimeframes } from "../utils";
-import { AddTradeSetupSchema } from "./add-trade-schema";
+import {
+  OrchestratedTradeSetupSchema,
+  TradeDetailsSchema,
+} from "./add-trade-schema";
 
 type Timeframe = (typeof TIMEFRAMES)[number];
-
+interface TradeDetailsExistingData {
+  existingTradeSetup?: Doc<"trade_setups">;
+  existingSnapshot?: Doc<"snapshots">;
+}
 // Type for the existing values data
 interface ExistingValuesData {
   existingTradeSetup?: Doc<"trade_setups"> | null;
@@ -21,7 +27,7 @@ interface ExistingValuesData {
 // Function to create default values based on existing data
 export const createAddTradeSetupDefaultValues = (
   existingValues?: ExistingValuesData
-): AddTradeSetupSchema => {
+): OrchestratedTradeSetupSchema => {
   const status = existingValues?.existingSnapshot?.status || "idea";
   const result = existingValues?.existingTradeSetup?.result;
 
@@ -66,7 +72,7 @@ export const createAddTradeSetupDefaultValues = (
 };
 
 // Fallback default values for when no existing data is available
-export const addTradeSetupDefaultValues = <AddTradeSetupSchema>{
+export const addTradeSetupDefaultValues = <OrchestratedTradeSetupSchema>{
   asset: "",
   timeframe: "4h" as Timeframe,
   creationTime: "",
@@ -75,4 +81,19 @@ export const addTradeSetupDefaultValues = <AddTradeSetupSchema>{
   timeframes: ["4h"] as Timeframe[],
   status: "idea",
   // Note: result is intentionally omitted for non-closed statuses
+};
+
+export const createTradeDetailsDefaultValues = (
+  existingData?: TradeDetailsExistingData
+): TradeDetailsSchema => {
+  return {
+    emotion: existingData?.existingSnapshot?.emotion,
+    timeframes: existingData?.existingTradeSetup?.timeframes as [Timeframe],
+    timeframe: existingData?.existingSnapshot?.timeframe as Timeframe,
+    title: existingData?.existingTradeSetup?.title,
+    trade_template: existingData?.existingTradeSetup?.trade_template,
+    status: existingData?.existingSnapshot?.status || "idea",
+    result: existingData?.existingTradeSetup?.result,
+    riskReward: existingData?.existingSnapshot?.riskReward,
+  };
 };

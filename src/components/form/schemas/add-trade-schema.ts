@@ -3,8 +3,8 @@ import { Id } from "convex/_generated/dataModel";
 import { z } from "zod";
 
 // Define the valid timeframes as a union type
-const timeframeSchema = z.enum(TIMEFRAMES);
-const timeframesSchema = timeframeSchema.array();
+export const timeframeSchema = z.enum(TIMEFRAMES);
+export const timeframesSchema = timeframeSchema.array();
 export const emotionSchema = z.enum([
   "fear",
   "greed",
@@ -50,7 +50,7 @@ export const addTradeSetupSchema = z.discriminatedUnion("status", [
 ]);
 
 // Export the inferred types
-export type AddTradeSetupSchema = z.infer<typeof addTradeSetupSchema>;
+export type OrchestratedTradeSetupSchema = z.infer<typeof addTradeSetupSchema>;
 export type TimeframesArrayType = z.infer<typeof timeframesSchema>;
 
 export type UnionKeys<T> = T extends T ? keyof T : never;
@@ -70,7 +70,7 @@ export const createSnapshotSchema = z.object({
   imageId: z.custom<Id<"tradingview_images">>(),
   result: z.enum(["win", "loss", "breakeven"]).optional(),
   riskReward: z.optional(z.number()),
-  emotion: emotionSchema.nullable(),
+  emotion: z.optional(emotionSchema),
 });
 
 // Schema for createTradeSetup mutation - only the fields it needs
@@ -79,35 +79,41 @@ export const createTradeSetupSchema = z.object({
   title: z.string().min(1).max(100),
   direction: z.enum(["long", "short"]),
   timeframes: timeframesSchema,
-  timeframe: timeframeSchema,
-  status: z.enum([
-    "idea",
-    "watching",
-    "executed",
-    "reviewed",
-    "canceled",
-    "closed",
-  ]),
   result: z.enum(["win", "loss", "breakeven"]).optional(),
-  emotion: emotionSchema.nullable(),
-  riskReward: z.optional(z.number()),
-  imageId: z.custom<Id<"tradingview_images">>(),
 });
 
 // Schema for updateTradeSetup mutation - only the fields it needs
 export const updateTradeSetupSchema = z.object({
-  id: z.custom<Id<"trade_setups">>(),
-  snapshotId: z.custom<Id<"snapshots">>(),
-  imageId: z.custom<Id<"tradingview_images">>(),
   title: z.string().min(1).max(100).optional(),
-  direction: z.enum(["long", "short"]).optional(),
+  direction: z.optional(z.enum(["long", "short"])),
   trade_template: z.custom<Id<"trade_templates">>().optional(),
-  emotion: emotionSchema.nullable(),
-  riskReward: z.optional(z.number()),
-  timeframes: timeframesSchema.optional(),
+  timeframes: z.optional(timeframesSchema),
 });
 
+export const attachTradeSetupSchema = z.object({
+  trade_template: z.custom<Id<"trade_templates">>().optional(),
+  timeframes: z.optional(timeframesSchema),
+});
+
+export const updateSnapshotSchema = z.object({
+  timeframe: z.optional(timeframeSchema),
+  status: z.optional(
+    z.enum(["idea", "watching", "executed", "reviewed", "canceled", "closed"])
+  ),
+  result: z.enum(["win", "loss", "breakeven"]).optional(),
+  riskReward: z.optional(z.number()),
+  emotion: z.optional(emotionSchema),
+});
+
+export const tradeDetailsSchema =
+  updateTradeSetupSchema.merge(updateSnapshotSchema);
+
+export const attachTradeSchema =
+  attachTradeSetupSchema.merge(createSnapshotSchema);
+
+export type AttachTradeSchema = z.infer<typeof attachTradeSchema>;
 // Export the inferred types for the new schemas
 export type CreateSnapshotData = z.infer<typeof createSnapshotSchema>;
 export type CreateTradeSetupData = z.infer<typeof createTradeSetupSchema>;
 export type UpdateTradeSetupData = z.infer<typeof updateTradeSetupSchema>;
+export type TradeDetailsSchema = z.infer<typeof tradeDetailsSchema>;

@@ -1,14 +1,17 @@
 import { Doc, Id } from "convex/_generated/dataModel";
 import { z } from "zod";
-import { emotionSchema } from "./add-trade-schema";
+import {
+  emotionSchema,
+  TimeframesArrayType,
+  timeframesSchema,
+} from "./add-trade-schema";
 
 // Define base schema with common fields
 const baseSchema = z.object({
   asset: z.string(),
-  creationTime: z.string(),
-  title: z.string().nullable(),
+  title: z.optional(z.string()),
   direction: z.enum(["long", "short"]),
-  timeframes: z.array(z.string()),
+  timeframes: timeframesSchema,
   status: z.enum([
     "idea",
     "watching",
@@ -17,7 +20,7 @@ const baseSchema = z.object({
     "canceled",
     "closed",
   ]),
-  result: z.enum(["win", "loss", "breakeven"]).optional().nullable(),
+  result: z.enum(["win", "loss", "breakeven"]).optional(),
   emotion: emotionSchema.nullable(),
   riskReward: z.optional(z.number()),
 });
@@ -26,32 +29,31 @@ const baseSchema = z.object({
 export const tradeDetailsSchema = baseSchema.extend({
   trade_template: z.custom<Id<"trade_templates">>().optional(),
   notes: z.array(z.any()).optional(),
-  emotion: emotionSchema.nullable().optional(),
+  emotion: z.optional(emotionSchema.optional()),
 });
 
 export type TradeDetailsSchema = z.infer<typeof tradeDetailsSchema>;
 
 // Type for existing data used in default values
 interface TradeDetailsExistingData {
-  existingTradeSetup?: Doc<"trade_setups"> | null;
-  existingSnapshot?: Doc<"snapshots"> | null;
+  existingTradeSetup: Doc<"trade_setups">;
+  existingSnapshot: Doc<"snapshots">;
 }
 
 // Function to create default values based on existing data
 export const createTradeDetailsDefaultValues = (
-  existingData?: TradeDetailsExistingData
+  existingData: TradeDetailsExistingData
 ): TradeDetailsSchema => {
   return {
-    asset: existingData?.existingTradeSetup?.asset || "",
-    creationTime: existingData?.existingTradeSetup?._creationTime
-      ? new Date(existingData.existingTradeSetup._creationTime).toLocaleString()
-      : "",
-    title: existingData?.existingTradeSetup?.title || null,
-    trade_template: existingData?.existingTradeSetup?.trade_template,
-    status: existingData?.existingSnapshot?.status || "idea",
-    direction: existingData?.existingTradeSetup?.direction || "long",
-    timeframes: existingData?.existingTradeSetup?.timeframes || ["4h"],
-    result: existingData?.existingTradeSetup?.result || null,
-    riskReward: existingData?.existingSnapshot?.riskReward,
+    asset: existingData.existingTradeSetup.asset,
+    title: existingData.existingTradeSetup.title,
+    trade_template: existingData.existingTradeSetup.trade_template,
+    status: existingData.existingSnapshot.status || "idea",
+    direction: existingData.existingTradeSetup.direction || "long",
+    timeframes:
+      (existingData.existingTradeSetup.timeframes as TimeframesArrayType) ||
+      (["4h"] as TimeframesArrayType),
+    result: existingData.existingTradeSetup.result,
+    riskReward: existingData.existingSnapshot.riskReward,
   };
 };

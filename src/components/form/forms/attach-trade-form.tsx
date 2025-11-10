@@ -1,16 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Separator } from "@/components/ui/separator";
-import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
+import { Timeframe } from "@/config/timeframe-order";
+import { useAttachSnapshot } from "@/hooks/snapshots/use-attach-snapshot";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { Loader } from "lucide-react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import NumberField from "../components/number-field";
 import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
-import Direction from "../features/direction";
 import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
 import SingleTimeframe from "../features/single-timeframe";
@@ -18,45 +20,52 @@ import StatusOptions from "../features/status-options";
 import Timeframes from "../features/timeframes";
 import { useExistingValues } from "../hooks/use-existing-values";
 import {
-  addTradeSetupSchema,
+  attachTradeSchema,
+  attachTradeSetupSchema,
   createSnapshotSchema,
-  createTradeSetupSchema,
   OrchestratedTradeSetupSchema,
   UnionKeys,
 } from "../schemas/add-trade-schema";
-import { createAddTradeSetupDefaultValues } from "../schemas/default-values";
 import { addTimeframeToTimeframes } from "../utils";
 
 interface Props {
   imageId: Id<"tradingview_images">;
   snapshotId: Id<"snapshots">;
+  tradeSetupId: Id<"trade_setups">;
   disabledFields?: UnionKeys<OrchestratedTradeSetupSchema>[];
 }
 
-const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
+const AttachTradeForm = ({
+  snapshotId,
+  imageId,
+  tradeSetupId,
+  disabledFields,
+}: Props) => {
   const navigate = useNavigate();
-  const search = useSearch({ from: "/trade_onboarding/add_trade" });
+  const search = useSearch({ from: "/trade_onboarding/attach_trade" });
   const {
     existingSnapshot,
     existingTradeSetup,
     imageData,
     isLoading,
     previousStatuses,
-    smartTitle,
   } = useExistingValues({
     snapshotId,
     imageId,
   });
 
-  const form = useForm<OrchestratedTradeSetupSchema>({
-    resolver: zodResolver(addTradeSetupSchema),
-    defaultValues: createAddTradeSetupDefaultValues({
-      existingTradeSetup,
-      existingSnapshot,
-      imageData,
-      smartTitle,
-      previousStatuses,
-    }),
+  const form = useForm<z.infer<typeof attachTradeSchema>>({
+    resolver: zodResolver(attachTradeSchema),
+    defaultValues: {
+      tradeSetupId,
+      imageId,
+      timeframe: imageData?.timeframe as Timeframe,
+      status: existingSnapshot?.status || "idea",
+      emotion: existingSnapshot?.emotion || "calm",
+      riskReward: existingSnapshot?.riskReward,
+      timeframes: (existingTradeSetup?.timeframes as Timeframe[]) || [],
+      trade_template: existingTradeSetup?.trade_template,
+    },
 
     mode: "onChange",
     shouldUnregister: true,
@@ -71,7 +80,7 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
   }) {
     const newSearch = { ...search, ...args };
     navigate({
-      from: "/trade_onboarding/add_trade",
+      from: "/trade_onboarding/attach_trade",
       search: newSearch,
       replace: true,
     });
@@ -81,11 +90,12 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
     });
   }
 
-  const { mutateAsync: createTradeSetup, isPending } = useCreateTradeSetup({
-    onSuccess: ({ tradeSetupId, snapshotId }) => {
+  const { mutateAsync: attachSnapshot, isPending } = useAttachSnapshot({
+    onSuccess: ({ snapshotId, tradeSetupId }) => {
       handleNavigate({ imageId, snapshotId, tradeSetupId });
     },
   });
+
   // Watch status to conditionally render result field
   const status = watch("status");
 
@@ -105,36 +115,46 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
     },
   });
 
-  const onSubmit = (data: OrchestratedTradeSetupSchema) => {
-    const snapshot = createSnapshotSchema.parse(data);
-    const tradeSetup = createTradeSetupSchema.parse(data);
-    createTradeSetup({ tradeSetup, snapshot, imageId });
+  const onSubmit = async (data: z.infer<typeof attachTradeSchema>) => {
+    const tradeSetup = attachTradeSetupSchema.parse({
+      ...data,
+    });
+    const snapshot = createSnapshotSchema.parse({ ...data, imageId });
+
+    attachSnapshot({
+      tradeSetup: { ...tradeSetup, id: tradeSetupId },
+      snapshot,
+    });
   };
 
   return (
     <FormProvider {...form}>
       <form
         className="flex flex-col space-y-3 px-4 py-3"
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, (data) =>
+          toast.error(JSON.stringify(data))
+        )}
       >
-        {/* Display read-only info */}
         <TextField
-          {...register("asset")}
           label="Asset"
           value={imageData?.asset}
-          disabled
           className="text-muted-foreground"
         />
         <Controller
           name="timeframe"
           control={control}
-          disabled={disabledFields?.includes("timeframe")}
           render={({ field }) => (
-            <SingleTimeframe field={field} label="Timeframe" />
+            <SingleTimeframe
+              field={
+                field as unknown as Parameters<
+                  typeof SingleTimeframe
+                >[0]["field"]
+              }
+              label="Timeframe"
+            />
           )}
         />
         <TextField
-          {...register("creationTime")}
           label="Creation Time"
           value={
             imageData?._creationTime &&
@@ -146,23 +166,12 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
 
         <Separator />
 
-        <TextField
-          {...register("title")}
-          label="Title"
-          disabled={disabledFields?.includes("title")}
-          placeholder={smartTitle?.title}
-        />
+        <TextField value={existingTradeSetup?.title} label="Title" disabled />
 
-        <Controller
-          name="direction"
-          control={control}
-          render={({ field }) => (
-            <Direction
-              disabled={disabledFields?.includes("direction")}
-              field={field}
-              label="Direction"
-            />
-          )}
+        <TextField
+          value={existingTradeSetup?.direction}
+          label="Direction"
+          disabled
         />
 
         <Controller
@@ -214,7 +223,9 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
           disabled={disabledFields?.includes("timeframes")}
           render={({ field }) => (
             <Timeframes
-              field={field}
+              field={
+                field as unknown as Parameters<typeof Timeframes>[0]["field"]
+              }
               label="Timeframes"
               singleTimeframe={timeframe}
             />
@@ -238,4 +249,4 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
   );
 };
 
-export default AddTradeForm;
+export default AttachTradeForm;

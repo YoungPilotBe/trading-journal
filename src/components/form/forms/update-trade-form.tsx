@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { statusOptions } from "@/config/constants";
@@ -7,7 +8,10 @@ import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statu
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Doc, Id } from "convex/_generated/dataModel";
+import { format } from "date-fns";
+import { Loader } from "lucide-react";
 import { useEffect } from "react";
 import {
   Controller,
@@ -17,26 +21,34 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import NumberField from "../components/number-field";
+import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
 import Direction from "../features/direction";
+import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
+import SingleTimeframe from "../features/single-timeframe";
 import StatusOptions from "../features/status-options";
 import TemplateSelector from "../features/template-selector";
-import TimeframesGeneric from "../features/timeframes-generic";
+import Timeframes from "../features/timeframes";
 import {
+  OrchestratedTradeSetupSchema,
   TradeDetailsSchema,
   tradeDetailsSchema,
   updateSnapshotSchema,
   updateTradeSetupSchema,
 } from "../schemas/add-trade-schema";
 import { createTradeDetailsDefaultValues } from "../schemas/trade-details-schema";
+import { addTimeframeToTimeframes } from "../utils";
 
 interface Props {
   tradeSetup: Doc<"trade_setups">;
   snapshot: Doc<"snapshots">;
+  imageId: Id<"tradingview_images">;
 }
 
-const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
+const UpdateTradeForm = ({ tradeSetup, snapshot, imageId }: Props) => {
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/trade_onboarding/update_trade" });
   const { openDialog } = useDialog();
 
   const { data: previousStatuses = [] } = useGetPreviousStatuses({
@@ -69,10 +81,29 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
     );
   }, [form, snapshot, tradeSetup]);
 
-  const { control, handleSubmit, setValue, reset, register } = form;
+  const { register, control, handleSubmit, setValue, reset, watch } = form;
   const { isDirty, isSubmitting } = useFormState({ control });
 
   const isPending = isPendingSnapshotUpdate || isPendingTradeSetupUpdate;
+
+  // Watch status to conditionally render result field
+  const status = watch("status");
+
+  // Watch timeframe field and automatically add to timeframes array
+  const timeframe = watch("timeframe");
+
+  form.subscribe({
+    name: "timeframe",
+    callback({ values }) {
+      // Only update if there's a timeframe value and it's not empty
+      if (values.timeframe && values.timeframe.trim() !== "") {
+        form.setValue(
+          "timeframes",
+          addTimeframeToTimeframes(values.timeframes, values.timeframe)
+        );
+      }
+    },
+  });
 
   // Handle status change with confirmation if tags exist
   const handleStatusChange = (newStatus: Doc<"snapshots">["status"]) => {
@@ -86,7 +117,7 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
     );
 
     const context = {
-      isNew: !tradeSetup._id,
+      isNew: false,
       currentStatus: snapshot?.status,
       hasExecutedTrade: previousStatuses.includes("executed"),
       previousStatuses: previousStatuses,
@@ -117,6 +148,23 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
     }
   };
 
+  function handleNavigate(args: {
+    tradeSetupId: Id<"trade_setups">;
+    imageId: Id<"tradingview_images">;
+    snapshotId: Id<"snapshots">;
+  }) {
+    const newSearch = { ...search, ...args };
+    navigate({
+      from: "/trade_onboarding/update_trade",
+      search: newSearch,
+      replace: true,
+    });
+    navigate({
+      to: "/trade_onboarding/add_template",
+      search: newSearch,
+    });
+  }
+
   const onSubmit = async (data: TradeDetailsSchema) => {
     const tradeSetupData = updateTradeSetupSchema.parse({
       ...data,
@@ -125,36 +173,52 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
     const snapshotData = updateSnapshotSchema.parse({
       ...data,
     });
+
     await updateTradeSetup({ ...tradeSetupData, id: tradeSetup._id });
     await updateSnapshot({ ...snapshotData, snapshotId: snapshot._id });
 
     reset({ ...tradeSetupData, ...snapshotData });
+
+    // Navigate to next step
+    handleNavigate({
+      imageId,
+      snapshotId: snapshot._id,
+      tradeSetupId: tradeSetup._id,
+    });
   };
 
   return (
     <FormProvider {...form}>
       <form
-        className="flex flex-col space-y-4"
+        className="flex flex-col space-y-3 px-4 py-3"
         onSubmit={handleSubmit(onSubmit)}
       >
-        {/* Asset (Read-only) */}
+        {/* Display read-only info */}
         <TextField
           label="Asset"
-          disabled
-          className="text-muted-foreground"
           value={tradeSetup.asset}
-        />
-
-        {/* Creation Time (Read-only) */}
-        <TextField
-          label="Created"
           disabled
           className="text-muted-foreground"
-          value={tradeSetup.createdAt}
+        />
+        <Controller
+          name="timeframe"
+          control={control}
+          render={({ field }) => (
+            <SingleTimeframe field={field} label="Timeframe" />
+          )}
+        />
+        <TextField
+          label="Creation Time"
+          value={
+            tradeSetup._creationTime &&
+            format(new Date(tradeSetup._creationTime), "HH:mm")
+          }
+          disabled
+          className="text-muted-foreground"
         />
 
-        <Separator className="max-w-[calc(100%-2.5rem)]" />
-        {/* Title */}
+        <Separator />
+
         <TextField {...register("title")} label="Title" placeholder="Phoenix" />
 
         {/* Template Select */}
@@ -171,32 +235,35 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
           )}
         />
 
-        {/* Direction */}
         <Controller
           name="direction"
-          disabled={isPending}
           control={control}
-          render={({ field }) => <Direction field={field} label="Direction" />}
+          render={({ field }) => (
+            <Direction
+              disabled={isPending}
+              field={field}
+              label="Direction"
+            />
+          )}
         />
 
-        {/* Status */}
         <Controller
           name="status"
-          disabled={isPending}
           control={control}
+          disabled={isPending}
           render={({ field }) => (
             <StatusOptions
               field={field}
               label="Status"
-              existingTradeSetup={tradeSetup}
-              existingSnapshot={snapshot}
               previousStatuses={previousStatuses}
+              existingSnapshot={snapshot}
+              existingTradeSetup={tradeSetup}
               onStatusChange={handleStatusChange}
             />
           )}
         />
 
-        {/* Result */}
+        {/* Only render result field when status is "closed" or there's an existing result */}
         {(status === "closed" || tradeSetup?.result) && (
           <Controller
             name="result"
@@ -205,75 +272,75 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
               <Result
                 field={field}
                 label="Result"
+                disabled={!!tradeSetup?.result}
                 existingResult={tradeSetup?.result}
               />
             )}
           />
         )}
 
-        {/* Timeframes */}
+        <Controller
+          name="emotion"
+          control={control}
+          disabled={isPending}
+          render={({ field }) => (
+            <EmotionOptions field={field} label="Emotion" />
+          )}
+        />
+
         <Controller
           name="timeframes"
-          disabled={isPending}
           control={control}
+          disabled={isPending}
           render={({ field }) => (
-            <TimeframesGeneric
+            <Timeframes
               field={field}
               label="Timeframes"
-              singleTimeframe={snapshot?.timeframe as Timeframe}
-              disabled={isPending || isSubmitting}
+              singleTimeframe={timeframe}
             />
           )}
         />
+
         <NumberField
           {...register("riskReward", { valueAsNumber: true })}
-          label={{
-            value: ["closed", "reviewed"].includes(
-              form.getValues("status") || ""
-            )
-              ? "RR Multiple"
-              : "Risk Reward",
-            className: ["closed", "reviewed"].includes(
-              form.getValues("status") || ""
-            )
-              ? "text-pink-500"
-              : "",
-          }}
-          className={
-            ["closed", "reviewed"].includes(form.getValues("status") || "")
-              ? "text-pink-500"
-              : undefined
-          }
-          disabled={["closed", "reviewed"].includes(
-            form.getValues("status") || ""
-          )}
-
-          // We need to pink the text
-          // the risk reward field will be disabled when status is closed / reviewed
+          label="Risk Reward"
         />
 
         {/* Submit Buttons */}
-        {isDirty && (
-          <div className="absolute bottom-0 translate-y-full right-0 flex flex-row gap-1 mr-[40px]">
+        {isDirty ? (
+          <div className="flex flex-row gap-2">
             <Button
               type="button"
-              className="duration-500 ease-out font-mono tracking-wide leading-3"
+              className="flex-1"
               onClick={() => reset()}
             >
-              X
+              Cancel
             </Button>
             <Button
               type="submit"
-              className="duration-500 ease-out font-mono tracking-wide leading-3"
+              className="flex-1"
               disabled={isPending || isSubmitting}
             >
-              {isPending || isSubmitting ? "Updating..." : "Update"}
+              {isPending || isSubmitting ? (
+                <Loader className="animate-spin size-3" />
+              ) : (
+                "Update"
+              )}
             </Button>
           </div>
+        ) : (
+          <SubmitButton
+            disabled={isPending}
+            className="w-24 right-[40px]"
+            label={
+              isPending ? <Loader className="animate-spin size-3" /> : "Submit"
+            }
+          />
         )}
       </form>
     </FormProvider>
   );
 };
 
-export default TradeDetailsForm;
+export default UpdateTradeForm;
+

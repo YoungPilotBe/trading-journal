@@ -1,59 +1,27 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
-import { emotionUnion, resultUnion, statusUnion } from "../constants/unions";
+import { resultUnion, statusUnion } from "../constants/unions";
 
 // Update an existing trade setup
 export const updateTradeSetup = mutation({
   args: {
     id: v.id("trade_setups"),
-    snapshotId: v.id("snapshots"),
-    imageId: v.id("tradingview_images"),
-    title: v.optional(v.union(v.string(), v.null())),
+    title: v.optional(v.string()),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
     status: v.optional(statusUnion),
-    emotion: v.optional(v.union(emotionUnion, v.null())),
     trade_template: v.optional(v.union(v.id("trade_templates"), v.null())),
     result: v.optional(resultUnion),
     timeframes: v.optional(v.array(v.string())),
-    timeframe: v.optional(v.string()),
-    riskReward: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const {
-      id,
-      snapshotId,
-      title,
-      timeframe,
-      imageId,
-      emotion,
-      riskReward,
-      ...updates
-    } = args;
+    const { id, ...updates } = args;
 
     await ctx.db.patch(id, {
       ...updates,
       updatedAt: Date.now(),
       trade_template: args.trade_template ? args.trade_template : undefined,
     });
-
-    if (emotion) {
-      await ctx.db.patch(snapshotId, {
-        emotion,
-      });
-    }
-
-    if (riskReward !== undefined) {
-      await ctx.db.patch(snapshotId, {
-        riskReward,
-      });
-    }
-
-    if (title) {
-      await ctx.db.patch(id, {
-        title,
-      });
-    }
 
     if (args.trade_template) {
       await ctx.runMutation(
@@ -67,20 +35,7 @@ export const updateTradeSetup = mutation({
       );
     }
 
-    const imgId =
-      imageId ??
-      (
-        await ctx.db
-          .query("tradingview_images")
-          .withIndex("by_snapshot", (q) => q.eq("snapshotId", snapshotId))
-          .first()
-      )?._id;
-
-    if (!imgId) throw new ConvexError("No associated image to snapshot found");
-
-    await ctx.db.patch(imgId, { timeframe });
-
-    return { snapshotId, tradeSetupId: id };
+    return { tradeSetupId: id };
   },
 });
 

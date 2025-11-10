@@ -5,53 +5,50 @@ import { emotionUnion, resultUnion, statusUnion } from "../constants/unions";
 
 export const createTradeSetupWithSnapshot = mutation({
   args: {
-    title: v.string(),
-    asset: v.string(),
-    direction: v.union(v.literal("long"), v.literal("short")),
-    status: statusUnion,
-    timeframes: v.array(v.string()),
-    timeframe: v.optional(v.string()),
-    result: v.optional(resultUnion),
-    emotion: v.union(emotionUnion, v.null()),
-    riskReward: v.optional(v.number()),
-    imageId: v.id("tradingview_images"), // Link to the image that triggered this trade setup
+    tradeSetup: v.object({
+      title: v.string(),
+      asset: v.string(),
+      direction: v.union(v.literal("long"), v.literal("short")),
+      timeframes: v.array(v.string()),
+      result: v.optional(resultUnion),
+    }),
+    snapshot: v.object({
+      timeframe: v.string(),
+      status: statusUnion,
+      emotion: v.optional(emotionUnion),
+      riskReward: v.optional(v.number()),
+    }),
+    imageId: v.id("tradingview_images"),
   },
   returns: {
     tradeSetupId: v.id("trade_setups"),
     snapshotId: v.id("snapshots"),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, { tradeSetup, snapshot, imageId }) => {
     const now = Date.now();
 
     // Create the trade setup
     const tradeSetupId = await ctx.db.insert("trade_setups", {
-      title: args.title,
-      asset: args.asset,
-      direction: args.direction,
-      timeframes: args.timeframes,
-      result: args.result,
+      ...tradeSetup,
       createdAt: now,
       updatedAt: now,
     });
 
+    // Create the snapshot
     const snapshotId = await ctx.db.insert("snapshots", {
+      ...snapshot,
       tradeSetupId,
-      timeframe: args.timeframe,
-      status: args.status,
-      imageId: args.imageId,
-      emotion: args.emotion ?? undefined,
-      riskReward: args.riskReward,
+      imageId,
+      emotion: snapshot.emotion ?? undefined,
       createdAt: now,
     });
 
-    // If an image was provided, link it to this trade setup
-    if (args.imageId) {
-      await ctx.db.patch(args.imageId, {
-        snapshotId,
-        timeframe: args.timeframe,
-        onboarding_complete: true,
-      });
-    }
+    // Link the image to this snapshot
+    await ctx.db.patch(imageId, {
+      snapshotId,
+      timeframe: snapshot.timeframe,
+      onboarding_complete: true,
+    });
 
     return { tradeSetupId, snapshotId };
   },

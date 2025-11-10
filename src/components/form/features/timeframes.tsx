@@ -8,12 +8,12 @@ import clsx from "clsx";
 import { useState } from "react";
 import { ControllerRenderProps, useFormState } from "react-hook-form";
 import {
-  AddTradeSetupSchema,
+  OrchestratedTradeSetupSchema,
   TimeframesArrayType,
 } from "../schemas/add-trade-schema";
 
 type Props = {
-  field: ControllerRenderProps<AddTradeSetupSchema, "timeframes">;
+  field: ControllerRenderProps<OrchestratedTradeSetupSchema, "timeframes">;
   label: string;
   disabled?: boolean;
   singleTimeframe?: string;
