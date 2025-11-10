@@ -20,9 +20,9 @@ const baseTradeSetupObject = {
   creationTime: z.string(),
   title: z.string().min(1).max(100),
   direction: z.enum(["long", "short"]),
-  riskReward: z.number().nullable(),
   timeframes: timeframesSchema,
   emotion: emotionSchema,
+  riskReward: z.optional(z.number()),
 };
 
 // Object for when status is 'closed' - result is required
@@ -69,6 +69,7 @@ export const createSnapshotSchema = z.object({
   ]),
   imageId: z.custom<Id<"tradingview_images">>(),
   result: z.enum(["win", "loss", "breakeven"]).optional(),
+  riskReward: z.optional(z.number()),
   emotion: emotionSchema.nullable(),
 });
 
@@ -77,7 +78,6 @@ export const createTradeSetupSchema = z.object({
   asset: z.string(),
   title: z.string().min(1).max(100),
   direction: z.enum(["long", "short"]),
-  riskReward: z.number().nullable(),
   timeframes: timeframesSchema,
   timeframe: timeframeSchema,
   status: z.enum([
@@ -90,6 +90,7 @@ export const createTradeSetupSchema = z.object({
   ]),
   result: z.enum(["win", "loss", "breakeven"]).optional(),
   emotion: emotionSchema.nullable(),
+  riskReward: z.optional(z.number()),
   imageId: z.custom<Id<"tradingview_images">>(),
 });
 
@@ -101,8 +102,8 @@ export const updateTradeSetupSchema = z.object({
   title: z.string().min(1).max(100).optional(),
   direction: z.enum(["long", "short"]).optional(),
   trade_template: z.custom<Id<"trade_templates">>().optional(),
-  riskReward: z.number().nullable().optional(),
   emotion: emotionSchema.nullable(),
+  riskReward: z.optional(z.number()),
   timeframes: timeframesSchema.optional(),
 });
 

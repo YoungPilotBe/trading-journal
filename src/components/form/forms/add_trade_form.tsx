@@ -279,9 +279,7 @@ const AddTradeForm = ({
 
         <NumberField
           {...register("riskReward", { valueAsNumber: true })}
-          label="Risk / Reward"
-          disabled={disabledFields?.includes("riskReward")}
-          placeholder="3.2"
+          label="Risk Reward"
         />
 
         <SubmitButton

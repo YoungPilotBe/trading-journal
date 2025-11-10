@@ -70,9 +70,6 @@ export default defineSchema({
     // Trade direction
     direction: v.union(v.literal("long"), v.literal("short")),
 
-    // Risk management
-    riskReward: v.union(v.number(), v.null()),
-
     trade_template: v.optional(v.id("trade_templates")),
 
     // Timeframes being watched
@@ -113,6 +110,8 @@ export default defineSchema({
 
     // Timestamp when this snapshot was created
     createdAt: v.number(),
+
+    riskReward: v.optional(v.number()),
 
     emotion: v.optional(emotionUnion),
   })

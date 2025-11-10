@@ -10,6 +10,7 @@ export const updateSnapshot = mutation({
     emotion: v.optional(emotionUnion),
     tags: v.optional(v.any()),
     tags_config: v.optional(v.any()),
+    riskReward: v.optional(v.number()),
   },
   handler: async (ctx, { snapshotId, ...args }) => {
     const snapshot = await ctx.runQuery(api.snaphot.queries.getSnapshot, {
@@ -35,10 +36,11 @@ export const createSnapshot = mutation({
     result: v.optional(resultUnion),
     emotion: v.union(emotionUnion, v.null()),
     timeframe: v.string(),
+    riskReward: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (
     ctx,
-    { imageId, tradeSetupId, status, result, timeframe, emotion }
+    { imageId, tradeSetupId, status, result, timeframe, emotion, riskReward }
   ) => {
     const now = Date.now();
 
@@ -48,6 +50,7 @@ export const createSnapshot = mutation({
       imageId: imageId,
       timeframe,
       emotion: emotion ?? undefined,
+      riskReward: riskReward ?? undefined,
       createdAt: now,
     });
 

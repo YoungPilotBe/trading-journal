@@ -8,7 +8,6 @@ const baseSchema = z.object({
   creationTime: z.string(),
   title: z.string().nullable(),
   direction: z.enum(["long", "short"]),
-  riskReward: z.number().nullable(),
   timeframes: z.array(z.string()),
   status: z.enum([
     "idea",
@@ -20,6 +19,7 @@ const baseSchema = z.object({
   ]),
   result: z.enum(["win", "loss", "breakeven"]).optional().nullable(),
   emotion: emotionSchema.nullable(),
+  riskReward: z.optional(z.number()),
 });
 
 // Extend with trade_template field that's specific to trade details
@@ -47,12 +47,11 @@ export const createTradeDetailsDefaultValues = (
       ? new Date(existingData.existingTradeSetup._creationTime).toLocaleString()
       : "",
     title: existingData?.existingTradeSetup?.title || null,
-    trade_template:
-      existingData?.existingTradeSetup?.trade_template || undefined,
+    trade_template: existingData?.existingTradeSetup?.trade_template,
     status: existingData?.existingSnapshot?.status || "idea",
     direction: existingData?.existingTradeSetup?.direction || "long",
-    riskReward: existingData?.existingTradeSetup?.riskReward || null,
     timeframes: existingData?.existingTradeSetup?.timeframes || ["4h"],
     result: existingData?.existingTradeSetup?.result || null,
+    riskReward: existingData?.existingSnapshot?.riskReward,
   };
 };

@@ -14,14 +14,22 @@ export const updateTradeSetup = mutation({
     status: v.optional(statusUnion),
     emotion: v.optional(v.union(emotionUnion, v.null())),
     trade_template: v.optional(v.union(v.id("trade_templates"), v.null())),
-    riskReward: v.optional(v.union(v.number(), v.null())),
     result: v.optional(resultUnion),
     timeframes: v.optional(v.array(v.string())),
     timeframe: v.optional(v.string()),
+    riskReward: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { id, snapshotId, title, timeframe, imageId, emotion, ...updates } =
-      args;
+    const {
+      id,
+      snapshotId,
+      title,
+      timeframe,
+      imageId,
+      emotion,
+      riskReward,
+      ...updates
+    } = args;
 
     await ctx.db.patch(id, {
       ...updates,
@@ -32,6 +40,12 @@ export const updateTradeSetup = mutation({
     if (emotion) {
       await ctx.db.patch(snapshotId, {
         emotion,
+      });
+    }
+
+    if (riskReward !== undefined) {
+      await ctx.db.patch(snapshotId, {
+        riskReward,
       });
     }
 

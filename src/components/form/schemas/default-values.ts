@@ -40,8 +40,8 @@ export const createAddTradeSetupDefaultValues = (
       existingValues?.existingTradeSetup?.timeframes as Timeframe[],
       existingValues?.imageData?.timeframe as Timeframe
     ),
-    riskReward: existingValues?.existingTradeSetup?.riskReward || null,
     emotion: existingValues?.existingSnapshot?.emotion || "calm",
+    riskReward: existingValues?.existingSnapshot?.riskReward,
   } as const;
 
   // If status is closed and result exists, return closed schema
@@ -73,7 +73,6 @@ export const addTradeSetupDefaultValues = <AddTradeSetupSchema>{
   title: "",
   direction: "long",
   timeframes: ["4h"] as Timeframe[],
-  riskReward: null,
   status: "idea",
   // Note: result is intentionally omitted for non-closed statuses
 };

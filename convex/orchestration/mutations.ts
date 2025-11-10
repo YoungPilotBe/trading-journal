@@ -9,11 +9,11 @@ export const createTradeSetupWithSnapshot = mutation({
     asset: v.string(),
     direction: v.union(v.literal("long"), v.literal("short")),
     status: statusUnion,
-    riskReward: v.union(v.number(), v.null()),
     timeframes: v.array(v.string()),
     timeframe: v.optional(v.string()),
     result: v.optional(resultUnion),
     emotion: v.union(emotionUnion, v.null()),
+    riskReward: v.optional(v.number()),
     imageId: v.id("tradingview_images"), // Link to the image that triggered this trade setup
   },
   returns: {
@@ -28,7 +28,6 @@ export const createTradeSetupWithSnapshot = mutation({
       title: args.title,
       asset: args.asset,
       direction: args.direction,
-      riskReward: args.riskReward,
       timeframes: args.timeframes,
       result: args.result,
       createdAt: now,
@@ -41,6 +40,7 @@ export const createTradeSetupWithSnapshot = mutation({
       status: args.status,
       imageId: args.imageId,
       emotion: args.emotion ?? undefined,
+      riskReward: args.riskReward,
       createdAt: now,
     });
 

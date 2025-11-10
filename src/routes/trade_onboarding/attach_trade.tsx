@@ -152,8 +152,8 @@ function TradeSetupCard({
             </span>
           )}
 
-          {tradeSetup.riskReward && (
-            <span className="font-mono">R/R: {tradeSetup.riskReward}</span>
+          {snapshot?.riskReward && (
+            <span className="font-mono">R/R: {snapshot.riskReward}</span>
           )}
         </div>
 

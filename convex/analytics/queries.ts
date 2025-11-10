@@ -84,12 +84,14 @@ export const findSimilarTradeSetups = query({
 
         // Only include results above the minimum similarity threshold
         if (similarity.similarityScore >= minSimilarityScore) {
+          // Get most recent snapshot's riskReward
+          const latestSnapshot = otherTradeSetup.snapshots[otherTradeSetup.snapshots.length - 1];
           similarities.push({
             ...similarity,
             asset: otherTradeSetup.asset,
             direction: otherTradeSetup.direction,
             title: otherTradeSetup.title,
-            riskReward: otherTradeSetup.riskReward,
+            riskReward: latestSnapshot?.riskReward ?? null,
           });
         }
       }
@@ -231,7 +233,7 @@ export const findSimilarSnapshots = query({
             asset: otherTradeSetup.asset,
             direction: otherTradeSetup.direction,
             title: otherTradeSetup.title,
-            riskReward: otherTradeSetup.riskReward,
+            riskReward: otherSnapshot.riskReward ?? null,
             snapshotStatus: otherSnapshot.status,
             snapshotCreatedAt: otherSnapshot._creationTime,
           });

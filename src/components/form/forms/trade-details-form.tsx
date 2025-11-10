@@ -255,14 +255,9 @@ const TradeDetailsForm = ({
             />
           )}
         />
-
-        {/* Risk/Reward */}
         <NumberField
           {...register("riskReward", { valueAsNumber: true })}
-          label="Risk / Reward"
-          placeholder="3.2"
-          step="0.1"
-          min="0"
+          label="Risk Reward"
         />
 
         {/* Submit Buttons */}
