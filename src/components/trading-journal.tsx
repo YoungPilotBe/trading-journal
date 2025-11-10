@@ -89,8 +89,39 @@ const TableRowSkeleton = () => (
   </TableRow>
 );
 
+/**
+ * ⚠️ WARNING: CLIENT-SIDE OPERATIONS DETECTED ⚠️
+ *
+ * This component currently performs the following client-side operations:
+ *
+ * 1. CLIENT-SIDE SORTING (TanStack Table's getSortedRowModel)
+ *    - Location: Line ~285 in useReactTable config
+ *    - Impact: All data is fetched from server, then sorted on client
+ *    - Recommendation: Use sortBy and sortOrder props passed from parent
+ *                      and rely on Convex query sorting instead
+ *
+ * 2. CLIENT-SIDE PAGINATION (TanStack Table's getPaginationRowModel)
+ *    - Location: Line ~286 in useReactTable config
+ *    - Impact: All data is fetched, then paginated on client
+ *    - Recommendation: Implement server-side pagination using limit/offset
+ *                      in the Convex query instead
+ *
+ * 3. PAGINATION STATE MANAGEMENT
+ *    - Location: Lines ~90-98 (pagination state)
+ *    - Impact: Page state managed in component, not in URL
+ *    - Recommendation: Move pagination state to URL search params
+ *                      for better UX (bookmarkable, shareable URLs)
+ *
+ * SUGGESTED REFACTOR:
+ * - Remove getSortedRowModel() and getSortedRowModel() from useReactTable
+ * - Remove local sorting and pagination state
+ * - Pass page/offset params through URL search params to Convex query
+ * - Update Convex query to support offset-based pagination
+ * - Make table columns non-sortable or redirect sorting to URL params
+ */
+
 const TradingJournal = ({ pageSize, ...args }: Props) => {
-  // State for filters and sorting
+  // ⚠️ CLIENT-SIDE STATE - Should be moved to URL search params
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -98,6 +129,7 @@ const TradingJournal = ({ pageSize, ...args }: Props) => {
   });
 
   // Fetch all data (no limit for client-side pagination)
+  // ⚠️ This fetches ALL data to enable client-side pagination/sorting
   const { data: journalData, isLoading } = useGetTradingJournalData(args);
 
   // Define columns
@@ -282,13 +314,18 @@ const TradingJournal = ({ pageSize, ...args }: Props) => {
     data: journalData || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
+
+    // ⚠️ CLIENT-SIDE SORTING - Remove this and use server-side sorting instead
     getSortedRowModel: getSortedRowModel(),
+
+    // ⚠️ CLIENT-SIDE PAGINATION - Remove this and implement server-side pagination
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    onPaginationChange: setPagination,
+
+    onSortingChange: setSorting, // ⚠️ Should update URL search params instead
+    onPaginationChange: setPagination, // ⚠️ Should update URL search params instead
     state: {
-      sorting,
-      pagination,
+      sorting, // ⚠️ Remove - sorting should come from URL/server
+      pagination, // ⚠️ Remove - pagination should come from URL/server
     },
   });
 
