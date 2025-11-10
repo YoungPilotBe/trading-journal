@@ -257,7 +257,23 @@ const TradeDetailsForm = ({
         />
         <NumberField
           {...register("riskReward", { valueAsNumber: true })}
-          label="Risk Reward"
+          label={{
+            value: ["closed", "reviewed"].includes(form.getValues("status"))
+              ? "RR Multiple"
+              : "Risk Reward",
+            className: ["closed", "reviewed"].includes(form.getValues("status"))
+              ? "text-pink-500"
+              : "",
+          }}
+          className={
+            ["closed", "reviewed"].includes(form.getValues("status"))
+              ? "text-pink-500"
+              : undefined
+          }
+          disabled={["closed", "reviewed"].includes(form.getValues("status"))}
+
+          // We need to pink the text
+          // the risk reward field will be disabled when status is closed / reviewed
         />
 
         {/* Submit Buttons */}
