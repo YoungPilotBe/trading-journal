@@ -82,7 +82,7 @@ export function useMoveImage(drawing?: Doc<"drawings">) {
 
   function handleTouchMove(e: React.TouchEvent) {
     if (!isDragging || !imageRef.current || !containerRef.current) return;
-    
+
     // Prevent default to stop page scrolling
     e.preventDefault();
 
