@@ -72,19 +72,24 @@ export function useMoveImage(drawing?: Doc<"drawings">) {
 
   // Touch event handlers for mobile/tablet devices
   function handleTouchStart(e: React.TouchEvent) {
-    if (!isMoveMode) return;
-    // Prevent default to stop page scrolling when in move mode
-    e.preventDefault();
-    setIsDragging(true);
-    dragStartY.current = e.touches[0].clientY;
-    dragStartOffset.current = imageOffsetY;
+    // Always prevent default when in move mode to stop page scrolling
+    if (isMoveMode) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
+      dragStartY.current = e.touches[0].clientY;
+      dragStartOffset.current = imageOffsetY;
+    }
   }
 
   function handleTouchMove(e: React.TouchEvent) {
-    if (!isDragging || !imageRef.current || !containerRef.current) return;
+    // Always prevent default when in move mode to stop page scrolling
+    if (isMoveMode) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
-    // Prevent default to stop page scrolling
-    e.preventDefault();
+    if (!isDragging || !imageRef.current || !containerRef.current) return;
 
     // Mark that user has manually dragged
     hasUserDragged.current = true;
@@ -103,7 +108,13 @@ export function useMoveImage(drawing?: Doc<"drawings">) {
     setImageOffsetY(clampedOffset);
   }
 
-  async function handleTouchEnd() {
+  async function handleTouchEnd(e: React.TouchEvent) {
+    // Prevent default to ensure no scroll behavior triggers on touch end
+    if (isMoveMode) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     setIsDragging(false);
 
     // Only save to database if drawing exists and user has dragged

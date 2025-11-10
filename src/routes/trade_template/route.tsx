@@ -246,6 +246,7 @@ function RouteComponent() {
             onTouchEnd={handleTouchEnd}
             style={{
               cursor: isMoveMode ? "ns-resize" : "default",
+              touchAction: isMoveMode ? "none" : "auto",
             }}
           >
             {drawingData?.url ? (
