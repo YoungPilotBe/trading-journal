@@ -19,7 +19,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "db:flush": "npx convex dev --reset",
-    "set-version": "npm version",
+    "set-version": "npm version --no-commit-hooks --no-git-tag-version",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",

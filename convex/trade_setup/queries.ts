@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { sortBy, sortOrder } from "../constants/unions";
+import { sortBy, sortOrder, statusUnion } from "../constants/unions";
 
 // Get a single trade setup by ID
 export const getTradeSetup = query({
@@ -68,11 +68,15 @@ export const getTradingJournalData = query({
   args: {
     asset: v.optional(v.string()),
     direction: v.optional(v.union(v.literal("long"), v.literal("short"))),
+    status: v.optional(v.array(statusUnion)),
     limit: v.optional(v.number()),
     sortBy,
     sortOrder,
   },
-  handler: async (ctx, { asset, direction, limit, sortBy, sortOrder }) => {
+  handler: async (
+    ctx,
+    { asset, direction, limit, sortBy, sortOrder, status }
+  ) => {
     const convexSortBy = sortBy || "createdAt";
     const convexSortOrder = sortOrder || "desc";
 
@@ -124,7 +128,12 @@ export const getTradingJournalData = query({
       })
     );
 
-    return journalData;
+    // Filter by latest snapshot status if status filter is provided
+    const filteredData = status
+      ? journalData.filter((data) => status.includes(data.latestStatus))
+      : journalData;
+
+    return filteredData;
   },
 });
 

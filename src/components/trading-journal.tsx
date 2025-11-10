@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -15,16 +16,20 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
+  PaginationState,
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
-import { ArrowRight, Calendar } from "lucide-react";
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import ResultBadge from "./result-badge";
 
+import type { FunctionArgs } from "convex/server";
+import { api } from "../../convex/_generated/api";
 // Types
 type JournalEntry = {
   id: Id<"trade_setups">;
@@ -78,12 +83,18 @@ const TableRowSkeleton = () => (
   </TableRow>
 );
 
-const TradingJournal = () => {
+const TradingJournal = (
+  props: FunctionArgs<typeof api.trade_setup.queries.getTradingJournalData>
+) => {
   // State for filters and sorting
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
-  // Fetch data
-  const { data: journalData, isLoading } = useGetTradingJournalData({});
+  // Fetch all data (no limit for client-side pagination)
+  const { data: journalData, isLoading } = useGetTradingJournalData(props);
 
   // Define columns
   const columns = useMemo(
@@ -268,9 +279,12 @@ const TradingJournal = () => {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
+    onPaginationChange: setPagination,
     state: {
       sorting,
+      pagination,
     },
   });
 
@@ -348,6 +362,46 @@ const TradingJournal = () => {
           )}
         </TableBody>
       </Table>
+
+      {/* Pagination Controls */}
+      {journalData && journalData.length > 0 && (
+        <div className="flex items-center justify-between px-2 py-4">
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-muted-foreground font-mono">
+              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
+            </p>
+            <span className="text-sm text-muted-foreground font-mono">•</span>
+            <p className="text-sm text-muted-foreground font-mono">
+              Showing {table.getRowModel().rows.length} of {journalData.length}{" "}
+              entries
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="badge"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="font-mono rounded-none"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <Button
+              variant="badge"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="font-mono rounded-none"
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

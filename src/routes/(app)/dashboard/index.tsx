@@ -14,8 +14,20 @@ function RouteComponent() {
     <>
       <Portal children={<DashboardPortal />} />
       <TradeSetupHeader />
-      <Separator className="my-5" />
-      <TradingJournal />
+      <Separator
+        className="my-5"
+        text="Active Trades"
+        textPosition="left"
+        textClassName="text-[10px] text-white"
+      />
+      <TradingJournal status={["idea", "watching", "executed", "closed"]} />
+      <Separator
+        className="my-5"
+        text="Completed Trades"
+        textPosition="left"
+        textClassName="text-[10px] text-white"
+      />
+      <TradingJournal status={["canceled", "reviewed"]} />
     </>
   );
 }

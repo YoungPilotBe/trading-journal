@@ -20,6 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { useDialog } from "@/contexts/dialog-context";
 import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
@@ -192,6 +193,12 @@ function RouteComponent() {
           tradeSetupId={tradeSetupId as Id<"trade_setups">}
         />
       </div>
+      <Separator
+        className="my-8"
+        text="Details"
+        textPosition="left"
+        textClassName="text-[10px] text-white"
+      />
       <SimilarTradesTable
         tradeSetupId={tradeSetupId as Id<"trade_setups">}
         snapshotId={snapshotId as Id<"snapshots">}
