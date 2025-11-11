@@ -1,0 +1,77 @@
+.numeric-keyboard-container {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.numeric-theme {
+  background-color: transparent;
+  padding: 0;
+}
+
+.numeric-theme .hg-button {
+  min-width: 72px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--background));
+  color: hsl(var(--muted-foreground));
+  border: 2px solid hsl(var(--border));
+  border-radius: 6px;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.numeric-theme .hg-button:active {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  transform: scale(0.96);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.1) inset;
+}
+
+.numeric-theme .hg-button:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.1);
+}
+
+.numeric-theme .hg-button-bksp {
+  background: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+  border: 2px solid hsl(var(--destructive) / 0.3);
+  font-size: 1.75rem;
+  font-weight: 400;
+}
+
+.numeric-theme .hg-button-bksp:hover {
+  background: hsl(var(--destructive) / 0.15);
+  color: hsl(var(--destructive));
+  border: 2px solid hsl(var(--destructive) / 0.4);
+}
+
+.numeric-theme .hg-button-bksp:active {
+  background: hsl(var(--destructive) / 0.2);
+  color: hsl(var(--destructive));
+  border: 2px solid hsl(var(--destructive) / 0.5);
+  transform: scale(0.96);
+}
+
+.numeric-theme .hg-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.numeric-theme .hg-row:last-child {
+  margin-bottom: 0;
+}
