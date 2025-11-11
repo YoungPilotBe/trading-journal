@@ -87,6 +87,7 @@ export const updateTradeSetupSchema = z.object({
   title: z.string().min(1).max(100).optional(),
   direction: z.optional(z.enum(["long", "short"])),
   trade_template: z.custom<Id<"trade_templates">>().optional(),
+  result: z.enum(["win", "loss", "breakeven"]).optional(),
   timeframes: z.optional(timeframesSchema),
 });
 
@@ -100,7 +101,6 @@ export const updateSnapshotSchema = z.object({
   status: z.optional(
     z.enum(["idea", "watching", "executed", "reviewed", "canceled", "closed"])
   ),
-  result: z.enum(["win", "loss", "breakeven"]).optional(),
   riskReward: z.optional(z.number()),
   emotion: z.optional(emotionSchema),
 });
