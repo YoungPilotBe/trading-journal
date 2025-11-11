@@ -89,49 +89,49 @@ const NumberField = React.forwardRef<HTMLInputElement, Props>(
 
     return (
       <>
-        <div className="grid grid-cols-[30%_1fr_2.25rem] items-center font-mono ">
-          <label
-            className={clsx(
-              "font-mono text-xs text-muted",
-              typeof label === "object" && label.className
-            )}
-            htmlFor={name}
-          >
-            {typeof label === "string" ? label : label.value}
-          </label>
-          <div className="flex justify-end pr-2">
-            <input
+      <div className="grid grid-cols-[30%_1fr_2.25rem] items-center font-mono ">
+        <label
+          className={clsx(
+            "font-mono text-xs text-muted",
+            typeof label === "object" && label.className
+          )}
+          htmlFor={name}
+        >
+          {typeof label === "string" ? label : label.value}
+        </label>
+        <div className="flex justify-end pr-2">
+          <input
               ref={setRefs}
               type={inputType}
-              id={name}
-              name={name}
-              step={0.01}
+            id={name}
+            name={name}
+            step={0.01}
               inputMode="decimal"
               readOnly={enableVirtualKeyboard && showKeyboard}
-              className={clsx(
-                "text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]",
-                className
-              )}
+            className={clsx(
+              "text-muted-foreground placeholder:text-muted border-none !bg-transparent !font-mono !text-xs text-end !p-0 w-fit !outline-0 !ring-0 focus-visible:underline !m-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]",
+              className
+            )}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              {...props}
-            />
-          </div>
-          <div className="flex items-center justify-center">
-            {hasError ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse starting:size-0 transition-all " />
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p className="text-xs">{String(error)}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <div className="w-2 h-2" />
-            )}
-          </div>
+            {...props}
+          />
         </div>
+        <div className="flex items-center justify-center">
+          {hasError ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse starting:size-0 transition-all " />
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p className="text-xs">{String(error)}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+              <div className="w-2 h-2" />
+          )}
+        </div>
+      </div>
 
         <VirtualKeyboard
           triggerRef={inputRef}
