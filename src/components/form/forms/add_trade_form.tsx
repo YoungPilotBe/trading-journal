@@ -13,9 +13,8 @@ import TextField from "../components/text-field";
 import Direction from "../features/direction";
 import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
-import SingleTimeframe from "../features/single-timeframe";
+import TimeframesGeneric from "../features/timeframes-generic";
 import StatusOptions from "../features/status-options";
-import Timeframes from "../features/timeframes";
 import { useExistingValues } from "../hooks/use-existing-values";
 import {
   addTradeSetupSchema,
@@ -25,7 +24,6 @@ import {
   UnionKeys,
 } from "../schemas/add-trade-schema";
 import { createAddTradeSetupDefaultValues } from "../schemas/default-values";
-import { addTimeframeToTimeframes } from "../utils";
 
 interface Props {
   imageId: Id<"tradingview_images">;
@@ -89,22 +87,6 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
   // Watch status to conditionally render result field
   const status = watch("status");
 
-  // Watch timeframe field and automatically add to timeframes array
-  const timeframe = watch("timeframe");
-
-  form.subscribe({
-    name: "timeframe",
-    callback({ values }) {
-      // Only update if there's a timeframe value and it's not empty
-      if (values.timeframe && values.timeframe.trim() !== "") {
-        form.setValue(
-          "timeframes",
-          addTimeframeToTimeframes(values.timeframes, values.timeframe)
-        );
-      }
-    },
-  });
-
   const onSubmit = (data: OrchestratedTradeSetupSchema) => {
     const snapshot = createSnapshotSchema.parse(data);
     const tradeSetup = createTradeSetupSchema.parse(data);
@@ -126,11 +108,15 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
           className="text-muted-foreground"
         />
         <Controller
-          name="timeframe"
+          name="timeframes"
           control={control}
-          disabled={disabledFields?.includes("timeframe")}
+          disabled={disabledFields?.includes("timeframes")}
           render={({ field }) => (
-            <SingleTimeframe field={field} label="Timeframe" />
+            <TimeframesGeneric
+              field={field}
+              label="Timeframes"
+              disabled={disabledFields?.includes("timeframes")}
+            />
           )}
         />
         <TextField
@@ -205,19 +191,6 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
           disabled={disabledFields?.includes("emotion")}
           render={({ field }) => (
             <EmotionOptions field={field} label="Emotion" />
-          )}
-        />
-
-        <Controller
-          name="timeframes"
-          control={control}
-          disabled={disabledFields?.includes("timeframes")}
-          render={({ field }) => (
-            <Timeframes
-              field={field}
-              label="Timeframes"
-              singleTimeframe={timeframe}
-            />
           )}
         />
 

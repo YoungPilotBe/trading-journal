@@ -9,11 +9,10 @@ export const createTradeSetupWithSnapshot = mutation({
       title: v.string(),
       asset: v.string(),
       direction: v.union(v.literal("long"), v.literal("short")),
-      timeframes: v.array(v.string()),
       result: v.optional(resultUnion),
     }),
     snapshot: v.object({
-      timeframe: v.string(),
+      timeframes: v.array(v.string()),
       status: statusUnion,
       emotion: v.optional(emotionUnion),
       riskReward: v.optional(v.number()),
@@ -43,10 +42,10 @@ export const createTradeSetupWithSnapshot = mutation({
       createdAt: now,
     });
 
-    // Link the image to this snapshot
+    // Link the image to this snapshot (use first timeframe for image field)
     await ctx.db.patch(imageId, {
       snapshotId,
-      timeframe: snapshot.timeframe,
+      timeframe: snapshot.timeframes[0],
       onboarding_complete: true,
     });
 

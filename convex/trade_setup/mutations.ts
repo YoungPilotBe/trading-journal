@@ -12,7 +12,6 @@ export const updateTradeSetup = mutation({
     status: v.optional(statusUnion),
     trade_template: v.optional(v.union(v.id("trade_templates"), v.null())),
     result: v.optional(resultUnion),
-    timeframes: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;

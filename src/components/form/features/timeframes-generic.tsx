@@ -17,7 +17,9 @@ type Props<T extends FieldValues> = {
   field: ControllerRenderProps<T, FieldPath<T>>;
   label: string;
   disabled?: boolean;
-  singleTimeframe?: Timeframe;
+  highlightedTimeframes?: Timeframe[];
+  allTimeframes?: Timeframe[]; // All timeframes from all snapshots
+  onRemove?: (timeframe: Timeframe, newTimeframes: Timeframe[]) => void;
 } & Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   "value" | "onClick" | "onBlur" | "name" | "id"
@@ -40,8 +42,10 @@ function sortTimeframes(timeframes: string[]) {
 const TimeframesGeneric = <T extends FieldValues>({
   field,
   label,
-  singleTimeframe,
+  highlightedTimeframes = [],
+  allTimeframes,
   disabled,
+  onRemove,
   ...props
 }: Props<T>) => {
   const { errors } = useFormState({ name: field.name });
@@ -51,10 +55,35 @@ const TimeframesGeneric = <T extends FieldValues>({
   const [isAddingTimeframe, setIsAddingTimeframe] = useState(false);
   const [newTimeframe, setNewTimeframe] = useState("");
 
-  // Ensure we have an array
+  // Current snapshot's timeframes (field value)
   const currentTimeframes: string[] = Array.isArray(field.value)
     ? field.value
     : [];
+
+  // Display all timeframes merged with current field value
+  // This ensures newly added timeframes show up immediately before form submission
+  // Also filters out timeframes that were removed from the current snapshot
+  const displayTimeframes = allTimeframes
+    ? (() => {
+        // Get timeframes from other snapshots (not in highlighted/original)
+        const otherSnapshotsTimeframes = allTimeframes.filter(
+          (tf) => !highlightedTimeframes.includes(tf)
+        );
+        // Combine with current snapshot's timeframes (including new additions)
+        return [
+          ...new Set([...otherSnapshotsTimeframes, ...currentTimeframes]),
+        ];
+      })()
+    : currentTimeframes;
+
+  const handleRemove = (timeframe: string) => {
+    const newTimeframes = currentTimeframes.filter((tf) => tf !== timeframe);
+    if (onRemove) {
+      onRemove(timeframe as Timeframe, newTimeframes as Timeframe[]);
+    } else {
+      field.onChange(newTimeframes);
+    }
+  };
 
   return (
     <div className="grid grid-cols-[30%_1fr_2.25rem] items-center font-mono">
@@ -63,27 +92,31 @@ const TimeframesGeneric = <T extends FieldValues>({
       </label>
       <div className="flex justify-end">
         <div className="flex flex-row gap-1 items-center max-w-full overflow-hidden">
-          {sortTimeframes(currentTimeframes).map((timeframe) => {
-            const isSingleTimeframe =
-              singleTimeframe && timeframe === singleTimeframe;
+          {sortTimeframes(displayTimeframes).map((timeframe) => {
+            const isHighlighted = highlightedTimeframes.includes(
+              timeframe as Timeframe
+            );
+            // Check if this is a newly added timeframe (not yet in database)
+            const isNew = allTimeframes
+              ? !allTimeframes.includes(timeframe as Timeframe) &&
+                currentTimeframes.includes(timeframe)
+              : false;
+
             return (
               <button
                 key={timeframe}
                 type="button"
-                onClick={() => {
-                  if (isSingleTimeframe) return;
-                  field.onChange(
-                    currentTimeframes.filter((tf) => tf !== timeframe)
-                  );
-                }}
+                onClick={() => handleRemove(timeframe)}
                 disabled={disabled}
                 className={clsx(
-                  "px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-muted disabled:hover:text-muted-foreground whitespace-nowrap",
-                  isSingleTimeframe
-                    ? "border-sky-400 text-sky-400"
-                    : "border-muted text-muted-foreground"
+                  "px-1 py-0.5 border font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-red-400/50 hover:text-red-400/70 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-muted disabled:hover:text-muted-foreground whitespace-nowrap",
+                  isNew
+                    ? "border-emerald-500 text-emerald-500"
+                    : isHighlighted
+                      ? "border-sky-400 text-sky-400"
+                      : "border-muted text-muted-foreground"
                 )}
-                title="Click to remove"
+                title={isNew ? "Newly added (unsaved)" : "Click to remove"}
                 {...props}
               >
                 {timeframe}
@@ -101,7 +134,7 @@ const TimeframesGeneric = <T extends FieldValues>({
                   e.preventDefault();
                   if (
                     newTimeframe.trim() !== "" &&
-                    !currentTimeframes.includes(
+                    !displayTimeframes.includes(
                       newTimeframe.trim() as Timeframe
                     ) &&
                     isValidTimeframe(newTimeframe.trim())
@@ -115,7 +148,7 @@ const TimeframesGeneric = <T extends FieldValues>({
               onBlur={() => {
                 if (
                   newTimeframe.trim() !== "" &&
-                  !currentTimeframes.includes(
+                  !displayTimeframes.includes(
                     newTimeframe.trim() as Timeframe
                   ) &&
                   isValidTimeframe(newTimeframe.trim())

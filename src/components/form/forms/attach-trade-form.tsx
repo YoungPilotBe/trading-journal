@@ -15,9 +15,8 @@ import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
 import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
-import SingleTimeframe from "../features/single-timeframe";
+import TimeframesGeneric from "../features/timeframes-generic";
 import StatusOptions from "../features/status-options";
-import Timeframes from "../features/timeframes";
 import { useExistingValues } from "../hooks/use-existing-values";
 import {
   attachTradeSchema,
@@ -26,7 +25,6 @@ import {
   OrchestratedTradeSetupSchema,
   UnionKeys,
 } from "../schemas/add-trade-schema";
-import { addTimeframeToTimeframes } from "../utils";
 
 interface Props {
   imageId: Id<"tradingview_images">;
@@ -59,11 +57,12 @@ const AttachTradeForm = ({
     defaultValues: {
       tradeSetupId,
       imageId,
-      timeframe: imageData?.timeframe as Timeframe,
+      timeframes: imageData?.timeframe
+        ? [imageData.timeframe as Timeframe]
+        : ([] as Timeframe[]),
       status: existingSnapshot?.status || "idea",
       emotion: existingSnapshot?.emotion || "calm",
       riskReward: existingSnapshot?.riskReward,
-      timeframes: (existingTradeSetup?.timeframes as Timeframe[]) || [],
       trade_template: existingTradeSetup?.trade_template,
     },
 
@@ -99,22 +98,6 @@ const AttachTradeForm = ({
   // Watch status to conditionally render result field
   const status = watch("status");
 
-  // Watch timeframe field and automatically add to timeframes array
-  const timeframe = watch("timeframe");
-
-  form.subscribe({
-    name: "timeframe",
-    callback({ values }) {
-      // Only update if there's a timeframe value and it's not empty
-      if (values.timeframe && values.timeframe.trim() !== "") {
-        form.setValue(
-          "timeframes",
-          addTimeframeToTimeframes(values.timeframes, values.timeframe)
-        );
-      }
-    },
-  });
-
   const onSubmit = async (data: z.infer<typeof attachTradeSchema>) => {
     const tradeSetup = attachTradeSetupSchema.parse({
       ...data,
@@ -141,17 +124,10 @@ const AttachTradeForm = ({
           className="text-muted-foreground"
         />
         <Controller
-          name="timeframe"
+          name="timeframes"
           control={control}
           render={({ field }) => (
-            <SingleTimeframe
-              field={
-                field as unknown as Parameters<
-                  typeof SingleTimeframe
-                >[0]["field"]
-              }
-              label="Timeframe"
-            />
+            <TimeframesGeneric field={field} label="Timeframes" />
           )}
         />
         <TextField
@@ -214,21 +190,6 @@ const AttachTradeForm = ({
           disabled={disabledFields?.includes("emotion")}
           render={({ field }) => (
             <EmotionOptions field={field} label="Emotion" />
-          )}
-        />
-
-        <Controller
-          name="timeframes"
-          control={control}
-          disabled={disabledFields?.includes("timeframes")}
-          render={({ field }) => (
-            <Timeframes
-              field={
-                field as unknown as Parameters<typeof Timeframes>[0]["field"]
-              }
-              label="Timeframes"
-              singleTimeframe={timeframe}
-            />
           )}
         />
 

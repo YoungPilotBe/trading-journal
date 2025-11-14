@@ -10,6 +10,25 @@ export const getTradeSetup = query({
   },
 });
 
+// Get all timeframes aggregated from all snapshots for a trade setup
+export const getTradeSetupTimeframes = query({
+  args: { tradeSetupId: v.id("trade_setups") },
+  handler: async (ctx, args) => {
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", args.tradeSetupId)
+      )
+      .collect();
+
+    // Aggregate unique timeframes from all snapshots
+    const allTimeframes = snapshots.flatMap((s) => s.timeframes || []);
+    const uniqueTimeframes = [...new Set(allTimeframes)];
+
+    return uniqueTimeframes;
+  },
+});
+
 export const getTradeSetupBySnapshotId = query({
   args: { snapshotId: v.id("snapshots") },
   handler: async (ctx, args) => {
@@ -107,6 +126,10 @@ export const getTradingJournalData = query({
         const firstSnapshot = snapshots[0];
         const lastSnapshot = snapshots[snapshots.length - 1];
 
+        // Aggregate unique timeframes from all snapshots
+        const allTimeframes = snapshots.flatMap((s) => s.timeframes || []);
+        const uniqueTimeframes = [...new Set(allTimeframes)];
+
         return {
           id: tradeSetup._id,
           asset: tradeSetup.asset,
@@ -114,7 +137,7 @@ export const getTradingJournalData = query({
           direction: tradeSetup.direction,
           title: tradeSetup.title,
           riskReward: lastSnapshot?.riskReward ?? null,
-          timeframes: tradeSetup.timeframes,
+          timeframes: uniqueTimeframes,
           createdAt: tradeSetup.createdAt,
           updatedAt: tradeSetup.updatedAt,
           snapshotCount: snapshots.length,

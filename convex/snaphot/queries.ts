@@ -135,3 +135,25 @@ export const getPreviousStatuses = query({
     return snapshots.map((snapshot) => snapshot.status);
   },
 });
+
+export const countSnapshotsWithTimeframe = query({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+    timeframe: v.string(),
+  },
+  handler: async (ctx, { tradeSetupId, timeframe }) => {
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", tradeSetupId)
+      )
+      .collect();
+
+    // Count snapshots that include this timeframe
+    const count = snapshots.filter((snapshot) =>
+      snapshot.timeframes?.includes(timeframe)
+    ).length;
+
+    return count;
+  },
+});

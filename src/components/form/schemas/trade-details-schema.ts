@@ -1,17 +1,14 @@
+import { Timeframe } from "@/config/timeframe-order";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { z } from "zod";
-import {
-  emotionSchema,
-  TimeframesArrayType,
-  timeframesSchema,
-} from "./add-trade-schema";
+import { emotionSchema, timeframesSchema } from "./add-trade-schema";
 
 // Define base schema with common fields
 const baseSchema = z.object({
   asset: z.string(),
   title: z.optional(z.string()),
   direction: z.enum(["long", "short"]),
-  timeframes: timeframesSchema,
+  timeframes: z.optional(timeframesSchema),
   status: z.enum([
     "idea",
     "watching",
@@ -38,6 +35,7 @@ export type TradeDetailsSchema = z.infer<typeof tradeDetailsSchema>;
 interface TradeDetailsExistingData {
   existingTradeSetup: Doc<"trade_setups">;
   existingSnapshot: Doc<"snapshots">;
+  aggregatedTimeframes?: string[];
 }
 
 // Function to create default values based on existing data
@@ -50,10 +48,9 @@ export const createTradeDetailsDefaultValues = (
     trade_template: existingData.existingTradeSetup.trade_template,
     status: existingData.existingSnapshot.status || "idea",
     direction: existingData.existingTradeSetup.direction || "long",
-    timeframes:
-      (existingData.existingTradeSetup.timeframes as TimeframesArrayType) ||
-      (["4h"] as TimeframesArrayType),
     result: existingData.existingTradeSetup.result,
     riskReward: existingData.existingSnapshot.riskReward,
+    // Use the current snapshot's timeframes, not the aggregated ones
+    timeframes: (existingData.existingSnapshot.timeframes as Timeframe[]) || [],
   };
 };

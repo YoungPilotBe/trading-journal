@@ -36,7 +36,6 @@ import {
   updateTradeSetupSchema,
 } from "../schemas/add-trade-schema";
 import { createTradeDetailsDefaultValues } from "../schemas/trade-details-schema";
-import { addTimeframeToTimeframes } from "../utils";
 
 interface Props {
   tradeSetup: Doc<"trade_setups">;
@@ -86,22 +85,6 @@ const UpdateTradeForm = ({ tradeSetup, snapshot, imageId }: Props) => {
 
   // Watch status to conditionally render result field
   const status = watch("status");
-
-  // Watch timeframe field and automatically add to timeframes array
-  const timeframe = watch("timeframe");
-
-  form.subscribe({
-    name: "timeframe",
-    callback({ values }) {
-      // Only update if there's a timeframe value and it's not empty
-      if (values.timeframe && values.timeframe.trim() !== "") {
-        form.setValue(
-          "timeframes",
-          addTimeframeToTimeframes(values.timeframes, values.timeframe)
-        );
-      }
-    },
-  });
 
   // Handle status change with confirmation if tags exist
   const handleStatusChange = (newStatus: Doc<"snapshots">["status"]) => {
@@ -286,20 +269,6 @@ const UpdateTradeForm = ({ tradeSetup, snapshot, imageId }: Props) => {
           disabled={isPending}
           render={({ field }) => (
             <EmotionOptions field={field} label="Emotion" />
-          )}
-        />
-
-        <Controller
-          name="timeframes"
-          control={control}
-          render={({ field }) => (
-            <Timeframes
-              field={
-                field as unknown as Parameters<typeof Timeframes>[0]["field"]
-              }
-              label="Timeframes"
-              singleTimeframe={timeframe}
-            />
           )}
         />
 

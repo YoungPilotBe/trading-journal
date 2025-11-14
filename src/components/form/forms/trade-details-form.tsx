@@ -4,7 +4,9 @@ import { statusOptions } from "@/config/constants";
 import { Timeframe } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
 import { useGetPreviousStatuses } from "@/hooks/snapshots/use-get-previous-statuses";
+import { useRemoveTimeframeFromAllSnapshots } from "@/hooks/snapshots/use-remove-timeframe-from-all-snapshots";
 import { useUpdateSnapshot } from "@/hooks/snapshots/use-update-snapshot";
+import { useGetTradeSetupTimeframes } from "@/hooks/trade-setup/use-get-trade-setup-timeframes";
 import { useUpdateTradeSetup } from "@/hooks/trade-setup/use-update-trade-setup";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Doc, Id } from "convex/_generated/dataModel";
@@ -43,6 +45,10 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
     tradeSetupId: tradeSetup._id as Id<"trade_setups">,
   });
 
+  const { data: aggregatedTimeframes = [] } = useGetTradeSetupTimeframes({
+    tradeSetupId: tradeSetup._id as Id<"trade_setups">,
+  });
+
   const {
     mutateAsync: updateTradeSetup,
     isPending: isPendingTradeSetupUpdate,
@@ -51,11 +57,21 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
   const { mutateAsync: updateSnapshot, isPending: isPendingSnapshotUpdate } =
     useUpdateSnapshot({});
 
+  const {
+    mutateAsync: removeTimeframeFromAllSnapshots,
+    isPending: isPendingTimeframeRemoval,
+  } = useRemoveTimeframeFromAllSnapshots({
+    onSuccess: () => {
+      toast.success("Timeframe removed from all snapshots");
+    },
+  });
+
   const form = useForm<TradeDetailsSchema>({
     resolver: zodResolver(tradeDetailsSchema),
     defaultValues: createTradeDetailsDefaultValues({
       existingTradeSetup: tradeSetup,
       existingSnapshot: snapshot,
+      aggregatedTimeframes,
     }),
 
     mode: "onChange",
@@ -66,14 +82,18 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
       createTradeDetailsDefaultValues({
         existingTradeSetup: tradeSetup,
         existingSnapshot: snapshot,
+        aggregatedTimeframes,
       })
     );
-  }, [form, snapshot, tradeSetup]);
+  }, [form, snapshot, tradeSetup, aggregatedTimeframes]);
 
   const { control, handleSubmit, setValue, reset, register } = form;
   const { isDirty, isSubmitting } = useFormState({ control });
 
-  const isPending = isPendingSnapshotUpdate || isPendingTradeSetupUpdate;
+  const isPending =
+    isPendingSnapshotUpdate ||
+    isPendingTradeSetupUpdate ||
+    isPendingTimeframeRemoval;
 
   // Handle status change with confirmation if tags exist
   const handleStatusChange = (newStatus: Doc<"snapshots">["status"]) => {
@@ -115,6 +135,45 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
       });
     } else {
       setValue("status", newStatus, { shouldDirty: true });
+    }
+  };
+
+  // Handle timeframe removal with confirmation
+  const handleTimeframeRemoval = (
+    timeframeToRemove: Timeframe,
+    newTimeframes: Timeframe[]
+  ) => {
+    // Check if this timeframe exists in other snapshots (not just current)
+    const snapshotTimeframes = snapshot.timeframes || [];
+    const isInCurrentSnapshot = snapshotTimeframes.includes(timeframeToRemove);
+    const isInOtherSnapshots =
+      aggregatedTimeframes.includes(timeframeToRemove) &&
+      aggregatedTimeframes.filter((tf) => tf === timeframeToRemove).length > 1;
+
+    // If timeframe exists in other snapshots, show confirmation dialog
+    if (isInOtherSnapshots || !isInCurrentSnapshot) {
+      const count = aggregatedTimeframes.filter(
+        (tf) => tf === timeframeToRemove
+      ).length;
+
+      openDialog("REMOVE_TIMEFRAME_CONFIRMATION", {
+        timeframe: timeframeToRemove,
+        affectedSnapshotsCount: count,
+        onCancel: () => {
+          // User cancelled, do nothing
+        },
+        onConfirm: async () => {
+          // Remove from all snapshots
+          await removeTimeframeFromAllSnapshots({
+            tradeSetupId: tradeSetup._id,
+            timeframe: timeframeToRemove,
+          });
+          setValue("timeframes", newTimeframes, { shouldDirty: true });
+        },
+      });
+    } else {
+      // Only in current snapshot, just update normally
+      setValue("timeframes", newTimeframes, { shouldDirty: true });
     }
   };
 
@@ -221,8 +280,10 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
             <TimeframesGeneric
               field={field}
               label="Timeframes"
-              singleTimeframe={snapshot?.timeframe as Timeframe}
+              allTimeframes={aggregatedTimeframes as Timeframe[]}
+              highlightedTimeframes={snapshot?.timeframes as Timeframe[]}
               disabled={isPending || isSubmitting}
+              onRemove={handleTimeframeRemoval}
             />
           )}
         />

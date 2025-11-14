@@ -12,6 +12,7 @@ export const updateSnapshot = mutation({
     tags: v.optional(v.any()),
     tags_config: v.optional(v.any()),
     riskReward: v.optional(v.number()),
+    timeframes: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { snapshotId, ...args }) => {
     const snapshot = await ctx.runQuery(api.snaphot.queries.getSnapshot, {
@@ -35,12 +36,12 @@ export const createSnapshot = mutation({
     status: statusUnion,
     imageId: v.id("tradingview_images"),
     emotion: v.optional(emotionUnion),
-    timeframe: v.string(),
+    timeframes: v.array(v.string()),
     riskReward: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (
     ctx,
-    { imageId, tradeSetupId, status, timeframe, emotion, riskReward }
+    { imageId, tradeSetupId, status, timeframes, emotion, riskReward }
   ) => {
     const now = Date.now();
 
@@ -48,7 +49,7 @@ export const createSnapshot = mutation({
       tradeSetupId,
       status: status,
       imageId: imageId,
-      timeframe,
+      timeframes,
       emotion: emotion ?? undefined,
       riskReward: riskReward ?? undefined,
       createdAt: now,
@@ -61,9 +62,10 @@ export const createSnapshot = mutation({
     //   });
     // }
 
+    // Store the first timeframe on the image for backward compatibility
     await ctx.db.patch(imageId, {
       snapshotId,
-      timeframe,
+      timeframe: timeframes[0],
       onboarding_complete: true,
     });
 
@@ -119,11 +121,10 @@ export const attachSnapshot = mutation({
     tradeSetup: v.object({
       id: v.id("trade_setups"),
       title: v.optional(v.string()),
-      timeframes: v.optional(v.array(v.string())),
       result: v.optional(resultUnion),
     }),
     snapshot: v.object({
-      timeframe: v.string(),
+      timeframes: v.array(v.string()),
       status: statusUnion,
       emotion: v.optional(emotionUnion),
       riskReward: v.optional(v.number()),
@@ -163,10 +164,43 @@ export const attachSnapshot = mutation({
 
     await ctx.runMutation(api.tradingview_images.mutations.updateImage, {
       id: args.snapshot.imageId,
-      timeframe: args.snapshot.timeframe,
+      timeframe: args.snapshot.timeframes[0], // Use first timeframe for image
       snapshotId: snapshot.snapshotId,
     });
 
     return snapshot;
+  },
+});
+
+export const removeTimeframeFromAllSnapshots = mutation({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+    timeframe: v.string(),
+  },
+  handler: async (ctx, { tradeSetupId, timeframe }) => {
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", tradeSetupId)
+      )
+      .collect();
+
+    let updatedCount = 0;
+
+    for (const snapshot of snapshots) {
+      if (snapshot.timeframes?.includes(timeframe)) {
+        const updatedTimeframes = snapshot.timeframes.filter(
+          (tf) => tf !== timeframe
+        );
+
+        await ctx.db.patch(snapshot._id, {
+          timeframes: updatedTimeframes,
+        });
+
+        updatedCount++;
+      }
+    }
+
+    return { updatedCount };
   },
 });

@@ -146,12 +146,6 @@ function TradeSetupCard({
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="font-mono">{tradeSetup.asset}</span>
 
-          {tradeSetup.timeframes && tradeSetup.timeframes.length > 0 && (
-            <span className="font-mono">
-              {tradeSetup.timeframes.join(", ")}
-            </span>
-          )}
-
           {snapshot?.riskReward && (
             <span className="font-mono">R/R: {snapshot.riskReward}</span>
           )}

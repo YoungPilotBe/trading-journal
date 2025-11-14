@@ -72,9 +72,6 @@ export default defineSchema({
 
     trade_template: v.optional(v.id("trade_templates")),
 
-    // Timeframes being watched
-    timeframes: v.array(v.string()),
-
     // Win/loss
     result: v.optional(
       v.union(v.literal("win"), v.literal("loss"), v.literal("breakeven"))
@@ -102,8 +99,8 @@ export default defineSchema({
     // Complete tree state configuration (expanded keys, selected nodes, etc.)
     tags_config: v.optional(v.any()),
 
-    // Timeframe couples
-    timeframe: v.optional(v.string()),
+    // Timeframes for this snapshot
+    timeframes: v.optional(v.array(v.string())),
 
     // Foreign key to link snapshot to the triggering image
     imageId: v.optional(v.id("tradingview_images")),
