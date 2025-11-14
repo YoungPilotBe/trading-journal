@@ -57,6 +57,7 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
       existingTradeSetup: tradeSetup,
       existingSnapshot: snapshot,
     }),
+
     mode: "onChange",
   });
 

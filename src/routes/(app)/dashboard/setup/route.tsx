@@ -68,8 +68,6 @@ function RouteComponent() {
     id: snapshotId as Id<"snapshots">,
   });
 
-  // Get previous statuses for chronological validation
-
   return (
     <>
       <div className="flex gap-8 p-6">

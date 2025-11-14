@@ -102,30 +102,12 @@ function RouteComponent() {
   });
 
   return (
-    <div className="absolute inset-0 pointer-events-none">
+    <div className="absolute inset-0">
       {/* Right-side form panel - similar to add_trade layout */}
-      <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto ">
-        <div className="flex w-full flex-col items-start space-y-2 mt-2 h-full">
-          <div className="w-full flex flex-row justify-between items-center ">
+      <div className="absolute right-[60%] left-[10%] top-[20%] bottom-[20%] h-auto max-h-[70vh] max-w-[25vw] min-w-[700px] pointer-events-auto">
+        <div className="flex w-full flex-col items-start space-y-2 mt-2 h-full  ">
+          <div className="w-full flex flex-row justify-between items-center  overflow-hidden">
             <span className="text-white font-light font-mono">Tags</span>
-            <Link
-              className={buttonVariants({
-                variant: "default",
-                className: clsx(
-                  `duration-500 ease-out font-mono tracking-wide leading-3 rounded-none hover:gap-0.5 transition w-40`,
-                  isPending && "opacity-50 pointer-events-none"
-                ),
-              })}
-              to="/dashboard/setup"
-              search={{
-                snapshotId: snapshot._id,
-                tradeSetupId: tradeSetup._id,
-              }}
-            >
-              <ChevronLeft />
-              Complete
-              <ChevronRight />
-            </Link>
           </div>
           <TreeProvider
             tradeSetup={tradeSetup}
@@ -137,6 +119,24 @@ function RouteComponent() {
           </TreeProvider>
         </div>
       </div>
+      <Link
+        className={buttonVariants({
+          variant: "default",
+          className: clsx(
+            `absolute bottom-36 left-1/2 -translate-x-1/2 duration-500 ease-out font-mono tracking-wide leading-3 rounded-none hover:gap-0.5 transition w-40`,
+            isPending && "opacity-50 pointer-events-none"
+          ),
+        })}
+        to="/dashboard/setup"
+        search={{
+          snapshotId: snapshot._id,
+          tradeSetupId: tradeSetup._id,
+        }}
+      >
+        <ChevronLeft />
+        Complete
+        <ChevronRight />
+      </Link>
     </div>
   );
 }

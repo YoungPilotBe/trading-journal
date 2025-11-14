@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { type PageVariants } from "@/types/animations";
 import { isRasp } from "@/utils/env-utils";
 import { useLocation, useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
 import { motion } from "framer-motion";
 import { forwardRef, useCallback, useState } from "react";
@@ -127,7 +128,7 @@ export const AnimatedImageLayout = forwardRef<
               className={cn(
                 `object-fit rounded-2xl w-6xl aspect-video transition-all duration-200 ${imageClassName}`,
                 isRootPage && " group-hover:blur-xs",
-                isRasp && "blur-xs"
+                isRasp && isRootPage && "blur-xs"
               )}
               onLoad={onImageLoad}
               initial={{ opacity: 0 }}
@@ -145,7 +146,12 @@ export const AnimatedImageLayout = forwardRef<
             {/* Hover Overlay with Buttons - Only show on root page */}
             {(isRootPage || isRasp) && (
               <>
-                <div className="absolute inset-0 flex flex-row rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto p-2 gap-2">
+                <div
+                  className={clsx(
+                    "absolute inset-0 flex flex-row rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto p-2 gap-2",
+                    isRasp && "!opacity-100 !pointer-events-auto"
+                  )}
+                >
                   {/* Add Trade Button - Left Half */}
                   <Button
                     size="lg"
