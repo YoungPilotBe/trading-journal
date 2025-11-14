@@ -37,34 +37,42 @@ export const Route = createFileRoute("/trade_onboarding/add_tags")({
     deps: { tradeSetupId, snapshotId },
   }) => {
     // Prefetch both tradeSetup and snapshot data
-    const [tradeSetup, snapshot, previousSnapshot] = await Promise.all([
-      queryClient.ensureQueryData(
-        convexQuery(api.trade_setup.queries.getTradeSetup, {
-          id: tradeSetupId as Id<"trade_setups">,
-        })
-      ),
-      queryClient.ensureQueryData(
-        convexQuery(api.snaphot.queries.getSnapshot, {
-          id: snapshotId as Id<"snapshots">,
-        })
-      ),
-      queryClient.ensureQueryData(
-        convexQuery(api.snaphot.queries.getPreviousSnapshot, {
-          id: snapshotId as Id<"snapshots">,
-        })
-      ),
-    ]);
+    const [tradeSetup, snapshot, previousSnapshot, timeframes] =
+      await Promise.all([
+        queryClient.ensureQueryData(
+          convexQuery(api.trade_setup.queries.getTradeSetup, {
+            id: tradeSetupId as Id<"trade_setups">,
+          })
+        ),
+        queryClient.ensureQueryData(
+          convexQuery(api.snaphot.queries.getSnapshot, {
+            id: snapshotId as Id<"snapshots">,
+          })
+        ),
+        queryClient.ensureQueryData(
+          convexQuery(api.snaphot.queries.getPreviousSnapshot, {
+            id: snapshotId as Id<"snapshots">,
+          })
+        ),
+        queryClient.ensureQueryData(
+          convexQuery(api.trade_setup.queries.getTradeSetupTimeframes, {
+            tradeSetupId: tradeSetupId as Id<"trade_setups">,
+          })
+        ),
+      ]);
 
     return {
       tradeSetup,
       snapshot,
       previousSnapshot,
+      timeframes,
     };
   },
 });
 
 function RouteComponent() {
-  const { tradeSetup, snapshot, previousSnapshot } = Route.useLoaderData();
+  const { tradeSetup, snapshot, previousSnapshot, timeframes } =
+    Route.useLoaderData();
   // Mutation to save tree state (must be before conditional return)
 
   const { mutateAsync: updateSnapshot, isPending } = useUpdateSnapshot();
@@ -87,7 +95,7 @@ function RouteComponent() {
   );
 
   // Conditional returns must come after all hooks
-  if (!snapshot || !tradeSetup) return null;
+  if (!snapshot || !tradeSetup || !timeframes) return null;
 
   // Initialize tree state from snapshot data
   const initialTreeState = createTreeStateFromSnapshot(
@@ -98,7 +106,7 @@ function RouteComponent() {
   // Create strategy trees with available timeframes
   // Dynamic instances will be automatically hydrated by TreeProvider
   const trees = createIdeaStrategyTree({
-    availableTimeframes: tradeSetup.timeframes as Timeframe[],
+    availableTimeframes: timeframes as Timeframe[],
   });
 
   return (

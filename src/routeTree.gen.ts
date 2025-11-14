@@ -13,7 +13,6 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as Trade_templateRouteRouteImport } from './routes/trade_template/route'
 import { Route as Trade_onboardingRouteRouteImport } from './routes/trade_onboarding/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as Trade_onboardingUpdate_tradeRouteImport } from './routes/trade_onboarding/update_trade'
 import { Route as Trade_onboardingChoose_trade_setupRouteImport } from './routes/trade_onboarding/choose_trade_setup'
 import { Route as Trade_onboardingAttach_tradeRouteImport } from './routes/trade_onboarding/attach_trade'
 import { Route as Trade_onboardingAdd_tradeRouteImport } from './routes/trade_onboarding/add_trade'
@@ -45,12 +44,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Trade_onboardingUpdate_tradeRoute =
-  Trade_onboardingUpdate_tradeRouteImport.update({
-    id: '/update_trade',
-    path: '/update_trade',
-    getParentRoute: () => Trade_onboardingRouteRoute,
-  } as any)
 const Trade_onboardingChoose_trade_setupRoute =
   Trade_onboardingChoose_trade_setupRouteImport.update({
     id: '/choose_trade_setup',
@@ -119,7 +112,6 @@ export interface FileRoutesByFullPath {
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/trade_onboarding/choose_trade_setup': typeof Trade_onboardingChoose_trade_setupRoute
-  '/trade_onboarding/update_trade': typeof Trade_onboardingUpdate_tradeRoute
   '/dashboard/setup': typeof appDashboardSetupRouteRoute
   '/dashboard/setups': typeof appDashboardSetupsRoute
   '/dashboard/': typeof appDashboardIndexRoute
@@ -135,7 +127,6 @@ export interface FileRoutesByTo {
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/trade_onboarding/choose_trade_setup': typeof Trade_onboardingChoose_trade_setupRoute
-  '/trade_onboarding/update_trade': typeof Trade_onboardingUpdate_tradeRoute
   '/dashboard/setup': typeof appDashboardSetupRouteRoute
   '/dashboard/setups': typeof appDashboardSetupsRoute
   '/dashboard': typeof appDashboardIndexRoute
@@ -153,7 +144,6 @@ export interface FileRoutesById {
   '/trade_onboarding/add_trade': typeof Trade_onboardingAdd_tradeRoute
   '/trade_onboarding/attach_trade': typeof Trade_onboardingAttach_tradeRoute
   '/trade_onboarding/choose_trade_setup': typeof Trade_onboardingChoose_trade_setupRoute
-  '/trade_onboarding/update_trade': typeof Trade_onboardingUpdate_tradeRoute
   '/(app)/dashboard/setup': typeof appDashboardSetupRouteRoute
   '/(app)/dashboard/setups': typeof appDashboardSetupsRoute
   '/(app)/dashboard/': typeof appDashboardIndexRoute
@@ -172,7 +162,6 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/trade_onboarding/choose_trade_setup'
-    | '/trade_onboarding/update_trade'
     | '/dashboard/setup'
     | '/dashboard/setups'
     | '/dashboard/'
@@ -188,7 +177,6 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/trade_onboarding/choose_trade_setup'
-    | '/trade_onboarding/update_trade'
     | '/dashboard/setup'
     | '/dashboard/setups'
     | '/dashboard'
@@ -205,7 +193,6 @@ export interface FileRouteTypes {
     | '/trade_onboarding/add_trade'
     | '/trade_onboarding/attach_trade'
     | '/trade_onboarding/choose_trade_setup'
-    | '/trade_onboarding/update_trade'
     | '/(app)/dashboard/setup'
     | '/(app)/dashboard/setups'
     | '/(app)/dashboard/'
@@ -249,13 +236,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/trade_onboarding/update_trade': {
-      id: '/trade_onboarding/update_trade'
-      path: '/update_trade'
-      fullPath: '/trade_onboarding/update_trade'
-      preLoaderRoute: typeof Trade_onboardingUpdate_tradeRouteImport
-      parentRoute: typeof Trade_onboardingRouteRoute
     }
     '/trade_onboarding/choose_trade_setup': {
       id: '/trade_onboarding/choose_trade_setup'
@@ -336,7 +316,6 @@ interface Trade_onboardingRouteRouteChildren {
   Trade_onboardingAdd_tradeRoute: typeof Trade_onboardingAdd_tradeRoute
   Trade_onboardingAttach_tradeRoute: typeof Trade_onboardingAttach_tradeRoute
   Trade_onboardingChoose_trade_setupRoute: typeof Trade_onboardingChoose_trade_setupRoute
-  Trade_onboardingUpdate_tradeRoute: typeof Trade_onboardingUpdate_tradeRoute
 }
 
 const Trade_onboardingRouteRouteChildren: Trade_onboardingRouteRouteChildren = {
@@ -346,7 +325,6 @@ const Trade_onboardingRouteRouteChildren: Trade_onboardingRouteRouteChildren = {
   Trade_onboardingAttach_tradeRoute: Trade_onboardingAttach_tradeRoute,
   Trade_onboardingChoose_trade_setupRoute:
     Trade_onboardingChoose_trade_setupRoute,
-  Trade_onboardingUpdate_tradeRoute: Trade_onboardingUpdate_tradeRoute,
 }
 
 const Trade_onboardingRouteRouteWithChildren =
