@@ -1,11 +1,13 @@
+import TimeframeKeyboard from "@/components/simple-keyboard/timeframe-keyboard";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Timeframe, TIMEFRAMES } from "@/config/timeframe-order";
+import { useTimeframeKeyboard } from "@/hooks/use-timeframe-keyboard";
 import clsx from "clsx";
-import { useState } from "react";
+import { useRef } from "react";
 import {
   ControllerRenderProps,
   FieldPath,
@@ -52,8 +54,8 @@ const TimeframesGeneric = <T extends FieldValues>({
   const error = errors[field.name]?.message;
   const hasError = !!error;
 
-  const [isAddingTimeframe, setIsAddingTimeframe] = useState(false);
-  const [newTimeframe, setNewTimeframe] = useState("");
+  const { isOpen, openKeyboard, closeKeyboard } = useTimeframeKeyboard();
+  const addButtonRef = useRef<HTMLButtonElement>(null);
 
   // Current snapshot's timeframes (field value)
   const currentTimeframes: string[] = Array.isArray(field.value)
@@ -82,6 +84,20 @@ const TimeframesGeneric = <T extends FieldValues>({
       onRemove(timeframe as Timeframe, newTimeframes as Timeframe[]);
     } else {
       field.onChange(newTimeframes);
+    }
+  };
+
+  const handleTimeframeSelect = (selectedTimeframe: string) => {
+    if (selectedTimeframe === "") {
+      // Backspace pressed - do nothing for now
+      return;
+    }
+    // Check if timeframe is valid and not already in the list
+    if (
+      isValidTimeframe(selectedTimeframe) &&
+      !displayTimeframes.includes(selectedTimeframe as Timeframe)
+    ) {
+      field.onChange([...currentTimeframes, selectedTimeframe]);
     }
   };
 
@@ -124,53 +140,12 @@ const TimeframesGeneric = <T extends FieldValues>({
             );
           })}
 
-          {/* Add timeframe button/input */}
-          {isAddingTimeframe && !disabled ? (
-            <input
-              value={newTimeframe}
-              onChange={(e) => setNewTimeframe(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  if (
-                    newTimeframe.trim() !== "" &&
-                    !displayTimeframes.includes(
-                      newTimeframe.trim() as Timeframe
-                    ) &&
-                    isValidTimeframe(newTimeframe.trim())
-                  ) {
-                    field.onChange([...currentTimeframes, newTimeframe.trim()]);
-                    setNewTimeframe("");
-                    setIsAddingTimeframe(false);
-                  }
-                }
-              }}
-              onBlur={() => {
-                if (
-                  newTimeframe.trim() !== "" &&
-                  !displayTimeframes.includes(
-                    newTimeframe.trim() as Timeframe
-                  ) &&
-                  isValidTimeframe(newTimeframe.trim())
-                ) {
-                  field.onChange([...currentTimeframes, newTimeframe.trim()]);
-                }
-                setNewTimeframe("");
-                setIsAddingTimeframe(false);
-              }}
-              autoFocus
-              disabled={disabled}
-              className={`w-10 h-6 px-1 py-0.5 border font-mono text-xs rounded-sm bg-transparent !outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                isValidTimeframe(newTimeframe)
-                  ? "border-muted text-muted-foreground"
-                  : "border-red-400/70 text-red-400"
-              }`}
-              placeholder="4h"
-            />
-          ) : !disabled ? (
+          {/* Add timeframe button */}
+          {!disabled && (
             <button
+              ref={addButtonRef}
               type="button"
-              onClick={() => setIsAddingTimeframe(true)}
+              onClick={openKeyboard}
               disabled={disabled}
               className="px-1 py-0.5 border border-muted text-muted-foreground font-mono text-xs rounded-sm transition-all cursor-pointer hover:border-muted-foreground/50 hover:text-muted-foreground/80 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Add timeframe"
@@ -178,7 +153,7 @@ const TimeframesGeneric = <T extends FieldValues>({
             >
               +
             </button>
-          ) : null}
+          )}
         </div>
       </div>
       <div className="flex items-center justify-center">
@@ -195,6 +170,16 @@ const TimeframesGeneric = <T extends FieldValues>({
           <div className="w-2 h-2" /> // Placeholder to maintain consistent spacing
         )}
       </div>
+
+      {/* Timeframe Keyboard */}
+      <TimeframeKeyboard
+        enable={!disabled}
+        triggerRef={addButtonRef}
+        isOpen={isOpen}
+        onClose={closeKeyboard}
+        onSelect={handleTimeframeSelect}
+        selectedTimeframes={displayTimeframes}
+      />
     </div>
   );
 };

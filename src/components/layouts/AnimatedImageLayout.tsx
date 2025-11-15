@@ -144,7 +144,7 @@ export const AnimatedImageLayout = forwardRef<
             />
 
             {/* Hover Overlay with Buttons - Only show on root page */}
-            {(isRootPage || isRasp) && (
+            {(isRootPage || (isRasp && isRootPage)) && (
               <>
                 <div
                   className={clsx(

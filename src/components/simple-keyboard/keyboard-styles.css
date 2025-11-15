@@ -1,77 +1,106 @@
-.numeric-keyboard-container {
+/* Shared Keyboard Container Styles */
+.numeric-keyboard-container,
+.timeframe-keyboard-container {
   width: 100%;
-  max-width: 380px;
+  max-width: 640px;
   margin: 0 auto;
 }
 
-.numeric-theme {
+.numeric-theme,
+.timeframe-theme {
   background-color: transparent;
   padding: 0;
 }
 
-.numeric-theme .hg-button {
-  min-width: 72px;
-  height: 64px;
+/* Base Button Styles - Unified across all keyboards */
+.numeric-theme .hg-button,
+.timeframe-theme .hg-button,
+.timeframe-theme .hg-button-timeframe {
+  flex: 1;
+  min-width: 64px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: hsl(var(--background));
-  color: hsl(var(--muted-foreground));
-  border: 2px solid hsl(var(--border));
-  border-radius: 6px;
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  font-size: 1.5rem;
-  font-weight: 600;
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #a4a4a4;
+  border-radius: 0;
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 400;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: all 0.15s ease;
+  box-shadow: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-.numeric-theme .hg-button:active {
-  background: hsl(var(--muted));
-  color: hsl(var(--foreground));
-  transform: scale(0.96);
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.1) inset;
+.numeric-theme .hg-button:hover,
+.timeframe-theme .hg-button:hover,
+.timeframe-theme .hg-button-timeframe:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
 }
 
-.numeric-theme .hg-button:hover {
-  background: hsl(var(--muted));
-  color: hsl(var(--foreground));
-  border-color: hsl(var(--border));
-  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.1);
-}
-
-.numeric-theme .hg-button-bksp {
-  background: hsl(var(--destructive) / 0.1);
-  color: hsl(var(--destructive));
-  border: 2px solid hsl(var(--destructive) / 0.3);
-  font-size: 1.75rem;
-  font-weight: 400;
-}
-
-.numeric-theme .hg-button-bksp:hover {
-  background: hsl(var(--destructive) / 0.15);
-  color: hsl(var(--destructive));
-  border: 2px solid hsl(var(--destructive) / 0.4);
-}
-
-.numeric-theme .hg-button-bksp:active {
-  background: hsl(var(--destructive) / 0.2);
-  color: hsl(var(--destructive));
-  border: 2px solid hsl(var(--destructive) / 0.5);
+.numeric-theme .hg-button:active,
+.timeframe-theme .hg-button:active,
+.timeframe-theme .hg-button-timeframe:active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
   transform: scale(0.96);
 }
 
-.numeric-theme .hg-row {
+/* Disabled Buttons - for already selected timeframes */
+.timeframe-theme .hg-button-disabled {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.timeframe-theme .hg-button-disabled:hover,
+.timeframe-theme .hg-button-disabled:active {
+  background: transparent !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  transform: none;
+}
+
+/* Backspace Button - same style as other buttons */
+.numeric-theme .hg-button-bksp,
+.timeframe-theme .hg-button-bksp {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  font-size: 1.5rem;
+}
+
+.numeric-theme .hg-button-bksp:hover,
+.timeframe-theme .hg-button-bksp:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.numeric-theme .hg-button-bksp:active,
+.timeframe-theme .hg-button-bksp:active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  transform: scale(0.96);
+}
+
+/* Row Spacing */
+.numeric-theme .hg-row,
+.timeframe-theme .hg-row {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.numeric-theme .hg-row:last-child {
+.numeric-theme .hg-row:last-child,
+.timeframe-theme .hg-row:last-child {
   margin-bottom: 0;
 }

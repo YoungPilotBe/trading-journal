@@ -73,8 +73,9 @@ function RouteComponent() {
         <Button
           variant="ghost"
           onClick={handleCancel}
-          className="absolute bottom-40 left-1/2 -translate-x-1/2 starting:opacity-0 starting:translate-y-5 transition-all opacity-100 delay-[1500] duration-500 text-muted-foreground font-mono font-normal tracking-wide"
+          className="absolute top-5 left-5 starting:opacity-0 starting:translate-y-5 transition-all opacity-100 delay-[1500] duration-500 text-muted-foreground font-mono font-normal tracking-wide inline-flex flex-row gap-2"
         >
+          <ChevronLeft className="size-3" />
           Cancel
         </Button>
       )}
