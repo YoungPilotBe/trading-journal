@@ -15,8 +15,8 @@ import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
 import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
-import TimeframesGeneric from "../features/timeframes-generic";
 import StatusOptions from "../features/status-options";
+import TimeframesGeneric from "../features/timeframes-generic";
 import { useExistingValues } from "../hooks/use-existing-values";
 import {
   attachTradeSchema,
@@ -196,6 +196,7 @@ const AttachTradeForm = ({
         <NumberField
           {...register("riskReward", { valueAsNumber: true })}
           label="Risk Reward"
+          placeholder="5.3"
         />
 
         <SubmitButton
