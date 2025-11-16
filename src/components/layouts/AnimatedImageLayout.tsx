@@ -105,11 +105,11 @@ export const AnimatedImageLayout = forwardRef<
       <>
         <div
           ref={ref}
-          className={`absolute inset-0 flex flex-col items-center justify-center ${className}`}
+          className={`absolute inset-0 flex flex-col items-center justify-center overflow-hidden ${className}`}
           style={{ perspective: "1000px" }}
         >
           <motion.div
-            className="relative animated-image-container group overflow-hidden rounded-2xl"
+            className="relative animated-image-container group rounded-2xl"
             layoutId={layoutId}
             animate={targetStyle}
             transition={{

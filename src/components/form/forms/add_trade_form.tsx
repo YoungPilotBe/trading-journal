@@ -13,8 +13,8 @@ import TextField from "../components/text-field";
 import Direction from "../features/direction";
 import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
-import TimeframesGeneric from "../features/timeframes-generic";
 import StatusOptions from "../features/status-options";
+import TimeframesGeneric from "../features/timeframes-generic";
 import { useExistingValues } from "../hooks/use-existing-values";
 import {
   addTradeSetupSchema,
@@ -197,6 +197,7 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
         <NumberField
           {...register("riskReward", { valueAsNumber: true })}
           label="Risk Reward"
+          placeholder="5.4"
         />
 
         <SubmitButton
