@@ -1,6 +1,7 @@
 import { DeleteSnapshotDialog } from "@/components/dialog/delete-snapshot-dialog";
 import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-dialog";
 import { DeleteTradeTemplateDialog } from "@/components/dialog/delete-trade-template-dialog";
+import { FindDrawingDialog } from "@/components/dialog/find-drawing-dialog";
 import NotesDialog from "@/components/dialog/notes-dialog";
 import { RemoveTimeframeConfirmationDialog } from "@/components/dialog/remove-timeframe-confirmation-dialog";
 import { StatusChangeConfirmationDialog } from "@/components/dialog/status-change-confirmation-dialog";
@@ -46,6 +47,10 @@ export const DIALOGS = {
   TAGS_COMPARISON: {
     key: "TAGS_COMPARISON" as const,
     component: TagViewTable,
+  },
+  FIND_DRAWING: {
+    key: "FIND_DRAWING" as const,
+    component: FindDrawingDialog,
   },
 } as const;
 

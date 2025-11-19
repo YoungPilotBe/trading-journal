@@ -111,6 +111,9 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
     id: template.drawingId as Id<"drawings">,
   });
 
+  // Get the image URL from the uploaded drawing
+  const imageUrl = drawingData?.url;
+
   const navigate = useNavigate();
   const search = Route.useSearch();
   const { mutateAsync: updateTradeSetup, isPending } = useUpdateTradeSetup({
@@ -138,9 +141,9 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
     >
       {/* Image thumbnail */}
       <div className="w-12 h-12 bg-muted rounded flex items-center justify-center flex-shrink-0">
-        {drawingData?.url ? (
+        {imageUrl ? (
           <img
-            src={drawingData.url}
+            src={imageUrl}
             alt={template.title}
             className="w-full h-full object-contain"
           />

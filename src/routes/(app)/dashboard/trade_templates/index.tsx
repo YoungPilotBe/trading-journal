@@ -185,6 +185,9 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
     id: template.drawingId,
   });
 
+  // Get the image URL from the uploaded drawing
+  const imageUrl = drawingData?.url;
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const { openDialog } = useDialog();
@@ -225,9 +228,9 @@ function TemplateCard({ template }: { template: Doc<"trade_templates"> }) {
       >
         <CardContent className="h-full flex flex-col justify-center">
           <div className="h-24">
-            {drawingData?.url ? (
+            {imageUrl ? (
               <img
-                src={drawingData.url}
+                src={imageUrl}
                 alt={template.title}
                 className="object-contain absolute inset-0 mask-b-from-0%"
               />

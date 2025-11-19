@@ -15,7 +15,7 @@ import {
 import { BlockNoteEditorComponent, useBlockNoteEditor } from "@/editor";
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { MoveIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { MoveIcon, PlusIcon, SearchIcon, TrashIcon } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 
 import AutoSavePortal from "@/components/portals/auto-save-portal";
@@ -26,10 +26,15 @@ import { useUploadDrawing } from "@/hooks/drawings/useUploadDrawing";
 import { useCreateTradeTemplate } from "@/hooks/trade_templates/create_trade_template";
 import { useGetTradeTemplate } from "@/hooks/trade_templates/get_trade_template";
 import { useUpdateTradeTemplate } from "@/hooks/trade_templates/update_trade_template";
+import {
+  extractTextFromBlocks,
+  isValidDescription,
+} from "@/utils/blocknote-text-extraction";
 import { convexQuery } from "@convex-dev/react-query";
 import clsx from "clsx";
 import { Id } from "convex/_generated/dataModel";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import z from "zod";
 
 import { api } from "../../../convex/_generated/api";
@@ -65,6 +70,9 @@ function RouteComponent() {
   const { data: drawingData } = useGetDrawing({
     id: existingTemplate?.drawingId,
   });
+
+  // Get the image URL from the uploaded drawing
+  const imageUrl = drawingData?.url;
 
   const { openDialog } = useDialog();
 
@@ -141,6 +149,85 @@ function RouteComponent() {
         drawingId: drawingId ?? undefined,
       });
     }
+  }
+
+  function handleFindDrawing() {
+    // Extract text from editor document
+    const description = extractTextFromBlocks(editor.document);
+
+    // Validate description
+    if (!isValidDescription(description)) {
+      toast.error(
+        "Please add descriptive content to the template before searching for images"
+      );
+      return;
+    }
+
+    // Open dialog with description
+    openDialog("FIND_DRAWING", {
+      description,
+      onSelect: async (imageUrl: string) => {
+        try {
+          // Download the image from the URL
+          toast.info("Downloading image...");
+          const response = await fetch(imageUrl);
+          if (!response.ok) {
+            throw new Error("Failed to download image");
+          }
+
+          // Convert to blob
+          const blob = await response.blob();
+
+          // Convert blob to PNG if needed (ensure it's a PNG)
+          let imageBlob: Blob = blob;
+          if (blob.type !== "image/png") {
+            // Convert to PNG using canvas
+            imageBlob = await new Promise<Blob>((resolve, reject) => {
+              const img = new Image();
+              img.crossOrigin = "anonymous";
+              img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) {
+                  reject(new Error("Failed to create canvas context"));
+                  return;
+                }
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob((blob) => {
+                  if (blob) {
+                    resolve(blob);
+                  } else {
+                    reject(new Error("Failed to convert image to PNG"));
+                  }
+                }, "image/png");
+              };
+              img.onerror = () => reject(new Error("Failed to load image"));
+              img.src = imageUrl;
+            });
+          }
+
+          // Upload the image
+          toast.info("Uploading image...");
+          const { drawingId } = await uploadDrawing({
+            file: imageBlob,
+          });
+
+          // Save the template with the new drawingId
+          await handleSave(drawingId);
+          await resetPosition();
+          toast.success("Image downloaded and saved successfully");
+        } catch (error) {
+          console.error("Error downloading/uploading image:", error);
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Failed to download and save image"
+          );
+        }
+      },
+    });
   }
 
   async function handleUploadDrawing() {
@@ -249,12 +336,12 @@ function RouteComponent() {
               touchAction: isMoveMode ? "none" : "auto",
             }}
           >
-            {drawingData?.url ? (
+            {imageUrl ? (
               <>
                 {/* Display the uploaded image */}
                 <img
                   ref={imageRef}
-                  src={drawingData.url}
+                  src={imageUrl}
                   alt="Trade template drawing"
                   className={clsx(
                     "w-full py-4 transition-all duration-200",
@@ -296,6 +383,15 @@ function RouteComponent() {
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-2 bg-white/90 backdrop-blur-sm"
+                    onClick={handleFindDrawing}
+                  >
+                    <SearchIcon className="w-4 h-4" />
+                    Find Drawing
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 bg-white/90 backdrop-blur-sm"
                     onClick={handleUploadDrawing}
                     disabled={isUploading}
                   >
@@ -305,8 +401,16 @@ function RouteComponent() {
                 </div>
               </>
             ) : (
-              /* No image - show centered button */
-              <div className="w-full h-full flex items-center justify-center">
+              /* No image - show centered buttons */
+              <div className="w-full h-full flex items-center justify-center gap-4">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={handleFindDrawing}
+                >
+                  <SearchIcon className="w-4 h-4" />
+                  Find Drawing
+                </Button>
                 <Button
                   variant="outline"
                   className="flex items-center gap-2"

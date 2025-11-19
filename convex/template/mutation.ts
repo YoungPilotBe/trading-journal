@@ -1,11 +1,13 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 
 export const createTemplate = mutation({
   args: {
     document: v.any(),
     drawingId: v.optional(v.id("drawings")),
+    drawingUrl: v.optional(v.string()),
     imageIds: v.optional(v.array(v.id("tradingview_images"))),
   },
   handler: async (ctx, args) => {
@@ -16,6 +18,7 @@ export const createTemplate = mutation({
       document: args.document,
       title,
       drawingId: args.drawingId,
+      drawingUrl: args.drawingUrl,
       createdAt: now,
       updatedAt: now,
     });
@@ -27,10 +30,11 @@ export const updateTemplate = mutation({
     id: v.id("trade_templates"),
     document: v.any(),
     drawingId: v.optional(v.id("drawings")),
+    drawingUrl: v.optional(v.string()),
     imageIds: v.optional(v.array(v.id("tradingview_images"))),
   },
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
+    const { id, document, drawingId, drawingUrl, imageIds } = args;
     const title = args.document?.[0]?.content?.[0]?.text ?? "Untitled";
 
     // Get the existing template to preserve fields not being updated
@@ -39,11 +43,40 @@ export const updateTemplate = mutation({
       throw new Error("Template not found");
     }
 
-    return await ctx.db.patch(id, {
-      ...updates,
+    // Build update object
+    // Only include fields that are explicitly provided in args
+    // This allows us to clear fields (by passing undefined) or preserve them (by not passing them)
+    const updateData: {
+      document: string;
+      title: string;
+      updatedAt: number;
+      drawingId?: Id<"drawings"> | undefined;
+      drawingUrl?: string | undefined;
+      imageIds?: Id<"tradingview_images">[];
+    } = {
+      document,
       title,
       updatedAt: Date.now(),
-    });
+    };
+
+    // Only update drawingId if it was explicitly provided in the args
+    // This allows us to clear it (by passing undefined) or set it (by passing a value)
+    // If not provided, the field won't be included and existing value will be preserved
+    if ("drawingId" in args) {
+      updateData.drawingId = drawingId;
+    }
+    // Only update drawingUrl if it was explicitly provided in the args
+    // This allows us to clear it (by passing undefined) or set it (by passing a value)
+    // If not provided, the field won't be included and existing value will be preserved
+    if ("drawingUrl" in args) {
+      updateData.drawingUrl = drawingUrl;
+    }
+    // Handle imageIds: if provided, update it
+    if (imageIds !== undefined) {
+      updateData.imageIds = imageIds;
+    }
+
+    return await ctx.db.patch(id, updateData);
   },
 });
 

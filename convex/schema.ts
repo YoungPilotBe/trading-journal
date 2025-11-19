@@ -42,6 +42,9 @@ export default defineSchema({
     // One-to-one relationship with drawings
     drawingId: v.optional(v.id("drawings")),
 
+    // External image URL (for AI-searched images)
+    drawingUrl: v.optional(v.string()),
+
     // One-to-many relationship with trade_setups
     tradeSetupIds: v.optional(v.array(v.id("trade_setups"))),
 
