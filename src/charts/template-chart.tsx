@@ -1,17 +1,13 @@
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { formatRiskReward } from "@/lib/utils";
+import { Route } from "@/routes/(app)/dashboard/setup/route";
+import { Link, useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
+import type { Id } from "convex/_generated/dataModel";
+import { CheckCircle2, ChevronRight, List } from "lucide-react";
 import type {
   BaseChartConfig,
   TemplateChartColors,
@@ -23,6 +19,8 @@ type TemplateChartProps = {
   chartConfig: BaseChartConfig | null;
   chartColors: TemplateChartColors | null;
   isLoading?: boolean;
+  templateId?: Id<"trade_templates">;
+  filterType?: "all" | "closed";
 };
 
 export const TemplateChart = ({
@@ -30,19 +28,36 @@ export const TemplateChart = ({
   chartConfig,
   chartColors,
   isLoading = false,
+  templateId,
+  filterType = "all",
 }: TemplateChartProps) => {
+  const navigate = useNavigate({ from: Route.fullPath });
+  const search = Route.useSearch();
+
+  const handleFilterChange = (newFilterType: "all" | "closed") => {
+    navigate({
+      search: {
+        ...search,
+        templateFilter: newFilterType,
+      },
+    });
+  };
   if (isLoading) {
     return (
-      <div className="w-full h-[400px] space-y-4">
+      <div className="w-full space-y-4">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-full w-full" />
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (
-      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground">
+      <div className="w-full flex items-center justify-center text-muted-foreground font-mono py-8">
         <p>No template data available</p>
       </div>
     );
@@ -50,166 +65,136 @@ export const TemplateChart = ({
 
   if (!chartColors || !chartConfig) {
     return (
-      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground">
+      <div className="w-full flex items-center justify-center text-muted-foreground font-mono py-8">
         <p>Chart configuration missing</p>
       </div>
     );
   }
 
-  // Format risk reward to 2 decimal places
-  const formatRiskReward = (value: number) => {
-    return value.toFixed(2);
-  };
+  // Sort templates by avgRiskReward descending
+  const sortedData = [...data].sort(
+    (a, b) => b.avgRiskReward - a.avgRiskReward
+  );
 
-  // Render bar chart
-  if (chartConfig.type === "bar") {
-    return (
-      <div className="w-full h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis
-              dataKey="templateTitle"
-              className="text-xs text-muted-foreground font-mono"
-              angle={-45}
-              textAnchor="end"
-              height={100}
-              tick={{ fontFamily: "monospace" }}
-            />
-            <YAxis
-              className="text-xs text-muted-foreground font-mono"
-              tickFormatter={formatRiskReward}
-              tick={{ fontFamily: "monospace" }}
-            />
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload as TemplateChartData;
-                  return (
-                    <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
-                      <p className="font-semibold text-sm">
-                        {data.templateTitle}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Avg Risk/Reward: {formatRiskReward(data.avgRiskReward)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Count: {data.count}
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Bar
-              dataKey="avgRiskReward"
-              fill={chartColors.primary}
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
+  // Calculate total count for usage percentage
+  const totalCount = sortedData.reduce((sum, item) => sum + item.count, 0);
 
-  // Render pie chart
-  if (chartConfig.type === "pie") {
-    // Prepare data for pie chart (using avgRiskReward as value)
-    const pieData = data.map((item, index) => ({
-      name: item.templateTitle,
-      value: item.avgRiskReward,
-      count: item.count,
-      color: chartColors.colors[index % chartColors.colors.length],
-    }));
-
-    return (
-      <div className="w-full h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({
-                name,
-                value,
-                cx,
-                cy,
-                midAngle,
-                innerRadius,
-                outerRadius,
-              }) => {
-                if (
-                  midAngle === undefined ||
-                  innerRadius === undefined ||
-                  outerRadius === undefined
-                ) {
-                  return null;
-                }
-                const RADIAN = Math.PI / 180;
-                const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                return (
-                  <text
-                    x={x}
-                    y={y}
-                    fill="currentColor"
-                    textAnchor={x > cx ? "start" : "end"}
-                    dominantBaseline="central"
-                    style={{ fontFamily: "monospace", fontSize: "12px" }}
-                    className="fill-foreground"
-                  >
-                    {`${name}: ${formatRiskReward(value)}`}
-                  </text>
-                );
-              }}
-              outerRadius={100}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {pieData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload as (typeof pieData)[0];
-                  return (
-                    <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
-                      <p className="font-semibold text-sm">{data.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Avg Risk/Reward: {formatRiskReward(data.value)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Count: {data.count}
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: "12px", fontFamily: "monospace" }}
-              formatter={(value) => value}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
-
-  // Fallback for unknown chart type
   return (
-    <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground">
-      <p>Unknown chart type: {chartConfig.type}</p>
+    <div className="w-full space-y-4">
+      {/* Filter buttons */}
+      <ButtonGroup>
+        <Button
+          variant="badge"
+          size="sm"
+          onClick={() => handleFilterChange("all")}
+          className={clsx(filterType === "closed" && "opacity-50")}
+        >
+          <List className="h-3 w-3 mr-1.5" />
+          All Trades
+        </Button>
+        <Button
+          variant="badge"
+          size="sm"
+          onClick={() => handleFilterChange("closed")}
+          className={clsx(filterType === "all" && "opacity-50")}
+        >
+          <CheckCircle2 className="h-3 w-3 mr-1.5" />
+          Closed Trades
+        </Button>
+      </ButtonGroup>
+
+      <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-x-4 gap-y-3">
+        {/* Header row */}
+        <div></div>
+        <div className="text-xs font-mono text-muted-foreground font-medium">
+          Template
+        </div>
+        <div className="text-xs font-mono text-muted-foreground font-medium">
+          Risk:Reward
+        </div>
+        <div className="text-xs font-mono text-muted-foreground font-medium">
+          Usage
+        </div>
+
+        {/* Separator */}
+        <div className="col-span-4">
+          <Separator />
+        </div>
+
+        {/* Data rows */}
+        {sortedData.map((item) => {
+          const isHighlighted =
+            templateId !== undefined &&
+            String(templateId) === String(item.templateId);
+          const isAboveOne = item.avgRiskReward >= 1;
+          const usagePercentage =
+            totalCount > 0 ? ((item.count / totalCount) * 100).toFixed(1) : "0";
+
+          // Determine color classes based on state
+          const textColorClass = isAboveOne
+            ? "text-emerald-500"
+            : "text-rose-500";
+
+          return (
+            <>
+              {/* Icon indicator */}
+              <div
+                key={`${item.templateId}-icon`}
+                className="flex items-center justify-center py-1"
+              >
+                {isHighlighted && (
+                  <ChevronRight
+                    className={clsx("h-4 w-4 text-muted-foreground")}
+                  />
+                )}
+              </div>
+
+              {/* Template Title (clickable) */}
+              <div
+                key={`${item.templateId}-title`}
+                className="flex items-center py-1"
+              >
+                <Link
+                  to="/trade_template"
+                  search={{ templateId: item.templateId }}
+                  className={clsx(
+                    "text-sm font-mono transition-colors hover:underline font-thin",
+                    isHighlighted && "font-semibold",
+                    "text-foreground"
+                  )}
+                >
+                  {item.templateTitle}
+                </Link>
+              </div>
+
+              {/* Risk:Reward */}
+              <div
+                key={`${item.templateId}-risk`}
+                className="flex items-center py-1"
+              >
+                <span
+                  className={clsx(
+                    "text-sm font-mono font-medium",
+                    textColorClass
+                  )}
+                >
+                  {formatRiskReward(item.avgRiskReward, { addPrefix: true })}R
+                </span>
+              </div>
+
+              {/* Usage Percentage */}
+              <div
+                key={`${item.templateId}-usage`}
+                className="flex items-center py-1"
+              >
+                <span className="text-sm font-mono text-muted-foreground">
+                  {usagePercentage}%
+                </span>
+              </div>
+            </>
+          );
+        })}
+      </div>
     </div>
   );
 };

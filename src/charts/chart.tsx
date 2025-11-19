@@ -22,13 +22,19 @@ type Props<T extends ChartType = ChartType> = {
 const Chart = <T extends ChartType>({ chartType, props }: Props<T>) => {
   return (
     <ChartProvider chartType={chartType} props={props}>
-      <ChartContent chartType={chartType} />
+      <ChartContent chartType={chartType} props={props} />
     </ChartProvider>
   );
 };
 
 // Internal component that uses the chart context
-const ChartContent = ({ chartType }: { chartType: ChartType }) => {
+const ChartContent = <T extends ChartType>({
+  chartType,
+  props,
+}: {
+  chartType: ChartType;
+  props?: ChartProps<T>;
+}) => {
   const { data, chartConfig, chartColors, isLoading, error } = useChart();
 
   // Handle error state
@@ -54,12 +60,18 @@ const ChartContent = ({ chartType }: { chartType: ChartType }) => {
   }
 
   if (chartType === "risk-reward") {
+    const templateId =
+      (props as ChartProps<"risk-reward">)?.templateId ?? undefined;
+    const filterType =
+      (props as ChartProps<"risk-reward">)?.filterType ?? "all";
     return (
       <TemplateChart
         data={data as TemplateChartData[] | null}
         chartConfig={chartConfig}
         chartColors={chartColors as TemplateChartColors | null}
         isLoading={isLoading}
+        templateId={templateId}
+        filterType={filterType}
       />
     );
   }

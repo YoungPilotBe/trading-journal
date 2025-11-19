@@ -36,28 +36,35 @@ const searchSchema = z.object({
   snapshotId: z.custom<Id<"snapshots">>((val) => typeof val === "string"),
   noteId: z.optional(z.custom<Id<"notes">>((val) => typeof val === "string")),
   image: z.optional(z.enum(["preview"])),
+  templateFilter: z.optional(z.enum(["all", "closed"])),
 });
 
 export const Route = createFileRoute("/(app)/dashboard/setup")({
   validateSearch: searchSchema,
   component: RouteComponent,
   preload: true,
-  loaderDeps: ({ search: { tradeSetupId, snapshotId } }) => ({
+  loaderDeps: ({ search: { tradeSetupId, snapshotId, templateFilter } }) => ({
     tradeSetupId,
     snapshotId,
+    templateFilter: templateFilter ?? "all",
   }),
   loader: async ({
-    deps: { tradeSetupId, snapshotId },
+    deps: { tradeSetupId, snapshotId, templateFilter },
     context: { queryClient },
   }) => {
-    await preloadSetupRouteData(queryClient, tradeSetupId, snapshotId);
-    return { tradeSetupId, snapshotId };
+    await preloadSetupRouteData(
+      queryClient,
+      tradeSetupId,
+      snapshotId,
+      templateFilter
+    );
+    return { tradeSetupId, snapshotId, templateFilter };
   },
 });
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const { tradeSetupId, snapshotId, image } = Route.useSearch();
+  const { tradeSetupId, snapshotId, image, templateFilter } = Route.useSearch();
 
   const { openDialog } = useDialog();
 
@@ -182,9 +189,20 @@ function RouteComponent() {
           tradeSetupId={tradeSetupId as Id<"trade_setups">}
         />
       </div>
+
       <Separator
         className="my-8"
-        text="Details"
+        text="Analytics"
+        textPosition="left"
+        textClassName="text-[10px] text-white"
+      />
+      <AnalyticsSection
+        tradeSetupId={tradeSetupId as Id<"trade_setups">}
+        templateFilter={templateFilter ?? "all"}
+      />
+      <Separator
+        className="my-8"
+        text="Similar Trades"
         textPosition="left"
         textClassName="text-[10px] text-white"
       />
@@ -194,14 +212,6 @@ function RouteComponent() {
         limit={4}
         currentStatus={snapshot?.status}
       />
-
-      <Separator
-        className="my-8"
-        text="Analytics"
-        textPosition="left"
-        textClassName="text-[10px] text-white"
-      />
-      <AnalyticsSection tradeSetupId={tradeSetupId as Id<"trade_setups">} />
     </>
   );
 }

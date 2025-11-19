@@ -38,7 +38,12 @@ export function ChartProvider<T extends ChartType>({
   // Pass enabled=false to prevent unnecessary fetching
   // Only the selected chart type will actually fetch data
   const emotionData = useEmotionChart(chartType === "emotion");
-  const riskRewardData = useRiskRewardChart(chartType === "risk-reward");
+  const riskRewardData = useRiskRewardChart(
+    chartType === "risk-reward",
+    chartType === "risk-reward"
+      ? ((props as ChartProps<"risk-reward">)?.filterType ?? "all")
+      : "all"
+  );
   const evolutionData = useRiskRewardEvolution(
     chartType === "risk-reward-evolution"
       ? ((props as ChartProps<"risk-reward-evolution">)?.tradeSetupId ?? null)

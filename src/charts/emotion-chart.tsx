@@ -2,9 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Bar,
   BarChart,
-  CartesianGrid,
   Cell,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -42,7 +40,7 @@ export const EmotionChart = ({
 
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (
-      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground">
+      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
         <p>No emotion data available</p>
       </div>
     );
@@ -50,7 +48,7 @@ export const EmotionChart = ({
 
   if (!chartColors || !chartConfig) {
     return (
-      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground">
+      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
         <p>Chart configuration missing</p>
       </div>
     );
@@ -73,19 +71,22 @@ export const EmotionChart = ({
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
           >
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis
               dataKey="emotion"
               tickFormatter={formatEmotion}
+              axisLine={false}
+              tickLine={false}
               className="text-xs text-muted-foreground font-mono"
-              tick={{ fontFamily: "monospace" }}
+              tick={{ fontFamily: "monospace", fontSize: 12 }}
             />
             <YAxis
+              axisLine={false}
+              tickLine={false}
               className="text-xs text-muted-foreground font-mono"
               tickFormatter={formatRiskReward}
-              tick={{ fontFamily: "monospace" }}
+              tick={{ fontFamily: "monospace", fontSize: 12 }}
             />
             <Tooltip
               content={({ active, payload }) => {
@@ -93,14 +94,8 @@ export const EmotionChart = ({
                   const data = payload[0].payload as EmotionChartData;
                   return (
                     <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
-                      <p className="font-semibold text-sm">
-                        {formatEmotion(data.emotion)}
-                      </p>
                       <p className="text-xs text-muted-foreground">
-                        Avg Risk/Reward: {formatRiskReward(data.avgRiskReward)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Count: {data.count}
+                        {formatEmotion(data.emotion)}: {formatRiskReward(data.avgRiskReward)}
                       </p>
                     </div>
                   );
@@ -186,22 +181,14 @@ export const EmotionChart = ({
                   const data = payload[0].payload as (typeof pieData)[0];
                   return (
                     <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
-                      <p className="font-semibold text-sm">{data.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Avg Risk/Reward: {formatRiskReward(data.value)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Count: {data.count}
+                        {data.name}: {formatRiskReward(data.value)}
                       </p>
                     </div>
                   );
                 }
                 return null;
               }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: "12px", fontFamily: "monospace" }}
-              formatter={(value) => value}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -211,7 +198,7 @@ export const EmotionChart = ({
 
   // Fallback for unknown chart type
   return (
-    <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground">
+    <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
       <p>Unknown chart type: {chartConfig.type}</p>
     </div>
   );

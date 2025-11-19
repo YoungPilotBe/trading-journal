@@ -114,11 +114,22 @@ export const preloadAddTradeFormData = async (
   }
 };
 
+// Template Risk Reward Chart Query Options
+export const templateRiskRewardChartQueryOptions = (
+  filterType: "all" | "closed" = "all"
+) =>
+  queryOptions({
+    ...convexQuery(api.charts.queries.getTemplateRiskRewardChart, {
+      filterType,
+    }),
+  });
+
 // Preloader function for the setup route
 export const preloadSetupRouteData = async (
   queryClient: QueryClient,
   tradeSetupId?: string,
-  snapshotId?: string
+  snapshotId?: string,
+  templateFilter: "all" | "closed" = "all"
 ) => {
   const promises = [];
 
@@ -157,6 +168,14 @@ export const preloadSetupRouteData = async (
 
   // Always preload templates
   promises.push(queryClient.ensureQueryData(templatesQueryOptions("desc")));
+
+  // Preload both filter types for template chart
+  promises.push(
+    queryClient.ensureQueryData(templateRiskRewardChartQueryOptions("all"))
+  );
+  promises.push(
+    queryClient.ensureQueryData(templateRiskRewardChartQueryOptions("closed"))
+  );
 
   await Promise.all(promises);
 };

@@ -102,7 +102,9 @@ export function isTemplateChartResponse(
 // Chart props type - defines what props each chart type needs
 export type ChartProps<T extends ChartType> = T extends "risk-reward-evolution"
   ? { tradeSetupId: Id<"trade_setups"> }
-  : Record<string, never>;
+  : T extends "risk-reward"
+    ? { templateId?: Id<"trade_templates">; filterType?: "all" | "closed" }
+    : Record<string, never>;
 
 // Chart context value types (what's stored in context)
 // Components can render either bar, pie, or line, so config can be any type

@@ -77,8 +77,10 @@ export const getEmotionRiskRewardChart = query({
  * Analyzes which trade templates perform best based on risk-reward
  */
 export const getTemplateRiskRewardChart = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    filterType: v.optional(v.union(v.literal("all"), v.literal("closed"))),
+  },
+  handler: async (ctx, { filterType = "all" }) => {
     // Fetch all trade setups that have a trade_template
     const allTradeSetups = await ctx.db.query("trade_setups").collect();
     const tradeSetupsWithTemplates = allTradeSetups.filter(
@@ -92,6 +94,12 @@ export const getTemplateRiskRewardChart = query({
         chartColors: {},
       };
     }
+
+    // Define status filters based on filterType
+    const allowedStatuses =
+      filterType === "closed"
+        ? ["closed", "reviewed"] // Only closed and reviewed for final risk/reward
+        : ["idea", "watching", "executed", "closed", "reviewed"]; // All except canceled
 
     // Group snapshots by template
     const templateStats = new Map<
@@ -116,10 +124,12 @@ export const getTemplateRiskRewardChart = query({
         )
         .collect();
 
-      // Filter snapshots with riskReward values
+      // Filter snapshots based on status and riskReward values
       const validSnapshots = snapshots.filter(
         (snapshot) =>
-          snapshot.riskReward !== undefined && snapshot.riskReward !== null
+          allowedStatuses.includes(snapshot.status) &&
+          snapshot.riskReward !== undefined &&
+          snapshot.riskReward !== null
       );
 
       // Aggregate riskReward for this template

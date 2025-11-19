@@ -20,3 +20,24 @@ export function parseFilename(filename: string): ParsedFilename {
 export function wait(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
+
+/**
+ * Formats a risk reward value to a specified number of decimal places
+ * @param value - The number to format
+ * @param decimals - The number of decimal places (default: 2)
+ * @param addPrefix - Whether to add a "+" prefix if the value is above zero (default: false)
+ * @returns The formatted string
+ */
+export function formatRiskReward(
+  value: number,
+  options?: {
+    decimals?: number;
+    addPrefix?: boolean;
+  }
+): string {
+  const formatted = value.toFixed(options?.decimals ?? 2);
+  if (options?.addPrefix && value > 0) {
+    return `+ ${formatted}`;
+  }
+  return formatted;
+}
