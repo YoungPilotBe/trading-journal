@@ -9,7 +9,7 @@ import { calculateKeyboardPosition, KeyboardPosition } from "./keyboard-utils";
 
 // Keyboard layout configuration
 const KEYBOARD_LAYOUT = {
-  default: ["7 8 9", "4 5 6", "1 2 3", ". 0 {bksp}"],
+  default: ["7 8 9", "4 5 6", "1 2 3", ". 0 - {bksp}"],
 };
 
 const KEYBOARD_DISPLAY = {
@@ -27,8 +27,7 @@ const KEYBOARD_BUTTON_THEME = [
 const KEYBOARD_THEME = "hg-theme-default hg-layout-numeric numeric-theme";
 const KEYBOARD_ANIMATION_CLASS =
   "fixed z-50 animate-in zoom-in-95 fade-in-0 duration-200";
-const KEYBOARD_CONTAINER_CLASS =
-  "bg-card border-2 border-border shadow-lg p-3";
+const KEYBOARD_CONTAINER_CLASS = "bg-card border-2 border-border shadow-lg p-3";
 
 interface VirtualKeyboardProps {
   enable?: boolean;
