@@ -23,7 +23,7 @@ const config: ForgeConfig = {
         name: "trading-journal",
         owner: "YoungPilotBe",
       },
-      draft: true,
+      draft: false,
       generateReleaseNotes: true,
       force: true,
     }),

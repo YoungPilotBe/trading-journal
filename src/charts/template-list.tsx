@@ -26,7 +26,6 @@ export const TemplateList = ({
   chartColors,
   isLoading = false,
   templateId,
-  filterType = "all",
 }: TemplateListProps) => {
   if (isLoading) {
     return (
