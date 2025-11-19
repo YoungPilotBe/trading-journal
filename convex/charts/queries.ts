@@ -3,6 +3,7 @@ import { query } from "../_generated/server";
 import {
   EMOTION_CHART_COLORS,
   TEMPLATE_CHART_COLORS,
+  EVOLUTION_CHART_COLORS,
 } from "./constants";
 
 /**
@@ -161,6 +162,46 @@ export const getTemplateRiskRewardChart = query({
         yAxis: "avgRiskReward",
       },
       chartColors: TEMPLATE_CHART_COLORS,
+    };
+  },
+});
+
+/**
+ * Get risk-reward evolution chart data for a specific trade setup
+ * Returns snapshots ordered by creation time with their risk-reward values
+ */
+export const getRiskRewardEvolutionChart = query({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+  },
+  handler: async (ctx, { tradeSetupId }) => {
+    // Fetch all snapshots for this trade setup, ordered by creation time
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", tradeSetupId)
+      )
+      .order("asc") // Oldest first to show evolution over time
+      .collect();
+
+    // Map snapshots to chart data format
+    // Include all snapshots, even if riskReward is undefined (will show as null/0)
+    const data = snapshots.map((snapshot, index) => ({
+      snapshotId: snapshot._id,
+      index: index, // Use index for positioning
+      riskReward: snapshot.riskReward ?? null,
+      status: snapshot.status,
+      createdAt: snapshot.createdAt,
+    }));
+
+    return {
+      data,
+      chartConfig: {
+        type: "line",
+        xAxis: "index",
+        yAxis: "riskReward",
+      },
+      chartColors: EVOLUTION_CHART_COLORS,
     };
   },
 });

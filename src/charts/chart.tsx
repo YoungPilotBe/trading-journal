@@ -1,22 +1,34 @@
 import { useChart } from "@/hooks/use-chart";
-import { ChartProvider, ChartType } from "./chart-context";
-import { EmotionBarChart } from "./emotion-bar-chart";
-import { TemplatePieChart } from "./template-pie-chart";
+import {
+  ChartProps,
+  ChartProvider,
+  ChartType,
+  type EmotionChartColors,
+  type EmotionChartData,
+  type EvolutionChartColors,
+  type EvolutionChartData,
+  type TemplateChartColors,
+  type TemplateChartData,
+} from "./chart-context";
+import { EmotionChart } from "./emotion-chart";
+import { EvolutionLineChart } from "./evolution-line-chart";
+import { TemplateChart } from "./template-chart";
 
-type Props = {
-  chartType: ChartType;
+type Props<T extends ChartType = ChartType> = {
+  chartType: T;
+  props?: ChartProps<T>;
 };
 
-const Chart = ({ chartType }: Props) => {
+const Chart = <T extends ChartType>({ chartType, props }: Props<T>) => {
   return (
-    <ChartProvider chartType={chartType}>
-      <ChartContent />
+    <ChartProvider chartType={chartType} props={props}>
+      <ChartContent chartType={chartType} />
     </ChartProvider>
   );
 };
 
 // Internal component that uses the chart context
-const ChartContent = () => {
+const ChartContent = ({ chartType }: { chartType: ChartType }) => {
   const { data, chartConfig, chartColors, isLoading, error } = useChart();
 
   // Handle error state
@@ -28,61 +40,42 @@ const ChartContent = () => {
     );
   }
 
-  // Determine chart type from config
-  const chartTypeFromConfig =
-    chartConfig && typeof chartConfig === "object" && "type" in chartConfig
-      ? (chartConfig as { type: string }).type
-      : null;
-
-  // Render appropriate chart based on config type
-  if (chartTypeFromConfig === "bar") {
+  // Render appropriate chart component based on chartType prop
+  // Each component will handle bar/pie rendering internally based on chartConfig.type
+  if (chartType === "emotion") {
     return (
-      <EmotionBarChart
-        data={
-          data as Array<{
-            emotion: string;
-            avgRiskReward: number;
-            count: number;
-          }> | null
-        }
-        chartConfig={
-          chartConfig as { type: string; xAxis: string; yAxis: string } | null
-        }
-        chartColors={
-          chartColors as { primary: string; secondary: string } | null
-        }
+      <EmotionChart
+        data={data as EmotionChartData[] | null}
+        chartConfig={chartConfig}
+        chartColors={chartColors as EmotionChartColors | null}
         isLoading={isLoading}
       />
     );
   }
 
-  if (chartTypeFromConfig === "pie") {
+  if (chartType === "risk-reward") {
     return (
-      <TemplatePieChart
-        data={
-          data as Array<{
-            templateId: string;
-            templateTitle: string;
-            avgRiskReward: number;
-            count: number;
-          }> | null
-        }
-        chartConfig={
-          chartConfig as { type: string; xAxis: string; yAxis: string } | null
-        }
-        chartColors={
-          chartColors as {
-            primary: string;
-            secondary: string;
-            colors: string[];
-          } | null
-        }
+      <TemplateChart
+        data={data as TemplateChartData[] | null}
+        chartConfig={chartConfig}
+        chartColors={chartColors as TemplateChartColors | null}
         isLoading={isLoading}
       />
     );
   }
 
-  // Fallback for unknown chart type or missing config
+  if (chartType === "risk-reward-evolution") {
+    return (
+      <EvolutionLineChart
+        data={data as EvolutionChartData[] | null}
+        chartConfig={chartConfig}
+        chartColors={chartColors as EvolutionChartColors | null}
+        isLoading={isLoading}
+      />
+    );
+  }
+
+  // Fallback for unknown chart type
   return (
     <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground">
       <p>Unknown chart type</p>

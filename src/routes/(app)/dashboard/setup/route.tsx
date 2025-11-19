@@ -1,4 +1,4 @@
-import Chart from "@/charts/chart";
+import { AnalyticsSection } from "@/components/analytics-section";
 import TradeDetailsForm from "@/components/form/forms/trade-details-form";
 import ImageSidebar from "@/components/image-sidebar";
 import ResultBadge from "@/components/result-badge";
@@ -195,7 +195,13 @@ function RouteComponent() {
         currentStatus={snapshot?.status}
       />
 
-      <Chart chartType="risk-reward" />
+      <Separator
+        className="my-8"
+        text="Analytics"
+        textPosition="left"
+        textClassName="text-[10px] text-white"
+      />
+      <AnalyticsSection tradeSetupId={tradeSetupId as Id<"trade_setups">} />
     </>
   );
 }
