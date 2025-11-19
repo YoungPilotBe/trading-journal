@@ -51,6 +51,7 @@ export interface TemplateChartData {
   templateTitle: string;
   avgRiskReward: number;
   count: number;
+  usagePercentage: number;
 }
 
 export interface EvolutionChartData {

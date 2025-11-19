@@ -67,7 +67,6 @@ export const createSnapshotSchema = z.object({
     "closed",
   ]),
   imageId: z.custom<Id<"tradingview_images">>(),
-  result: z.enum(["win", "loss", "breakeven"]).optional(),
   riskReward: z.optional(z.number()),
   emotion: z.optional(emotionSchema),
 });
@@ -90,6 +89,7 @@ export const updateTradeSetupSchema = z.object({
 
 export const attachTradeSetupSchema = z.object({
   trade_template: z.custom<Id<"trade_templates">>().optional(),
+  result: z.enum(["win", "loss", "breakeven"]).optional(),
 });
 
 export const updateSnapshotSchema = z.object({

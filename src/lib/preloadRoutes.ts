@@ -128,8 +128,7 @@ export const templateRiskRewardChartQueryOptions = (
 export const preloadSetupRouteData = async (
   queryClient: QueryClient,
   tradeSetupId?: string,
-  snapshotId?: string,
-  templateFilter: "all" | "closed" = "all"
+  snapshotId?: string
 ) => {
   const promises = [];
 

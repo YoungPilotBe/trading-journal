@@ -2,8 +2,8 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import {
   EMOTION_CHART_COLORS,
-  TEMPLATE_CHART_COLORS,
   EVOLUTION_CHART_COLORS,
+  TEMPLATE_CHART_COLORS,
 } from "./constants";
 
 /**
@@ -15,10 +15,13 @@ export const getEmotionRiskRewardChart = query({
   handler: async (ctx) => {
     // Fetch all snapshots that have both emotion and riskReward values
     const allSnapshots = await ctx.db.query("snapshots").collect();
-    
+
     // Filter snapshots with both emotion and riskReward
     const validSnapshots = allSnapshots.filter(
-      (snapshot) => snapshot.emotion && snapshot.riskReward !== undefined && snapshot.riskReward !== null
+      (snapshot) =>
+        snapshot.emotion &&
+        snapshot.riskReward !== undefined &&
+        snapshot.riskReward !== null
     );
 
     if (validSnapshots.length === 0) {
@@ -164,8 +167,17 @@ export const getTemplateRiskRewardChart = query({
       .filter((item) => item.count > 0) // Only include templates with data
       .sort((a, b) => b.avgRiskReward - a.avgRiskReward); // Sort descending by avgRiskReward
 
+    // Calculate total count for usage percentage
+    const totalCount = data.reduce((sum, item) => sum + item.count, 0);
+
+    // Add usage percentage to each item
+    const dataWithUsage = data.map((item) => ({
+      ...item,
+      usagePercentage: totalCount > 0 ? (item.count / totalCount) * 100 : 0,
+    }));
+
     return {
-      data,
+      data: dataWithUsage,
       chartConfig: {
         type: "pie",
         xAxis: "templateTitle",
@@ -215,4 +227,3 @@ export const getRiskRewardEvolutionChart = query({
     };
   },
 });
-

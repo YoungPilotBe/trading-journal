@@ -37,28 +37,23 @@ const searchSchema = z.object({
   noteId: z.optional(z.custom<Id<"notes">>((val) => typeof val === "string")),
   image: z.optional(z.enum(["preview"])),
   templateFilter: z.optional(z.enum(["all", "closed"])),
+  templateView: z.optional(z.enum(["list", "chart"])),
 });
 
 export const Route = createFileRoute("/(app)/dashboard/setup")({
   validateSearch: searchSchema,
   component: RouteComponent,
   preload: true,
-  loaderDeps: ({ search: { tradeSetupId, snapshotId, templateFilter } }) => ({
+  loaderDeps: ({ search: { tradeSetupId, snapshotId } }) => ({
     tradeSetupId,
     snapshotId,
-    templateFilter: templateFilter ?? "all",
   }),
   loader: async ({
-    deps: { tradeSetupId, snapshotId, templateFilter },
+    deps: { tradeSetupId, snapshotId },
     context: { queryClient },
   }) => {
-    await preloadSetupRouteData(
-      queryClient,
-      tradeSetupId,
-      snapshotId,
-      templateFilter
-    );
-    return { tradeSetupId, snapshotId, templateFilter };
+    await preloadSetupRouteData(queryClient, tradeSetupId, snapshotId);
+    return { tradeSetupId, snapshotId };
   },
 });
 

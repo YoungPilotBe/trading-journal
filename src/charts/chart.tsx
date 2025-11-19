@@ -12,7 +12,7 @@ import {
 } from "./chart-context";
 import { EmotionChart } from "./emotion-chart";
 import { EvolutionLineChart } from "./evolution-line-chart";
-import { TemplateChart } from "./template-chart";
+import { TemplateView } from "./template-view";
 
 type Props<T extends ChartType = ChartType> = {
   chartType: T;
@@ -65,7 +65,7 @@ const ChartContent = <T extends ChartType>({
     const filterType =
       (props as ChartProps<"risk-reward">)?.filterType ?? "all";
     return (
-      <TemplateChart
+      <TemplateView
         data={data as TemplateChartData[] | null}
         chartConfig={chartConfig}
         chartColors={chartColors as TemplateChartColors | null}

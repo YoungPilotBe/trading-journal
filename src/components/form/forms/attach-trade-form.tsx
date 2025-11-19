@@ -104,7 +104,7 @@ const AttachTradeForm = ({
     });
     const snapshot = createSnapshotSchema.parse({ ...data, imageId });
 
-    attachSnapshot({
+    await attachSnapshot({
       tradeSetup: { ...tradeSetup, id: tradeSetupId },
       snapshot,
     });

@@ -1,13 +1,16 @@
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRiskReward } from "@/lib/utils";
-import { Route } from "@/routes/(app)/dashboard/setup/route";
-import { Link, useNavigate } from "@tanstack/react-router";
-import clsx from "clsx";
 import type { Id } from "convex/_generated/dataModel";
-import { CheckCircle2, ChevronRight, List } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type {
   BaseChartConfig,
   TemplateChartColors,
@@ -29,35 +32,19 @@ export const TemplateChart = ({
   chartColors,
   isLoading = false,
   templateId,
-  filterType = "all",
 }: TemplateChartProps) => {
-  const navigate = useNavigate({ from: Route.fullPath });
-  const search = Route.useSearch();
-
-  const handleFilterChange = (newFilterType: "all" | "closed") => {
-    navigate({
-      search: {
-        ...search,
-        templateFilter: newFilterType,
-      },
-    });
-  };
   if (isLoading) {
     return (
-      <div className="w-full space-y-4">
+      <div className="w-full h-[400px] space-y-4">
         <Skeleton className="h-8 w-48" />
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
+        <Skeleton className="h-full w-full" />
       </div>
     );
   }
 
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (
-      <div className="w-full flex items-center justify-center text-muted-foreground font-mono py-8">
+      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
         <p>No template data available</p>
       </div>
     );
@@ -65,136 +52,160 @@ export const TemplateChart = ({
 
   if (!chartColors || !chartConfig) {
     return (
-      <div className="w-full flex items-center justify-center text-muted-foreground font-mono py-8">
+      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
         <p>Chart configuration missing</p>
       </div>
     );
   }
 
-  // Sort templates by avgRiskReward descending
-  const sortedData = [...data].sort(
-    (a, b) => b.avgRiskReward - a.avgRiskReward
-  );
-
-  // Calculate total count for usage percentage
-  const totalCount = sortedData.reduce((sum, item) => sum + item.count, 0);
-
   return (
-    <div className="w-full space-y-4">
-      {/* Filter buttons */}
-      <ButtonGroup>
-        <Button
-          variant="badge"
-          size="sm"
-          onClick={() => handleFilterChange("all")}
-          className={clsx(filterType === "closed" && "opacity-50")}
+    <div className="w-full h-[400px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          margin={{ top: 50, right: 30, left: 20, bottom: 60 }}
+          barCategoryGap="20%"
         >
-          <List className="h-3 w-3 mr-1.5" />
-          All Trades
-        </Button>
-        <Button
-          variant="badge"
-          size="sm"
-          onClick={() => handleFilterChange("closed")}
-          className={clsx(filterType === "all" && "opacity-50")}
-        >
-          <CheckCircle2 className="h-3 w-3 mr-1.5" />
-          Closed Trades
-        </Button>
-      </ButtonGroup>
+          <defs>
+            <pattern
+              id="hatch-red"
+              patternUnits="userSpaceOnUse"
+              width="4"
+              height="4"
+            >
+              <path
+                d="M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2"
+                stroke="rgb(225 29 72)"
+                strokeWidth="0.5"
+              />
+            </pattern>
+            <pattern
+              id="hatch-white"
+              patternUnits="userSpaceOnUse"
+              width="4"
+              height="4"
+            >
+              <path
+                d="M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2"
+                stroke="rgb(255 255 255)"
+                strokeWidth="0.5"
+              />
+            </pattern>
+          </defs>
+          <XAxis
+            dataKey="templateTitle"
+            angle={-45}
+            textAnchor="end"
+            height={80}
+            axisLine={false}
+            tickLine={false}
+            padding={{ left: 20, right: 20 }}
+            className="text-xs text-muted-foreground font-mono"
+            tick={{ fontFamily: "monospace", fontSize: 11 }}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            className="text-xs text-muted-foreground font-mono"
+            tickFormatter={(value) => formatRiskReward(value)}
+            tick={{ fontFamily: "monospace", fontSize: 12 }}
+            domain={["auto", "auto"]}
+          />
+          <ReferenceLine
+            y={0}
+            stroke="#525252"
+            strokeWidth={1}
+            strokeDasharray="4 4"
+            opacity={0.3}
+          />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                const data = payload[0].payload as TemplateChartData;
+                return (
+                  <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
+                    <p className="text-xs text-foreground font-medium mb-1">
+                      {data.templateTitle}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Risk:Reward:{" "}
+                      {formatRiskReward(data.avgRiskReward, {
+                        addPrefix: true,
+                      })}
+                      R
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Usage: {data.usagePercentage.toFixed(1)}%
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            }}
+          />
+          <Bar
+            dataKey="avgRiskReward"
+            barSize={20}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            shape={(props: any) => {
+              const { x, y, width, height, payload } = props;
+              if (
+                typeof x !== "number" ||
+                typeof y !== "number" ||
+                typeof width !== "number" ||
+                typeof height !== "number" ||
+                !payload
+              ) {
+                return <g />;
+              }
 
-      <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-x-4 gap-y-3">
-        {/* Header row */}
-        <div></div>
-        <div className="text-xs font-mono text-muted-foreground font-medium">
-          Template
-        </div>
-        <div className="text-xs font-mono text-muted-foreground font-medium">
-          Risk:Reward
-        </div>
-        <div className="text-xs font-mono text-muted-foreground font-medium">
-          Usage
-        </div>
+              const isNegative = payload.avgRiskReward < 0;
+              const isHighlighted =
+                templateId !== undefined &&
+                String(templateId) === String(payload.templateId);
 
-        {/* Separator */}
-        <div className="col-span-4">
-          <Separator />
-        </div>
+              // For negative bars, Recharts provides:
+              // - y: the zero line position
+              // - height: negative value (e.g., -50)
+              // We need to calculate the actual y position and use absolute height
+              const barY = isNegative ? y + height : y;
+              const barHeight = Math.abs(height);
 
-        {/* Data rows */}
-        {sortedData.map((item) => {
-          const isHighlighted =
-            templateId !== undefined &&
-            String(templateId) === String(item.templateId);
-          const isAboveOne = item.avgRiskReward >= 1;
-          const usagePercentage =
-            totalCount > 0 ? ((item.count / totalCount) * 100).toFixed(1) : "0";
-
-          // Determine color classes based on state
-          const textColorClass = isAboveOne
-            ? "text-emerald-500"
-            : "text-rose-500";
-
-          return (
-            <>
-              {/* Icon indicator */}
-              <div
-                key={`${item.templateId}-icon`}
-                className="flex items-center justify-center py-1"
-              >
-                {isHighlighted && (
-                  <ChevronRight
-                    className={clsx("h-4 w-4 text-muted-foreground")}
+              return (
+                <g>
+                  <rect
+                    x={x}
+                    y={barY}
+                    width={width}
+                    height={barHeight}
+                    fill={isNegative ? "url(#hatch-red)" : "url(#hatch-white)"}
+                    stroke={isNegative ? "rgb(225 29 72)" : "rgb(255 255 255)"}
+                    strokeWidth={1.5}
+                    rx={4}
+                    ry={4}
                   />
-                )}
-              </div>
-
-              {/* Template Title (clickable) */}
-              <div
-                key={`${item.templateId}-title`}
-                className="flex items-center py-1"
-              >
-                <Link
-                  to="/trade_template"
-                  search={{ templateId: item.templateId }}
-                  className={clsx(
-                    "text-sm font-mono transition-colors hover:underline font-thin",
-                    isHighlighted && "font-semibold",
-                    "text-foreground"
+                  {isHighlighted && (
+                    <foreignObject
+                      x={x + width / 2 - 8}
+                      y={isNegative ? barY + barHeight + 4 : barY - 24}
+                      width={16}
+                      height={16}
+                    >
+                      <div className="flex justify-center items-center">
+                        {isNegative ? (
+                          <ChevronUp className="h-4 w-4 text-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-foreground" />
+                        )}
+                      </div>
+                    </foreignObject>
                   )}
-                >
-                  {item.templateTitle}
-                </Link>
-              </div>
-
-              {/* Risk:Reward */}
-              <div
-                key={`${item.templateId}-risk`}
-                className="flex items-center py-1"
-              >
-                <span
-                  className={clsx(
-                    "text-sm font-mono font-medium",
-                    textColorClass
-                  )}
-                >
-                  {formatRiskReward(item.avgRiskReward, { addPrefix: true })}R
-                </span>
-              </div>
-
-              {/* Usage Percentage */}
-              <div
-                key={`${item.templateId}-usage`}
-                className="flex items-center py-1"
-              >
-                <span className="text-sm font-mono text-muted-foreground">
-                  {usagePercentage}%
-                </span>
-              </div>
-            </>
-          );
-        })}
-      </div>
+                </g>
+              );
+            }}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 };
