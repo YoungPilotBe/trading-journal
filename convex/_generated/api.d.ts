@@ -18,6 +18,8 @@ import type * as analytics_queries from "../analytics/queries.js";
 import type * as base_titles_mutation from "../base_titles/mutation.js";
 import type * as base_titles_queries from "../base_titles/queries.js";
 import type * as base_titles_utilities from "../base_titles/utilities.js";
+import type * as charts_constants from "../charts/constants.js";
+import type * as charts_queries from "../charts/queries.js";
 import type * as config_analytics from "../config/analytics.js";
 import type * as constants_unions from "../constants/unions.js";
 import type * as drawings from "../drawings.js";
@@ -53,6 +55,8 @@ declare const fullApi: ApiFromModules<{
   "base_titles/mutation": typeof base_titles_mutation;
   "base_titles/queries": typeof base_titles_queries;
   "base_titles/utilities": typeof base_titles_utilities;
+  "charts/constants": typeof charts_constants;
+  "charts/queries": typeof charts_queries;
   "config/analytics": typeof config_analytics;
   "constants/unions": typeof constants_unions;
   drawings: typeof drawings;

@@ -1,0 +1,167 @@
+import { v } from "convex/values";
+import { query } from "../_generated/server";
+import {
+  EMOTION_CHART_COLORS,
+  TEMPLATE_CHART_COLORS,
+} from "./constants";
+
+/**
+ * Get emotion risk-reward chart data
+ * Analyzes which emotions correlate with higher risk-reward ratios
+ */
+export const getEmotionRiskRewardChart = query({
+  args: {},
+  handler: async (ctx) => {
+    // Fetch all snapshots that have both emotion and riskReward values
+    const allSnapshots = await ctx.db.query("snapshots").collect();
+    
+    // Filter snapshots with both emotion and riskReward
+    const validSnapshots = allSnapshots.filter(
+      (snapshot) => snapshot.emotion && snapshot.riskReward !== undefined && snapshot.riskReward !== null
+    );
+
+    if (validSnapshots.length === 0) {
+      return {
+        data: [],
+        chartConfig: {},
+        chartColors: {},
+      };
+    }
+
+    // Group snapshots by emotion and calculate statistics
+    const emotionStats = new Map<
+      string,
+      { totalRiskReward: number; count: number }
+    >();
+
+    for (const snapshot of validSnapshots) {
+      const emotion = snapshot.emotion!;
+      const riskReward = snapshot.riskReward!;
+
+      const existing = emotionStats.get(emotion);
+      if (existing) {
+        existing.totalRiskReward += riskReward;
+        existing.count += 1;
+      } else {
+        emotionStats.set(emotion, {
+          totalRiskReward: riskReward,
+          count: 1,
+        });
+      }
+    }
+
+    // Calculate average riskReward for each emotion
+    const data = Array.from(emotionStats.entries())
+      .map(([emotion, stats]) => ({
+        emotion,
+        avgRiskReward: stats.totalRiskReward / stats.count,
+        count: stats.count,
+      }))
+      .sort((a, b) => b.avgRiskReward - a.avgRiskReward); // Sort descending by avgRiskReward
+
+    return {
+      data,
+      chartConfig: {
+        type: "bar",
+        xAxis: "emotion",
+        yAxis: "avgRiskReward",
+      },
+      chartColors: EMOTION_CHART_COLORS,
+    };
+  },
+});
+
+/**
+ * Get template risk-reward chart data
+ * Analyzes which trade templates perform best based on risk-reward
+ */
+export const getTemplateRiskRewardChart = query({
+  args: {},
+  handler: async (ctx) => {
+    // Fetch all trade setups that have a trade_template
+    const allTradeSetups = await ctx.db.query("trade_setups").collect();
+    const tradeSetupsWithTemplates = allTradeSetups.filter(
+      (setup) => setup.trade_template !== undefined
+    );
+
+    if (tradeSetupsWithTemplates.length === 0) {
+      return {
+        data: [],
+        chartConfig: {},
+        chartColors: {},
+      };
+    }
+
+    // Group snapshots by template
+    const templateStats = new Map<
+      string,
+      { totalRiskReward: number; count: number; templateTitle: string }
+    >();
+
+    for (const tradeSetup of tradeSetupsWithTemplates) {
+      const templateId = tradeSetup.trade_template!;
+
+      // Fetch template to get title (handle case where template might be deleted)
+      const template = await ctx.db.get(templateId);
+      if (!template) {
+        continue; // Skip deleted templates
+      }
+
+      // Get all snapshots for this trade setup
+      const snapshots = await ctx.db
+        .query("snapshots")
+        .withIndex("by_trade_setup", (q) =>
+          q.eq("tradeSetupId", tradeSetup._id)
+        )
+        .collect();
+
+      // Filter snapshots with riskReward values
+      const validSnapshots = snapshots.filter(
+        (snapshot) =>
+          snapshot.riskReward !== undefined && snapshot.riskReward !== null
+      );
+
+      // Aggregate riskReward for this template
+      const existing = templateStats.get(templateId);
+      if (existing) {
+        for (const snapshot of validSnapshots) {
+          existing.totalRiskReward += snapshot.riskReward!;
+          existing.count += 1;
+        }
+      } else {
+        let totalRiskReward = 0;
+        for (const snapshot of validSnapshots) {
+          totalRiskReward += snapshot.riskReward!;
+        }
+        templateStats.set(templateId, {
+          totalRiskReward,
+          count: validSnapshots.length,
+          templateTitle: template.title,
+        });
+      }
+    }
+
+    // Calculate average riskReward for each template
+    const data = Array.from(templateStats.entries())
+      .map(([templateId, stats]) => ({
+        templateId,
+        templateTitle: stats.templateTitle,
+        avgRiskReward:
+          stats.count > 0 ? stats.totalRiskReward / stats.count : 0,
+        count: stats.count,
+      }))
+      .filter((item) => item.count > 0) // Only include templates with data
+      .sort((a, b) => b.avgRiskReward - a.avgRiskReward); // Sort descending by avgRiskReward
+
+    return {
+      data,
+      chartConfig: {
+        type: "pie",
+        xAxis: "templateTitle",
+        yAxis: "avgRiskReward",
+      },
+      chartColors: TEMPLATE_CHART_COLORS,
+    };
+  },
+});
+

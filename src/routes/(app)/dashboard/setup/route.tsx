@@ -1,3 +1,4 @@
+import Chart from "@/charts/chart";
 import TradeDetailsForm from "@/components/form/forms/trade-details-form";
 import ImageSidebar from "@/components/image-sidebar";
 import ResultBadge from "@/components/result-badge";
@@ -193,6 +194,8 @@ function RouteComponent() {
         limit={4}
         currentStatus={snapshot?.status}
       />
+
+      <Chart chartType="risk-reward" />
     </>
   );
 }
