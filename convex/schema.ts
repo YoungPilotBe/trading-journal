@@ -48,6 +48,9 @@ export default defineSchema({
     // One-to-many relationship with trade_setups
     tradeSetupIds: v.optional(v.array(v.id("trade_setups"))),
 
+    // Image zoom mode: "cover" (offsetable) or "contain" (fits container, no offset)
+    zoomMode: v.optional(v.union(v.literal("cover"), v.literal("contain"))),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),

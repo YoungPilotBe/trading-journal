@@ -9,6 +9,7 @@ export const createTemplate = mutation({
     drawingId: v.optional(v.id("drawings")),
     drawingUrl: v.optional(v.string()),
     imageIds: v.optional(v.array(v.id("tradingview_images"))),
+    zoomMode: v.optional(v.union(v.literal("cover"), v.literal("contain"))),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -19,6 +20,7 @@ export const createTemplate = mutation({
       title,
       drawingId: args.drawingId,
       drawingUrl: args.drawingUrl,
+      zoomMode: args.zoomMode ?? "cover", // Default to "cover" mode
       createdAt: now,
       updatedAt: now,
     });
@@ -32,9 +34,10 @@ export const updateTemplate = mutation({
     drawingId: v.optional(v.id("drawings")),
     drawingUrl: v.optional(v.string()),
     imageIds: v.optional(v.array(v.id("tradingview_images"))),
+    zoomMode: v.optional(v.union(v.literal("cover"), v.literal("contain"))),
   },
   handler: async (ctx, args) => {
-    const { id, document, drawingId, drawingUrl, imageIds } = args;
+    const { id, document, drawingId, drawingUrl, imageIds, zoomMode } = args;
     const title = args.document?.[0]?.content?.[0]?.text ?? "Untitled";
 
     // Get the existing template to preserve fields not being updated
@@ -53,6 +56,7 @@ export const updateTemplate = mutation({
       drawingId?: Id<"drawings"> | undefined;
       drawingUrl?: string | undefined;
       imageIds?: Id<"tradingview_images">[];
+      zoomMode?: "cover" | "contain";
     } = {
       document,
       title,
@@ -74,6 +78,10 @@ export const updateTemplate = mutation({
     // Handle imageIds: if provided, update it
     if (imageIds !== undefined) {
       updateData.imageIds = imageIds;
+    }
+    // Handle zoomMode: if provided, update it
+    if (zoomMode !== undefined) {
+      updateData.zoomMode = zoomMode;
     }
 
     return await ctx.db.patch(id, updateData);

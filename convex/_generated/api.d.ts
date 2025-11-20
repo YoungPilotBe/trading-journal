@@ -23,6 +23,7 @@ import type * as charts_queries from "../charts/queries.js";
 import type * as config_analytics from "../config/analytics.js";
 import type * as constants_unions from "../constants/unions.js";
 import type * as drawings from "../drawings.js";
+import type * as image_search_actions from "../image_search/actions.js";
 import type * as notes_internal from "../notes/internal.js";
 import type * as notes_mutation from "../notes/mutation.js";
 import type * as notes_queries from "../notes/queries.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   "config/analytics": typeof config_analytics;
   "constants/unions": typeof constants_unions;
   drawings: typeof drawings;
+  "image_search/actions": typeof image_search_actions;
   "notes/internal": typeof notes_internal;
   "notes/mutation": typeof notes_mutation;
   "notes/queries": typeof notes_queries;

@@ -1,7 +1,7 @@
 {
   "name": "trading-journal",
   "private": true,
-  "version": "0.1.22",
+  "version": "0.1.23",
   "type": "module",
   "scripts": {
     "generate-routes": "tsr generate",
@@ -91,6 +91,7 @@
     "react-hook-form": "^7.63.0",
     "react-simple-keyboard": "^3.8.133",
     "recharts": "^3.4.1",
+    "serpapi": "^2.2.1",
     "simple-statistics": "^7.8.8",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
