@@ -37,7 +37,7 @@ export const createAddTradeSetupDefaultValues = (
       ? [existingValues.imageData.timeframe as Timeframe]
       : ([] as Timeframe[]),
     emotion: existingValues?.existingSnapshot?.emotion || "calm",
-    riskReward: existingValues?.existingSnapshot?.riskReward,
+    rMultiple: existingValues?.existingSnapshot?.rMultiple,
   } as const;
 
   // If status is closed and result exists, return closed schema

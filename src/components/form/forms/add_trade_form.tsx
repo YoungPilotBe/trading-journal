@@ -195,8 +195,8 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
         />
 
         <NumberField
-          {...register("riskReward", { valueAsNumber: true })}
-          label="Risk Reward"
+          {...register("rMultiple", { valueAsNumber: true })}
+          label="R-Multiple"
           placeholder="5.4"
         />
 

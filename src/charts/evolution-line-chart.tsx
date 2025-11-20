@@ -55,24 +55,24 @@ export const EvolutionLineChart = ({
     );
   }
 
-  // Format risk reward to 2 decimal places
-  const formatRiskReward = (value: number | null) => {
+  // Format R-Multiple to 2 decimal places
+  const formatRMultiple = (value: number | null) => {
     if (value === null || value === undefined) return "N/A";
     return value.toFixed(2);
   };
 
-  // Filter out null riskReward values for the line, but keep them for tooltips
+  // Filter out null rMultiple values for the line, but keep them for tooltips
   const chartData = data.map((item) => ({
     ...item,
-    riskReward: item.riskReward ?? 0, // Use 0 for null values so line can render
+    rMultiple: item.rMultiple ?? 0, // Use 0 for null values so line can render
   }));
 
-  // Calculate min and max risk reward values for gradient positioning
-  const riskRewardValues = chartData
-    .map((item) => item.riskReward)
+  // Calculate min and max R-Multiple values for gradient positioning
+  const rMultipleValues = chartData
+    .map((item) => item.rMultiple)
     .filter((val) => val !== null && val !== undefined) as number[];
-  const minValue = Math.min(...riskRewardValues, 0);
-  const maxValue = Math.max(...riskRewardValues, 1);
+  const minValue = Math.min(...rMultipleValues, 0);
+  const maxValue = Math.max(...rMultipleValues, 1);
 
   // Ensure domain includes 1 for proper gradient alignment
   const yDomainMin = Math.min(minValue, 0);
@@ -104,7 +104,7 @@ export const EvolutionLineChart = ({
         >
           <defs>
             <linearGradient
-              id="riskRewardGradient"
+              id="rMultipleGradient"
               gradientUnits="userSpaceOnUse"
               x1="0"
               y1={marginTop}
@@ -158,13 +158,13 @@ export const EvolutionLineChart = ({
           {/* Area fill from bottom up to y=1 with gradient */}
           <Area
             type="monotone"
-            dataKey="riskReward"
+            dataKey="rMultiple"
             fill="url(#areaFillGradient)"
             stroke="none"
             data={chartData.map((item) => ({
               ...item,
               // Clamp values to min(value, 1) so area only fills up to y=1
-              riskReward: Math.min(item.riskReward ?? yDomainMin, 1),
+              rMultiple: Math.min(item.rMultiple ?? yDomainMin, 1),
             }))}
             connectNulls={false}
           />
@@ -183,14 +183,14 @@ export const EvolutionLineChart = ({
           />
           <Line
             type="monotone"
-            dataKey="riskReward"
-            stroke="url(#riskRewardGradient)"
+            dataKey="rMultiple"
+            stroke="url(#rMultipleGradient)"
             strokeWidth={2}
             dot={({ cx, cy, payload }) => {
               if (cx === undefined || cy === undefined) return null;
 
               const item = payload as EvolutionChartData;
-              const value = item.riskReward ?? 0;
+              const value = item.rMultiple ?? 0;
               const isAboveOne = value >= 1;
               const dotColor = isAboveOne ? neutralWhite : roseRed;
 
@@ -236,7 +236,7 @@ export const EvolutionLineChart = ({
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Risk/Reward: {formatRiskReward(data.riskReward)}
+                      R-Multiple: {formatRMultiple(data.rMultiple)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Created: {new Date(data.createdAt).toLocaleDateString()}

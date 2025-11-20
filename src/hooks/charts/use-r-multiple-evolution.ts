@@ -4,18 +4,18 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 /**
- * Hook to fetch risk-reward evolution chart data for a trade setup
+ * Hook to fetch R-Multiple evolution chart data for a trade setup
  *
  * @param tradeSetupId - The ID of the trade setup to get evolution data for
  * @param enabled - Whether the query should be enabled. Set to false to prevent fetching.
  */
-export const useRiskRewardEvolution = (
+export const useRMultipleEvolution = (
   tradeSetupId: Id<"trade_setups"> | null,
   enabled = true
 ) => {
   const queryResult = useQuery({
     ...convexQuery(
-      api.charts.queries.getRiskRewardEvolutionChart,
+      api.charts.queries.getRMultipleEvolutionChart,
       tradeSetupId ? { tradeSetupId } : ({ tradeSetupId: "" as Id<"trade_setups"> })
     ),
     enabled: enabled && tradeSetupId !== null,

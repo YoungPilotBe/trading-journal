@@ -62,7 +62,7 @@ const AttachTradeForm = ({
         : ([] as Timeframe[]),
       status: existingSnapshot?.status || "idea",
       emotion: existingSnapshot?.emotion || "calm",
-      riskReward: existingSnapshot?.riskReward,
+      rMultiple: existingSnapshot?.rMultiple,
       trade_template: existingTradeSetup?.trade_template,
     },
 
@@ -194,8 +194,8 @@ const AttachTradeForm = ({
         />
 
         <NumberField
-          {...register("riskReward", { valueAsNumber: true })}
-          label="Risk Reward"
+          {...register("rMultiple", { valueAsNumber: true })}
+          label="R-Multiple"
           placeholder="5.3"
         />
 

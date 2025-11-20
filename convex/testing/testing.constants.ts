@@ -178,7 +178,7 @@ export const TAG_CATEGORIES = {
     "partial-profit",
     "scale-out",
     "position-sizing",
-    "risk-reward-favorable",
+    "r-multiple-favorable",
     "high-probability",
   ],
   market_conditions: [

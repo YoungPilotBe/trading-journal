@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatRiskReward } from "@/lib/utils";
+import { formatRMultiple } from "@/lib/utils";
 import type { Id } from "convex/_generated/dataModel";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import {
@@ -107,7 +107,7 @@ export const TemplateChart = ({
             axisLine={false}
             tickLine={false}
             className="text-xs text-muted-foreground font-mono"
-            tickFormatter={(value) => formatRiskReward(value)}
+            tickFormatter={(value) => formatRMultiple(value)}
             tick={{ fontFamily: "monospace", fontSize: 12 }}
             domain={["auto", "auto"]}
           />
@@ -128,8 +128,8 @@ export const TemplateChart = ({
                       {data.templateTitle}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Risk:Reward:{" "}
-                      {formatRiskReward(data.avgRiskReward, {
+                      R-Multiple:{" "}
+                      {formatRMultiple(data.avgRMultiple, {
                         addPrefix: true,
                       })}
                       R
@@ -144,7 +144,7 @@ export const TemplateChart = ({
             }}
           />
           <Bar
-            dataKey="avgRiskReward"
+            dataKey="avgRMultiple"
             barSize={20}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             shape={(props: any) => {
@@ -159,7 +159,7 @@ export const TemplateChart = ({
                 return <g />;
               }
 
-              const isNegative = payload.avgRiskReward < 0;
+              const isNegative = payload.avgRMultiple < 0;
               const isHighlighted =
                 templateId !== undefined &&
                 String(templateId) === String(payload.templateId);

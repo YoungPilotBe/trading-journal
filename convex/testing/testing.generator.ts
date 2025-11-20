@@ -52,7 +52,7 @@ export class Generator {
       "loss",
       "breakeven",
     ]);
-    const riskReward = this.faker.number.float({
+    const rMultiple = this.faker.number.float({
       min: 0.4,
       max: 10.0,
       fractionDigits: 1,
@@ -75,7 +75,7 @@ export class Generator {
       asset,
       direction,
       template,
-      riskReward,
+      rMultiple,
       snapshots,
       timeframes,
       result,

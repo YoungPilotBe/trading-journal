@@ -1,6 +1,6 @@
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatRiskReward } from "@/lib/utils";
+import { formatRMultiple } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import clsx from "clsx";
 import type { Id } from "convex/_generated/dataModel";
@@ -65,7 +65,7 @@ export const TemplateList = ({
           Template
         </div>
         <div className="text-xs font-mono text-muted-foreground font-medium">
-          Risk:Reward
+          R-Multiple
         </div>
         <div className="text-xs font-mono text-muted-foreground font-medium">
           Usage
@@ -81,7 +81,7 @@ export const TemplateList = ({
           const isHighlighted =
             templateId !== undefined &&
             String(templateId) === String(item.templateId);
-          const isAboveOne = item.avgRiskReward >= 1;
+          const isAboveOne = item.avgRMultiple >= 1;
           const usagePercentage = item.usagePercentage.toFixed(1);
 
           // Determine color classes based on state
@@ -121,7 +121,7 @@ export const TemplateList = ({
                 </Link>
               </div>
 
-              {/* Risk:Reward */}
+              {/* R-Multiple */}
               <div
                 key={`${item.templateId}-risk`}
                 className="flex items-center py-1"
@@ -132,7 +132,7 @@ export const TemplateList = ({
                     textColorClass
                   )}
                 >
-                  {formatRiskReward(item.avgRiskReward, { addPrefix: true })}R
+                  {formatRMultiple(item.avgRMultiple, { addPrefix: true })}R
                 </span>
               </div>
 

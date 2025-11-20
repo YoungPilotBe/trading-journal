@@ -11,7 +11,7 @@ import type {
  */
 
 // Chart type identifier
-export type ChartType = "emotion" | "risk-reward" | "risk-reward-evolution";
+export type ChartType = "emotion" | "r-multiple" | "r-multiple-evolution";
 
 // Chart configuration types
 export type ChartConfigType = "bar" | "pie" | "line";
@@ -42,14 +42,14 @@ export type EvolutionChartColors = typeof EVOLUTION_CHART_COLORS;
 // Chart data types
 export interface EmotionChartData {
   emotion: string;
-  avgRiskReward: number;
+  avgRMultiple: number;
   count: number;
 }
 
 export interface TemplateChartData {
   templateId: string;
   templateTitle: string;
-  avgRiskReward: number;
+  avgRMultiple: number;
   count: number;
   usagePercentage: number;
 }
@@ -57,7 +57,7 @@ export interface TemplateChartData {
 export interface EvolutionChartData {
   snapshotId: Id<"snapshots">;
   index: number;
-  riskReward: number | null;
+  rMultiple: number | null;
   status: string;
   createdAt: number;
 }
@@ -101,9 +101,9 @@ export function isTemplateChartResponse(
 }
 
 // Chart props type - defines what props each chart type needs
-export type ChartProps<T extends ChartType> = T extends "risk-reward-evolution"
+export type ChartProps<T extends ChartType> = T extends "r-multiple-evolution"
   ? { tradeSetupId: Id<"trade_setups"> }
-  : T extends "risk-reward"
+  : T extends "r-multiple"
     ? { templateId?: Id<"trade_templates">; filterType?: "all" | "closed" }
     : Record<string, never>;
 
@@ -118,7 +118,7 @@ export type ChartContextValue<T extends ChartType = ChartType> =
         isLoading: boolean;
         error: unknown;
       }
-    : T extends "risk-reward"
+    : T extends "r-multiple"
       ? {
           data: TemplateChartData[] | null;
           chartConfig: BaseChartConfig | null;
@@ -126,7 +126,7 @@ export type ChartContextValue<T extends ChartType = ChartType> =
           isLoading: boolean;
           error: unknown;
         }
-      : T extends "risk-reward-evolution"
+      : T extends "r-multiple-evolution"
         ? {
             data: EvolutionChartData[] | null;
             chartConfig: BaseChartConfig | null;

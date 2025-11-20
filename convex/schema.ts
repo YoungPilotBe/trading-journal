@@ -114,7 +114,7 @@ export default defineSchema({
     // Timestamp when this snapshot was created
     createdAt: v.number(),
 
-    riskReward: v.optional(v.number()),
+    rMultiple: v.optional(v.number()),
 
     emotion: v.optional(emotionUnion),
   })

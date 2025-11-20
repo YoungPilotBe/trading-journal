@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEmotionChart } from "@/hooks/charts/use-emotion-chart";
-import { useRiskRewardChart } from "@/hooks/charts/use-risk-reward-chart";
-import { useRiskRewardEvolution } from "@/hooks/charts/use-risk-reward-evolution";
+import { useRMultipleChart } from "@/hooks/charts/use-r-multiple-chart";
+import { useRMultipleEvolution } from "@/hooks/charts/use-r-multiple-evolution";
 import React, { createContext } from "react";
 import type {
   BaseChartConfig,
@@ -38,17 +38,17 @@ export function ChartProvider<T extends ChartType>({
   // Pass enabled=false to prevent unnecessary fetching
   // Only the selected chart type will actually fetch data
   const emotionData = useEmotionChart(chartType === "emotion");
-  const riskRewardData = useRiskRewardChart(
-    chartType === "risk-reward",
-    chartType === "risk-reward"
-      ? ((props as ChartProps<"risk-reward">)?.filterType ?? "all")
+  const rMultipleData = useRMultipleChart(
+    chartType === "r-multiple",
+    chartType === "r-multiple"
+      ? ((props as ChartProps<"r-multiple">)?.filterType ?? "all")
       : "all"
   );
-  const evolutionData = useRiskRewardEvolution(
-    chartType === "risk-reward-evolution"
-      ? ((props as ChartProps<"risk-reward-evolution">)?.tradeSetupId ?? null)
+  const evolutionData = useRMultipleEvolution(
+    chartType === "r-multiple-evolution"
+      ? ((props as ChartProps<"r-multiple-evolution">)?.tradeSetupId ?? null)
       : null,
-    chartType === "risk-reward-evolution"
+    chartType === "r-multiple-evolution"
   );
 
   // Select the appropriate data based on chartType
@@ -66,24 +66,24 @@ export function ChartProvider<T extends ChartType>({
       } as ChartContextValue<"emotion">;
       break;
     }
-    case "risk-reward": {
+    case "r-multiple": {
       value = {
-        data: riskRewardData.data as TemplateChartData[] | null,
-        chartConfig: riskRewardData.chartConfig as BaseChartConfig | null,
-        chartColors: riskRewardData.chartColors as TemplateChartColors | null,
-        isLoading: riskRewardData.isLoading,
-        error: riskRewardData.error ?? null,
-      } as ChartContextValue<"risk-reward">;
+        data: rMultipleData.data as TemplateChartData[] | null,
+        chartConfig: rMultipleData.chartConfig as BaseChartConfig | null,
+        chartColors: rMultipleData.chartColors as TemplateChartColors | null,
+        isLoading: rMultipleData.isLoading,
+        error: rMultipleData.error ?? null,
+      } as ChartContextValue<"r-multiple">;
       break;
     }
-    case "risk-reward-evolution": {
+    case "r-multiple-evolution": {
       value = {
         data: evolutionData.data as EvolutionChartData[] | null,
         chartConfig: evolutionData.chartConfig as BaseChartConfig | null,
         chartColors: evolutionData.chartColors as EvolutionChartColors | null,
         isLoading: evolutionData.isLoading,
         error: evolutionData.error ?? null,
-      } as ChartContextValue<"risk-reward-evolution">;
+      } as ChartContextValue<"r-multiple-evolution">;
       break;
     }
     default:

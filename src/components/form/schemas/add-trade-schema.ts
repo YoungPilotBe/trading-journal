@@ -21,7 +21,7 @@ const baseTradeSetupObject = {
   title: z.string().min(1).max(100),
   direction: z.enum(["long", "short"]),
   emotion: emotionSchema,
-  riskReward: z.optional(z.number()),
+  rMultiple: z.optional(z.number()),
 };
 
 // Object for when status is 'closed' - result is required
@@ -67,7 +67,7 @@ export const createSnapshotSchema = z.object({
     "closed",
   ]),
   imageId: z.custom<Id<"tradingview_images">>(),
-  riskReward: z.optional(z.number()),
+  rMultiple: z.optional(z.number()),
   emotion: z.optional(emotionSchema),
 });
 
@@ -97,7 +97,7 @@ export const updateSnapshotSchema = z.object({
   status: z.optional(
     z.enum(["idea", "watching", "executed", "reviewed", "canceled", "closed"])
   ),
-  riskReward: z.optional(z.number()),
+  rMultiple: z.optional(z.number()),
   emotion: z.optional(emotionSchema),
 });
 

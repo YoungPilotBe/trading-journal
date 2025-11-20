@@ -29,17 +29,17 @@ export function AnalyticsSection({
       <Card className="bg-transparent">
         <CardHeader>
           <CardTitle className="font-mono text-sm font-medium text-muted-foreground/60">
-            Risk:Reward Evolution
+            R-Multiple Evolution
           </CardTitle>
         </CardHeader>
         <CardContent className="">
-          <Chart chartType="risk-reward-evolution" props={{ tradeSetupId }} />
+          <Chart chartType="r-multiple-evolution" props={{ tradeSetupId }} />
         </CardContent>
       </Card>
       <Card className="bg-transparent flex flex-col">
         <CardContent className="flex-1">
           <Chart
-            chartType="risk-reward"
+            chartType="r-multiple"
             props={{
               templateId: tradeSetup?.trade_template,
               filterType: templateFilter,

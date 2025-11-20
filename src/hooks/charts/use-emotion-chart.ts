@@ -9,7 +9,7 @@ import { api } from "../../../convex/_generated/api";
  */
 export const useEmotionChart = (enabled = true) => {
   const queryResult = useQuery({
-    ...convexQuery(api.charts.queries.getEmotionRiskRewardChart, {}),
+    ...convexQuery(api.charts.queries.getEmotionRMultipleChart, {}),
     enabled,
   });
 

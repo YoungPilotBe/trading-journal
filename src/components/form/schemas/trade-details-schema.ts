@@ -19,7 +19,7 @@ const baseSchema = z.object({
   ]),
   result: z.enum(["win", "loss", "breakeven"]).optional(),
   emotion: emotionSchema.nullable(),
-  riskReward: z.optional(z.number()),
+  rMultiple: z.optional(z.number()),
 });
 
 // Extend with trade_template field that's specific to trade details
@@ -49,7 +49,7 @@ export const createTradeDetailsDefaultValues = (
     status: existingData.existingSnapshot.status || "idea",
     direction: existingData.existingTradeSetup.direction || "long",
     result: existingData.existingTradeSetup.result,
-    riskReward: existingData.existingSnapshot.riskReward,
+    rMultiple: existingData.existingSnapshot.rMultiple,
     // Use the current snapshot's timeframes, not the aggregated ones
     timeframes: (existingData.existingSnapshot.timeframes as Timeframe[]) || [],
   };

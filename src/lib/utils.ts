@@ -22,13 +22,13 @@ export function wait(milliseconds: number) {
 }
 
 /**
- * Formats a risk reward value to a specified number of decimal places
+ * Formats an R-Multiple value to a specified number of decimal places
  * @param value - The number to format
  * @param decimals - The number of decimal places (default: 2)
  * @param addPrefix - Whether to add a "+" prefix if the value is above zero (default: false)
  * @returns The formatted string
  */
-export function formatRiskReward(
+export function formatRMultiple(
   value: number,
   options?: {
     decimals?: number;

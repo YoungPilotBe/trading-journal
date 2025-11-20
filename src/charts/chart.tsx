@@ -59,11 +59,11 @@ const ChartContent = <T extends ChartType>({
     );
   }
 
-  if (chartType === "risk-reward") {
+  if (chartType === "r-multiple") {
     const templateId =
-      (props as ChartProps<"risk-reward">)?.templateId ?? undefined;
+      (props as ChartProps<"r-multiple">)?.templateId ?? undefined;
     const filterType =
-      (props as ChartProps<"risk-reward">)?.filterType ?? "all";
+      (props as ChartProps<"r-multiple">)?.filterType ?? "all";
     return (
       <TemplateView
         data={data as TemplateChartData[] | null}
@@ -76,7 +76,7 @@ const ChartContent = <T extends ChartType>({
     );
   }
 
-  if (chartType === "risk-reward-evolution") {
+  if (chartType === "r-multiple-evolution") {
     return (
       <EvolutionLineChart
         data={data as EvolutionChartData[] | null}

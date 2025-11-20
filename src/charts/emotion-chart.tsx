@@ -59,8 +59,8 @@ export const EmotionChart = ({
     return emotion.charAt(0).toUpperCase() + emotion.slice(1);
   };
 
-  // Format risk reward to 2 decimal places
-  const formatRiskReward = (value: number) => {
+  // Format R-Multiple to 2 decimal places
+  const formatRMultiple = (value: number) => {
     return value.toFixed(2);
   };
 
@@ -85,7 +85,7 @@ export const EmotionChart = ({
               axisLine={false}
               tickLine={false}
               className="text-xs text-muted-foreground font-mono"
-              tickFormatter={formatRiskReward}
+              tickFormatter={formatRMultiple}
               tick={{ fontFamily: "monospace", fontSize: 12 }}
             />
             <Tooltip
@@ -95,7 +95,7 @@ export const EmotionChart = ({
                   return (
                     <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
                       <p className="text-xs text-muted-foreground">
-                        {formatEmotion(data.emotion)}: {formatRiskReward(data.avgRiskReward)}
+                        {formatEmotion(data.emotion)}: {formatRMultiple(data.avgRMultiple)}
                       </p>
                     </div>
                   );
@@ -104,7 +104,7 @@ export const EmotionChart = ({
               }}
             />
             <Bar
-              dataKey="avgRiskReward"
+              dataKey="avgRMultiple"
               fill={chartColors.primary}
               radius={[4, 4, 0, 0]}
             />
@@ -116,10 +116,10 @@ export const EmotionChart = ({
 
   // Render pie chart
   if (chartConfig.type === "pie") {
-    // Prepare data for pie chart (using avgRiskReward as value)
+    // Prepare data for pie chart (using avgRMultiple as value)
     const pieData = data.map((item, index) => ({
       name: formatEmotion(item.emotion),
-      value: item.avgRiskReward,
+      value: item.avgRMultiple,
       count: item.count,
       color: index % 2 === 0 ? chartColors.primary : chartColors.secondary,
     }));
@@ -163,7 +163,7 @@ export const EmotionChart = ({
                     style={{ fontFamily: "monospace", fontSize: "12px" }}
                     className="fill-foreground"
                   >
-                    {`${name}: ${formatRiskReward(value)}`}
+                    {`${name}: ${formatRMultiple(value)}`}
                   </text>
                 );
               }}
@@ -182,7 +182,7 @@ export const EmotionChart = ({
                   return (
                     <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
                       <p className="text-xs text-muted-foreground">
-                        {data.name}: {formatRiskReward(data.value)}
+                        {data.name}: {formatRMultiple(data.value)}
                       </p>
                     </div>
                   );

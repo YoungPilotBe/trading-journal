@@ -15,7 +15,7 @@ export const createTradeSetupWithSnapshot = mutation({
       timeframes: v.array(v.string()),
       status: statusUnion,
       emotion: v.optional(emotionUnion),
-      riskReward: v.optional(v.number()),
+      rMultiple: v.optional(v.number()),
     }),
     imageId: v.id("tradingview_images"),
   },

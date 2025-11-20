@@ -7,21 +7,21 @@ import {
 } from "./constants";
 
 /**
- * Get emotion risk-reward chart data
- * Analyzes which emotions correlate with higher risk-reward ratios
+ * Get emotion R-Multiple chart data
+ * Analyzes which emotions correlate with higher R-Multiple ratios
  */
-export const getEmotionRiskRewardChart = query({
+export const getEmotionRMultipleChart = query({
   args: {},
   handler: async (ctx) => {
-    // Fetch all snapshots that have both emotion and riskReward values
+    // Fetch all snapshots that have both emotion and rMultiple values
     const allSnapshots = await ctx.db.query("snapshots").collect();
 
-    // Filter snapshots with both emotion and riskReward
+    // Filter snapshots with both emotion and rMultiple
     const validSnapshots = allSnapshots.filter(
       (snapshot) =>
         snapshot.emotion &&
-        snapshot.riskReward !== undefined &&
-        snapshot.riskReward !== null
+        snapshot.rMultiple !== undefined &&
+        snapshot.rMultiple !== null
     );
 
     if (validSnapshots.length === 0) {
@@ -35,40 +35,40 @@ export const getEmotionRiskRewardChart = query({
     // Group snapshots by emotion and calculate statistics
     const emotionStats = new Map<
       string,
-      { totalRiskReward: number; count: number }
+      { totalRMultiple: number; count: number }
     >();
 
     for (const snapshot of validSnapshots) {
       const emotion = snapshot.emotion!;
-      const riskReward = snapshot.riskReward!;
+      const rMultiple = snapshot.rMultiple!;
 
       const existing = emotionStats.get(emotion);
       if (existing) {
-        existing.totalRiskReward += riskReward;
+        existing.totalRMultiple += rMultiple;
         existing.count += 1;
       } else {
         emotionStats.set(emotion, {
-          totalRiskReward: riskReward,
+          totalRMultiple: rMultiple,
           count: 1,
         });
       }
     }
 
-    // Calculate average riskReward for each emotion
+    // Calculate average rMultiple for each emotion
     const data = Array.from(emotionStats.entries())
       .map(([emotion, stats]) => ({
         emotion,
-        avgRiskReward: stats.totalRiskReward / stats.count,
+        avgRMultiple: stats.totalRMultiple / stats.count,
         count: stats.count,
       }))
-      .sort((a, b) => b.avgRiskReward - a.avgRiskReward); // Sort descending by avgRiskReward
+      .sort((a, b) => b.avgRMultiple - a.avgRMultiple); // Sort descending by avgRMultiple
 
     return {
       data,
       chartConfig: {
         type: "bar",
         xAxis: "emotion",
-        yAxis: "avgRiskReward",
+        yAxis: "avgRMultiple",
       },
       chartColors: EMOTION_CHART_COLORS,
     };
@@ -76,10 +76,10 @@ export const getEmotionRiskRewardChart = query({
 });
 
 /**
- * Get template risk-reward chart data
- * Analyzes which trade templates perform best based on risk-reward
+ * Get template R-Multiple chart data
+ * Analyzes which trade templates perform best based on R-Multiple
  */
-export const getTemplateRiskRewardChart = query({
+export const getTemplateRMultipleChart = query({
   args: {
     filterType: v.optional(v.union(v.literal("all"), v.literal("closed"))),
   },
@@ -101,13 +101,13 @@ export const getTemplateRiskRewardChart = query({
     // Define status filters based on filterType
     const allowedStatuses =
       filterType === "closed"
-        ? ["closed", "reviewed"] // Only closed and reviewed for final risk/reward
+        ? ["closed", "reviewed"] // Only closed and reviewed for final R-Multiple
         : ["idea", "watching", "executed", "closed", "reviewed"]; // All except canceled
 
     // Group snapshots by template
     const templateStats = new Map<
       string,
-      { totalRiskReward: number; count: number; templateTitle: string }
+      { totalRMultiple: number; count: number; templateTitle: string }
     >();
 
     for (const tradeSetup of tradeSetupsWithTemplates) {
@@ -127,45 +127,45 @@ export const getTemplateRiskRewardChart = query({
         )
         .collect();
 
-      // Filter snapshots based on status and riskReward values
+      // Filter snapshots based on status and rMultiple values
       const validSnapshots = snapshots.filter(
         (snapshot) =>
           allowedStatuses.includes(snapshot.status) &&
-          snapshot.riskReward !== undefined &&
-          snapshot.riskReward !== null
+          snapshot.rMultiple !== undefined &&
+          snapshot.rMultiple !== null
       );
 
-      // Aggregate riskReward for this template
+      // Aggregate rMultiple for this template
       const existing = templateStats.get(templateId);
       if (existing) {
         for (const snapshot of validSnapshots) {
-          existing.totalRiskReward += snapshot.riskReward!;
+          existing.totalRMultiple += snapshot.rMultiple!;
           existing.count += 1;
         }
       } else {
-        let totalRiskReward = 0;
+        let totalRMultiple = 0;
         for (const snapshot of validSnapshots) {
-          totalRiskReward += snapshot.riskReward!;
+          totalRMultiple += snapshot.rMultiple!;
         }
         templateStats.set(templateId, {
-          totalRiskReward,
+          totalRMultiple,
           count: validSnapshots.length,
           templateTitle: template.title,
         });
       }
     }
 
-    // Calculate average riskReward for each template
+    // Calculate average rMultiple for each template
     const data = Array.from(templateStats.entries())
       .map(([templateId, stats]) => ({
         templateId,
         templateTitle: stats.templateTitle,
-        avgRiskReward:
-          stats.count > 0 ? stats.totalRiskReward / stats.count : 0,
+        avgRMultiple:
+          stats.count > 0 ? stats.totalRMultiple / stats.count : 0,
         count: stats.count,
       }))
       .filter((item) => item.count > 0) // Only include templates with data
-      .sort((a, b) => b.avgRiskReward - a.avgRiskReward); // Sort descending by avgRiskReward
+      .sort((a, b) => b.avgRMultiple - a.avgRMultiple); // Sort descending by avgRMultiple
 
     // Calculate total count for usage percentage
     const totalCount = data.reduce((sum, item) => sum + item.count, 0);
@@ -181,7 +181,7 @@ export const getTemplateRiskRewardChart = query({
       chartConfig: {
         type: "pie",
         xAxis: "templateTitle",
-        yAxis: "avgRiskReward",
+        yAxis: "avgRMultiple",
       },
       chartColors: TEMPLATE_CHART_COLORS,
     };
@@ -189,10 +189,10 @@ export const getTemplateRiskRewardChart = query({
 });
 
 /**
- * Get risk-reward evolution chart data for a specific trade setup
- * Returns snapshots ordered by creation time with their risk-reward values
+ * Get R-Multiple evolution chart data for a specific trade setup
+ * Returns snapshots ordered by creation time with their R-Multiple values
  */
-export const getRiskRewardEvolutionChart = query({
+export const getRMultipleEvolutionChart = query({
   args: {
     tradeSetupId: v.id("trade_setups"),
   },
@@ -207,11 +207,11 @@ export const getRiskRewardEvolutionChart = query({
       .collect();
 
     // Map snapshots to chart data format
-    // Include all snapshots, even if riskReward is undefined (will show as null/0)
+    // Include all snapshots, even if rMultiple is undefined (will show as null/0)
     const data = snapshots.map((snapshot, index) => ({
       snapshotId: snapshot._id,
       index: index, // Use index for positioning
-      riskReward: snapshot.riskReward ?? null,
+      rMultiple: snapshot.rMultiple ?? null,
       status: snapshot.status,
       createdAt: snapshot.createdAt,
     }));
@@ -221,7 +221,7 @@ export const getRiskRewardEvolutionChart = query({
       chartConfig: {
         type: "line",
         xAxis: "index",
-        yAxis: "riskReward",
+        yAxis: "rMultiple",
       },
       chartColors: EVOLUTION_CHART_COLORS,
     };

@@ -11,7 +11,7 @@ export const updateSnapshot = mutation({
     emotion: v.optional(emotionUnion),
     tags: v.optional(v.any()),
     tags_config: v.optional(v.any()),
-    riskReward: v.optional(v.number()),
+    rMultiple: v.optional(v.number()),
     timeframes: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { snapshotId, ...args }) => {
@@ -37,11 +37,11 @@ export const createSnapshot = mutation({
     imageId: v.id("tradingview_images"),
     emotion: v.optional(emotionUnion),
     timeframes: v.array(v.string()),
-    riskReward: v.optional(v.union(v.number(), v.null())),
+    rMultiple: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (
     ctx,
-    { imageId, tradeSetupId, status, timeframes, emotion, riskReward }
+    { imageId, tradeSetupId, status, timeframes, emotion, rMultiple }
   ) => {
     const now = Date.now();
 
@@ -51,7 +51,7 @@ export const createSnapshot = mutation({
       imageId: imageId,
       timeframes,
       emotion: emotion ?? undefined,
-      riskReward: riskReward ?? undefined,
+      rMultiple: rMultiple ?? undefined,
       createdAt: now,
     });
 
@@ -127,7 +127,7 @@ export const attachSnapshot = mutation({
       timeframes: v.array(v.string()),
       status: statusUnion,
       emotion: v.optional(emotionUnion),
-      riskReward: v.optional(v.number()),
+      rMultiple: v.optional(v.number()),
       imageId: v.id("tradingview_images"),
     }),
   },

@@ -38,7 +38,7 @@ export const findSimilarTradeSetups = query({
       asset: string;
       direction: "long" | "short";
       title: string;
-      riskReward: number | null;
+      rMultiple: number | null;
     })[]
   > => {
     const config = TRADE_SETUP_SIMILARITY_CONFIG;
@@ -71,7 +71,7 @@ export const findSimilarTradeSetups = query({
         asset: string;
         direction: "long" | "short";
         title: string;
-        riskReward: number | null;
+        rMultiple: number | null;
       })[] = [];
 
       for (const otherTradeSetup of allTradeSetups) {
@@ -84,14 +84,14 @@ export const findSimilarTradeSetups = query({
 
         // Only include results above the minimum similarity threshold
         if (similarity.similarityScore >= minSimilarityScore) {
-          // Get most recent snapshot's riskReward
+          // Get most recent snapshot's rMultiple
           const latestSnapshot = otherTradeSetup.snapshots[otherTradeSetup.snapshots.length - 1];
           similarities.push({
             ...similarity,
             asset: otherTradeSetup.asset,
             direction: otherTradeSetup.direction,
             title: otherTradeSetup.title,
-            riskReward: latestSnapshot?.riskReward ?? null,
+            rMultiple: latestSnapshot?.rMultiple ?? null,
           });
         }
       }
@@ -134,7 +134,7 @@ export const findSimilarSnapshots = query({
       asset: string;
       direction: "long" | "short";
       title: string;
-      riskReward: number | null;
+      rMultiple: number | null;
       snapshotStatus: string;
       snapshotCreatedAt: number;
     })[]
@@ -197,7 +197,7 @@ export const findSimilarSnapshots = query({
         asset: string;
         direction: "long" | "short";
         title: string;
-        riskReward: number | null;
+        rMultiple: number | null;
         snapshotStatus: string;
         snapshotCreatedAt: number;
       })[] = [];
@@ -233,7 +233,7 @@ export const findSimilarSnapshots = query({
             asset: otherTradeSetup.asset,
             direction: otherTradeSetup.direction,
             title: otherTradeSetup.title,
-            riskReward: otherSnapshot.riskReward ?? null,
+            rMultiple: otherSnapshot.rMultiple ?? null,
             snapshotStatus: otherSnapshot.status,
             snapshotCreatedAt: otherSnapshot._creationTime,
           });

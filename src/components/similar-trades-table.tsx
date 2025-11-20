@@ -52,7 +52,7 @@ type SimilarTradeEntry = {
   asset: string;
   direction: "long" | "short";
   title: string | null;
-  riskReward?: number;
+  rMultiple?: number;
   // Additional fields for snapshot mode
   snapshotStatus?: string;
   snapshotCreatedAt?: number;
@@ -243,14 +243,14 @@ const SimilarTradesTable = ({
           );
         },
       }),
-      columnHelper.accessor("riskReward", {
+      columnHelper.accessor("rMultiple", {
         header: ({ column }) => (
           <button
             className="flex flex-row items-center hover:bg-muted/50 p-1 rounded font-mono text-xs"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             <Target className="mr-2 h-4 w-4" />
-            Risk / Reward
+            R-Multiple
           </button>
         ),
         cell: ({ getValue }) => (

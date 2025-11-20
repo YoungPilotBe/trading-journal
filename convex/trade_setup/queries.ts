@@ -136,7 +136,7 @@ export const getTradingJournalData = query({
           result: tradeSetup.result,
           direction: tradeSetup.direction,
           title: tradeSetup.title,
-          riskReward: lastSnapshot?.riskReward ?? null,
+          rMultiple: lastSnapshot?.rMultiple ?? null,
           timeframes: uniqueTimeframes,
           createdAt: tradeSetup.createdAt,
           updatedAt: tradeSetup.updatedAt,
