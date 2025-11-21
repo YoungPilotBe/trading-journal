@@ -1,4 +1,5 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
+import { api } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { tpslSchema } from "../constants/unions";
 
@@ -83,12 +84,18 @@ export const upsertTpslEntries = mutation({
 
     const now = Date.now();
 
-    // Get all existing entries for this snapshot
-    const existingEntries = await ctx.db
-      .query("tpsl_entries")
-      .withIndex("by_snapshot", (q) => q.eq("snapshotId", snapshotId))
-      .collect();
+    const tradeSetup = await ctx.runQuery(
+      api.trade_setup.queries.getTradeSetupBySnapshotId,
+      { snapshotId }
+    );
 
+    if (!tradeSetup) throw new ConvexError("No trade setup found");
+
+    // Get all existing entries for this snapshot
+    const existingEntries = await ctx.runQuery(
+      api.tpsl.queries.getTpslEntriesByTradeSetup,
+      { tradeSetupId: tradeSetup._id }
+    );
     // Create sets of entry IDs from the submitted data
     const submittedEntryIds = new Set<string>();
 
