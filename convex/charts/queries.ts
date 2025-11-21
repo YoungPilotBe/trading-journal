@@ -1,10 +1,12 @@
 import { v } from "convex/values";
+import { api } from "../_generated/api";
 import { query } from "../_generated/server";
 import {
   EMOTION_CHART_COLORS,
   EVOLUTION_CHART_COLORS,
   TEMPLATE_CHART_COLORS,
 } from "./constants";
+import { calculateRMultiple } from "./services/r_multiple";
 
 /**
  * Get emotion R-Multiple chart data
@@ -160,8 +162,7 @@ export const getTemplateRMultipleChart = query({
       .map(([templateId, stats]) => ({
         templateId,
         templateTitle: stats.templateTitle,
-        avgRMultiple:
-          stats.count > 0 ? stats.totalRMultiple / stats.count : 0,
+        avgRMultiple: stats.count > 0 ? stats.totalRMultiple / stats.count : 0,
         count: stats.count,
       }))
       .filter((item) => item.count > 0) // Only include templates with data
@@ -215,6 +216,95 @@ export const getRMultipleEvolutionChart = query({
       status: snapshot.status,
       createdAt: snapshot.createdAt,
     }));
+
+    return {
+      data,
+      chartConfig: {
+        type: "line",
+        xAxis: "index",
+        yAxis: "rMultiple",
+      },
+      chartColors: EVOLUTION_CHART_COLORS,
+    };
+  },
+});
+
+/**
+ * Get actual R-Multiple evolution chart data for a specific trade setup
+ * Calculates R-Multiple for each snapshot using its TPSL entries and entry price
+ * Returns snapshots ordered by creation time with calculated R-Multiple values
+ */
+export const getActualRMultipleEvolutionChart = query({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+  },
+  handler: async (ctx, { tradeSetupId }) => {
+    // Fetch the trade setup to get the direction
+    const tradeSetup = await ctx.db.get(tradeSetupId);
+    if (!tradeSetup || !tradeSetup.direction) {
+      return {
+        data: [],
+        chartConfig: {
+          type: "line",
+          xAxis: "index",
+          yAxis: "rMultiple",
+        },
+        chartColors: EVOLUTION_CHART_COLORS,
+      };
+    }
+
+    const direction = tradeSetup.direction;
+
+    // Fetch all snapshots for this trade setup, ordered by creation time
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", tradeSetupId)
+      )
+      .order("asc") // Oldest first to show evolution over time
+      .collect();
+
+    // Calculate R-Multiple for each snapshot
+    const data = await Promise.all(
+      snapshots.map(async (snapshot, index) => {
+        // Fetch TPSL entries for this snapshot
+        const tpslEntries = await ctx.runQuery(
+          api.tpsl.queries.getTpslEntriesBySnapshot,
+          { snapshotId: snapshot._id }
+        );
+
+        // Separate entries into take profits and stop losses
+        const takeProfits = tpslEntries
+          .filter((entry) => entry.type === "take_profit")
+          .map((entry) => ({
+            price: entry.price,
+            margin: entry.margin,
+          }));
+
+        const stopLosses = tpslEntries
+          .filter((entry) => entry.type === "stop_loss")
+          .map((entry) => ({
+            price: entry.price,
+            margin: entry.margin,
+          }));
+
+        // Calculate R-Multiple using the snapshot's entry price and TPSL entries
+        const calculatedRMultiple = calculateRMultiple(
+          snapshot.entryPrice,
+          takeProfits,
+          stopLosses,
+          direction
+        );
+
+        return {
+          snapshotId: snapshot._id,
+          index: index, // Use index for positioning
+          rMultiple: calculatedRMultiple ?? null,
+          status: snapshot.status,
+          createdAt: snapshot.createdAt,
+        };
+      })
+    );
 
     return {
       data,
