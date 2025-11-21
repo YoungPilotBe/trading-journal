@@ -38,6 +38,7 @@ interface Props {
   imageData?: (Doc<"tradingview_images"> & { url: string | null }) | null;
   previousStatuses: Doc<"snapshots">["status"][];
   tpslEntries: Doc<"tpsl_entries">[];
+  previousEntryPrice: number | undefined;
 }
 
 const AttachTradeForm = ({
@@ -49,6 +50,7 @@ const AttachTradeForm = ({
   imageData,
   previousStatuses,
   tpslEntries,
+  previousEntryPrice,
 }: Props) => {
   const navigate = useNavigate();
   const search = useSearch({ from: "/trade_onboarding/attach_trade" });
@@ -56,7 +58,7 @@ const AttachTradeForm = ({
 
   const transformedTpsl = transformTpslEntriesToFormInput(
     tpslEntries,
-    existingSnapshot?.entryPrice
+    previousEntryPrice
   );
 
   const form = useForm<z.infer<typeof attachTradeSchema>>({

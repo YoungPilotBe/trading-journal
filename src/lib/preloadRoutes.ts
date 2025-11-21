@@ -91,6 +91,33 @@ export const tpslEntriesByTradeSetupQueryOptions = (
     }),
   });
 
+export const getPreviousSnapshot = (tradeSetupId: Id<"trade_setups">) =>
+  queryOptions({
+    ...convexQuery(api.snaphot.queries.getMostRecentSnapshotByTradeSetupId, {
+      tradeSetupId,
+    }),
+  });
+
+// Latest TP/SL Entries by Trade Setup Query Options
+export const latestTpslEntriesByTradeSetupQueryOptions = (
+  tradeSetupId: Id<"trade_setups">
+) =>
+  queryOptions({
+    ...convexQuery(api.tpsl.queries.getLatestTpslEntriesByTradeSetup, {
+      tradeSetupId,
+    }),
+  });
+
+// Previous TP/SL Entries by Snapshot Query Options
+export const previousTpslEntriesBySnapshotQueryOptions = (
+  snapshotId: Id<"snapshots">
+) =>
+  queryOptions({
+    ...convexQuery(api.tpsl.queries.getPreviousTpslEntriesBySnapshot, {
+      snapshotId,
+    }),
+  });
+
 // Preloader function for the add trade form
 export const preloadAddTradeFormData = async (
   queryClient: QueryClient,
@@ -144,20 +171,23 @@ export const preloadAttachTradeFormData = async (
     );
   }
 
-  // Preload previous statuses and TP/SL entries by trade setup
-  const [previousStatuses, tpslEntries] = await Promise.all([
-    queryClient.ensureQueryData(previousStatusesQueryOptions(tradeSetupId)),
-    queryClient.ensureQueryData(
-      tpslEntriesByTradeSetupQueryOptions(tradeSetupId)
-    ),
-  ]);
+  // Preload previous statuses
+  const previousStatuses = await queryClient.ensureQueryData(
+    previousStatusesQueryOptions(tradeSetupId)
+  );
+
+  // Get latest TPSL entries for this trade setup (from previous snapshot)
+  const latestTpsl = await queryClient.ensureQueryData(
+    latestTpslEntriesByTradeSetupQueryOptions(tradeSetupId)
+  );
 
   return {
     imageData,
     existingTradeSetup,
     existingSnapshot,
     previousStatuses: previousStatuses || [],
-    tpslEntries: tpslEntries || [],
+    tpslEntries: latestTpsl.entries || [],
+    previousEntry: latestTpsl.entryPrice,
   };
 };
 

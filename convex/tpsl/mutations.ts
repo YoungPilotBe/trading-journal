@@ -17,6 +17,20 @@ export const createTpslEntries = mutation({
 
     const now = Date.now();
 
+    // Get all existing entries for this snapshot
+    const existingEntries = await ctx.runQuery(
+      api.tpsl.queries.getTpslEntriesBySnapshot,
+      { snapshotId }
+    );
+
+    // Delete existing entries for this snapshot (except hit ones)
+    // Hit entries cannot be removed
+    for (const existingEntry of existingEntries) {
+      if (!existingEntry.isHit) {
+        await ctx.db.delete(existingEntry._id);
+      }
+    }
+
     // Process take profits - all entries have valid prices (schema ensures this)
     for (const entry of tpsl.takeProfits) {
       await ctx.db.insert("tpsl_entries", {
@@ -90,139 +104,49 @@ export const upsertTpslEntries = mutation({
 
     const now = Date.now();
 
-    const tradeSetup = await ctx.runQuery(
-      api.trade_setup.queries.getTradeSetupBySnapshotId,
+    // Get all existing entries for this snapshot (not trade setup)
+    const existingEntries = await ctx.runQuery(
+      api.tpsl.queries.getTpslEntriesBySnapshot,
       { snapshotId }
     );
 
-    if (!tradeSetup) throw new ConvexError("No trade setup found");
+    // Delete existing entries for this snapshot (except hit ones)
+    // Hit entries cannot be removed
+    for (const existingEntry of existingEntries) {
+      if (!existingEntry.isHit) {
+        await ctx.db.delete(existingEntry._id);
+      }
+    }
 
-    // Get all existing entries for this snapshot
-    const existingEntries = await ctx.runQuery(
-      api.tpsl.queries.getTpslEntriesByTradeSetup,
-      { tradeSetupId: tradeSetup._id }
-    );
-    // Create sets of entry IDs from the submitted data
-    const submittedEntryIds = new Set<string>();
-
+    // Always create new entries for the current snapshot
     // Process take profits
     for (const entry of tpsl.takeProfits) {
-      if (entry._id) {
-        // Update existing entry
-        submittedEntryIds.add(entry._id);
-        const existingEntry = await ctx.db.get(entry._id);
-        if (existingEntry) {
-          // Build update fields from provided entry data
-          const updateFields: {
-            updatedAt: number;
-            price: number;
-            margin: number;
-            isHit?: boolean;
-            hitSnapshotId?: Id<"snapshots">;
-            hitAt?: number;
-          } = {
-            price: entry.price,
-            margin: entry.margin,
-            updatedAt: now,
-          };
-
-          // Handle isHit: prevent unhitting (once hit, cannot unhit)
-          // If entry is already hit in DB, don't allow unhitting
-          if (existingEntry.isHit && !entry.isHit) {
-            // Don't update isHit - keep it as true
-            updateFields.isHit = existingEntry.isHit;
-          } else {
-            // Allow setting to true or updating from false to true
-            updateFields.isHit = entry.isHit;
-            // If setting to true and hitSnapshotId/hitAt not set, set them
-            if (entry.isHit && !existingEntry.hitSnapshotId) {
-              updateFields.hitSnapshotId = snapshotId;
-              updateFields.hitAt = now;
-            }
-          }
-
-          await ctx.db.patch(entry._id, updateFields);
-        }
-      } else {
-        // Create new entry
-        await ctx.db.insert("tpsl_entries", {
-          snapshotId,
-          type: "take_profit",
-          price: entry.price,
-          margin: entry.margin,
-          isHit: entry.isHit ?? false,
-          hitSnapshotId: entry.isHit ? snapshotId : undefined,
-          hitAt: entry.isHit ? now : undefined,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
+      await ctx.db.insert("tpsl_entries", {
+        snapshotId,
+        type: "take_profit",
+        price: entry.price,
+        margin: entry.margin,
+        isHit: entry.isHit ?? false,
+        hitSnapshotId: entry.isHit ? snapshotId : undefined,
+        hitAt: entry.isHit ? now : undefined,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
 
     // Process stop losses
     for (const entry of tpsl.stopLosses) {
-      if (entry._id) {
-        // Update existing entry
-        submittedEntryIds.add(entry._id);
-        const existingEntry = await ctx.db.get(entry._id);
-        if (existingEntry) {
-          // Build update fields from provided entry data
-          const updateFields: {
-            updatedAt: number;
-            price: number;
-            margin: number;
-            isHit?: boolean;
-            hitSnapshotId?: Id<"snapshots">;
-            hitAt?: number;
-          } = {
-            price: entry.price,
-            margin: entry.margin,
-            updatedAt: now,
-          };
-
-          // Handle isHit: prevent unhitting (once hit, cannot unhit)
-          // If entry is already hit in DB, don't allow unhitting
-          if (existingEntry.isHit && !entry.isHit) {
-            // Don't update isHit - keep it as true
-            updateFields.isHit = existingEntry.isHit;
-          } else {
-            // Allow setting to true or updating from false to true
-            updateFields.isHit = entry.isHit;
-            // If setting to true and hitSnapshotId/hitAt not set, set them
-            if (entry.isHit && !existingEntry.hitSnapshotId) {
-              updateFields.hitSnapshotId = snapshotId;
-              updateFields.hitAt = now;
-            }
-          }
-
-          await ctx.db.patch(entry._id, updateFields);
-        }
-      } else {
-        // Create new entry
-        await ctx.db.insert("tpsl_entries", {
-          snapshotId,
-          type: "stop_loss",
-          price: entry.price,
-          margin: entry.margin,
-          isHit: entry.isHit ?? false,
-          hitSnapshotId: entry.isHit ? snapshotId : undefined,
-          hitAt: entry.isHit ? now : undefined,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-    }
-
-    // Delete entries that exist in DB but aren't in the submitted array
-    // Never delete entries that are hit (isHit = true)
-    for (const existingEntry of existingEntries) {
-      if (!submittedEntryIds.has(existingEntry._id)) {
-        // Prevent deletion of hit entries
-        if (existingEntry.isHit) {
-          continue;
-        }
-        await ctx.db.delete(existingEntry._id);
-      }
+      await ctx.db.insert("tpsl_entries", {
+        snapshotId,
+        type: "stop_loss",
+        price: entry.price,
+        margin: entry.margin,
+        isHit: entry.isHit ?? false,
+        hitSnapshotId: entry.isHit ? snapshotId : undefined,
+        hitAt: entry.isHit ? now : undefined,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
 
     // Update snapshot with entry price
