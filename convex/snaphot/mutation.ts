@@ -2,7 +2,12 @@ import { ConvexError, v } from "convex/values";
 import { api, internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { emotionUnion, resultUnion, statusUnion } from "../constants/unions";
+import {
+  emotionUnion,
+  resultUnion,
+  statusUnion,
+  tpslSchema,
+} from "../constants/unions";
 
 export const updateSnapshot = mutation({
   args: {
@@ -130,6 +135,7 @@ export const attachSnapshot = mutation({
       rMultiple: v.optional(v.number()),
       imageId: v.id("tradingview_images"),
     }),
+    tpsl: tpslSchema,
   },
 
   handler: async (
@@ -161,6 +167,14 @@ export const attachSnapshot = mutation({
         tradeSetupId: tradeSetup._id,
       }
     );
+
+    // Create TP/SL entries if provided
+    if (args.tpsl) {
+      await ctx.runMutation(api.tpsl.mutations.createTpslEntries, {
+        snapshotId: snapshot.snapshotId,
+        tpsl: args.tpsl,
+      });
+    }
 
     await ctx.runMutation(api.tradingview_images.mutations.updateImage, {
       id: args.snapshot.imageId,

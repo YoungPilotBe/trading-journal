@@ -27,7 +27,7 @@ interface TPSLDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   direction: "long" | "short";
-  initialValues?: TPSLFormData;
+  initialValues?: TPSLFormInput;
   onSave?: (data: TPSLFormData) => void;
 }
 

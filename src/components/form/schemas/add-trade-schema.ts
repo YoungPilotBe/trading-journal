@@ -150,8 +150,51 @@ export const attachTradeSetupSchema = baseTradeFormSchema
 export const tradeDetailsSchema =
   updateTradeSetupSchema.merge(updateSnapshotSchema);
 
-export const attachTradeSchema =
+// Base attach trade schema without TP/SL validation
+const attachTradeSchemaBase =
   attachTradeSetupSchema.merge(createSnapshotSchema);
+
+// Add TP/SL validation and transformation against direction
+export const attachTradeSchema = attachTradeSchemaBase
+  .extend({
+    // Add direction from existing trade setup for TP/SL validation
+    direction: z.enum(["long", "short"]).optional(),
+    // TP/SL configuration (optional, validated against direction)
+    tpsl: z.custom<TPSLFormData>().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Only validate TP/SL if it exists and direction is available
+    if (!data.tpsl || !data.direction) {
+      return;
+    }
+
+    // Validate TP/SL data against the direction
+    const tpslSchema = createTpslFormSchema(data.direction);
+    const result = tpslSchema.safeParse(data.tpsl);
+
+    if (!result.success) {
+      // Add validation errors to the tpsl field
+      result.error.errors.forEach((error) => {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: error.message,
+          path: ["tpsl", ...(error.path || [])],
+        });
+      });
+    }
+  })
+  .transform((data) => {
+    // Transform TP/SL data if it exists (filters out undefined prices)
+    if (data.tpsl && data.direction) {
+      const tpslSchema = createTpslFormSchema(data.direction);
+      const result = tpslSchema.safeParse(data.tpsl);
+      return {
+        ...data,
+        tpsl: result.success ? result.data : data.tpsl,
+      };
+    }
+    return data;
+  });
 
 // Transformed schemas that automatically split data
 // For addTradeSetupSchema, imageId is passed separately to the mutation
@@ -178,7 +221,9 @@ export function splitAttachTradeData<
 >(data: T, imageId: Id<"tradingview_images">) {
   const tradeSetup = attachTradeSetupSchema.parse(data);
   const snapshot = createSnapshotSchema.parse({ ...data, imageId });
-  return { tradeSetup, snapshot };
+  // tpsl is already validated by attachTradeSchema, so we can extract it directly
+  const tpsl = data.tpsl;
+  return { tradeSetup, snapshot, tpsl };
 }
 
 // Export the inferred types

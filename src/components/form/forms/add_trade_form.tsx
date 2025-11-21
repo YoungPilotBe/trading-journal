@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Timeframe } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Id } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { Loader } from "lucide-react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
@@ -18,47 +19,47 @@ import Result from "../features/result";
 import StatusOptions from "../features/status-options";
 import TimeframesGeneric from "../features/timeframes-generic";
 import { TPSLOverview } from "../features/tpsl-overview";
-import { useExistingValues } from "../hooks/use-existing-values";
 import {
   addTradeSetupSchema,
   OrchestratedTradeSetupSchema,
   splitAddTradeSetupData,
   UnionKeys,
 } from "../schemas/add-trade-schema";
-import { createAddTradeSetupDefaultValues } from "../schemas/default-values";
-import { TPSLFormData } from "../schemas/tpsl-schema";
+import { TPSLFormData, TPSLFormInput } from "../schemas/tpsl-schema";
 
 interface Props {
   imageId: Id<"tradingview_images">;
-  snapshotId: Id<"snapshots">;
   disabledFields?: UnionKeys<OrchestratedTradeSetupSchema>[];
+  imageData?: (Doc<"tradingview_images"> & { url: string | null }) | null;
+  smartTitle?: { title: string; usageCount: number } | null;
 }
 
-const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
+const AddTradeForm = ({
+  imageId,
+  disabledFields,
+  imageData,
+  smartTitle,
+}: Props) => {
   const navigate = useNavigate();
   const search = useSearch({ from: "/trade_onboarding/add_trade" });
   const { openDialog } = useDialog();
-  const {
-    existingSnapshot,
-    existingTradeSetup,
-    imageData,
-    isLoading,
-    previousStatuses,
-    smartTitle,
-  } = useExistingValues({
-    snapshotId,
-    imageId,
-  });
 
   const form = useForm<OrchestratedTradeSetupSchema>({
     resolver: zodResolver(addTradeSetupSchema),
-    defaultValues: createAddTradeSetupDefaultValues({
-      existingTradeSetup,
-      existingSnapshot,
-      imageData,
-      smartTitle,
-      previousStatuses,
-    }),
+    defaultValues: {
+      asset: imageData?.asset || "",
+      timeframes: imageData?.timeframe
+        ? [imageData.timeframe as Timeframe]
+        : ([] as Timeframe[]),
+      creationTime: imageData?._creationTime
+        ? format(new Date(imageData._creationTime), "HH:mm")
+        : "",
+      title: smartTitle?.title || "",
+      direction: "long",
+      status: "idea",
+      emotion: "calm",
+      rMultiple: undefined,
+    },
     mode: "onChange",
     shouldUnregister: true,
   });
@@ -163,15 +164,15 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
             <StatusOptions
               field={field}
               label="Status"
-              previousStatuses={previousStatuses}
-              existingSnapshot={existingSnapshot}
-              existingTradeSetup={existingTradeSetup}
+              previousStatuses={[]}
+              existingSnapshot={null}
+              existingTradeSetup={null}
             />
           )}
         />
 
-        {/* Only render result field when status is "closed" or there's an existing result */}
-        {(status === "closed" || existingTradeSetup?.result) && (
+        {/* Only render result field when status is "closed" */}
+        {status === "closed" && (
           <Controller
             name="result"
             control={control}
@@ -179,11 +180,8 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
               <Result
                 field={field}
                 label="Result"
-                disabled={
-                  !!existingTradeSetup?.result ||
-                  disabledFields?.includes("result")
-                }
-                existingResult={existingTradeSetup?.result}
+                disabled={disabledFields?.includes("result")}
+                existingResult={undefined}
               />
             )}
           />
@@ -211,7 +209,7 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
             if (direction) {
               openDialog("TPSL", {
                 direction,
-                initialValues: tpsl,
+                initialValues: tpsl as TPSLFormInput | undefined,
                 onSave: (data: TPSLFormData) => {
                   setValue("tpsl", data, { shouldValidate: true });
                 },
@@ -225,21 +223,27 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
         </Button>
 
         {/* Display TP/SL summary if configured */}
-        <TPSLOverview
-          data={tpsl}
-          onEdit={() =>
-            openDialog("TPSL", {
-              direction,
-              initialValues: tpsl,
-              onSave: (data: TPSLFormData) => {
-                setValue("tpsl", data, { shouldValidate: true });
-              },
-            })
-          }
+        <Controller
+          name="tpsl"
+          control={control}
+          render={({ field }) => (
+            <TPSLOverview
+              data={field.value}
+              onEdit={() => {
+                openDialog("TPSL", {
+                  direction,
+                  initialValues: field.value as TPSLFormInput | undefined,
+                  onSave: (data: TPSLFormData) => {
+                    field.onChange(data);
+                  },
+                });
+              }}
+            />
+          )}
         />
 
         <SubmitButton
-          disabled={isPending || isLoading}
+          disabled={isPending}
           className="w-24 right-[40px]"
           label={
             isPending ? <Loader className="animate-spin size-3" /> : "Submit"

@@ -22,29 +22,27 @@ export const Route = createFileRoute("/trade_onboarding/add_trade")({
       <div className="text-muted-foreground font-mono text-sm">Loading...</div>
     </div>
   ),
-  loaderDeps: ({ search: { snapshotId, imageId } }) => ({
+  loaderDeps: ({ search: { imageId } }) => ({
     imageId,
-    snapshotId,
   }),
-  loader: async ({
-    deps: { imageId, snapshotId },
-    context: { queryClient },
-  }) => {
-    await preloadAddTradeFormData(queryClient, imageId, snapshotId);
-    return { imageId, snapshotId };
+  loader: async ({ deps: { imageId }, context: { queryClient } }) => {
+    const preloadedData = await preloadAddTradeFormData(queryClient, imageId);
+    return { imageId, ...preloadedData };
   },
 });
 
 function RouteComponent() {
-  const { snapshotId, imageId } = Route.useSearch();
+  const { imageId } = Route.useSearch();
+  const { imageData, smartTitle } = Route.useLoaderData();
 
   return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Right-side form panel - opposite to the centered AnimatedImageLayout */}
       <div className="absolute left-[60%] right-[10%] top-[20%] bottom-[40%] h-auto max-h-[70vh] max-w-[30vw] pointer-events-auto">
         <AddTradeForm
-          snapshotId={snapshotId as Id<"snapshots">}
           imageId={imageId}
+          imageData={imageData}
+          smartTitle={smartTitle}
         />
       </div>
     </div>

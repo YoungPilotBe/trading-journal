@@ -1,5 +1,5 @@
 import AttachTradeForm from "@/components/form/forms/attach-trade-form";
-import { preloadAddTradeFormData } from "@/lib/preloadRoutes";
+import { preloadAttachTradeFormData } from "@/lib/preloadRoutes";
 import { createFileRoute } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { z } from "zod";
@@ -23,21 +23,36 @@ export const Route = createFileRoute("/trade_onboarding/attach_trade")({
       <div className="text-muted-foreground font-mono text-sm">Loading...</div>
     </div>
   ),
-  loaderDeps: ({ search: { snapshotId, imageId } }) => ({
+  loaderDeps: ({ search: { snapshotId, imageId, tradeSetupId } }) => ({
     imageId,
     snapshotId,
+    tradeSetupId,
   }),
   loader: async ({
-    deps: { imageId, snapshotId },
+    deps: { imageId, snapshotId, tradeSetupId },
     context: { queryClient },
   }) => {
-    await preloadAddTradeFormData(queryClient, imageId, snapshotId);
-    return { imageId, snapshotId };
+    const preloadedData = await preloadAttachTradeFormData(
+      queryClient,
+      imageId,
+      tradeSetupId,
+      snapshotId
+    );
+    return { imageId, snapshotId, tradeSetupId, ...preloadedData };
   },
 });
 
 function RouteComponent() {
   const { snapshotId, imageId, tradeSetupId } = Route.useSearch();
+  const {
+    existingTradeSetup,
+    existingSnapshot,
+    imageData,
+    previousStatuses,
+    tpslEntries,
+  } = Route.useLoaderData();
+
+  console.log({ tpslEntries });
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -47,6 +62,11 @@ function RouteComponent() {
           tradeSetupId={tradeSetupId}
           snapshotId={snapshotId as Id<"snapshots">}
           imageId={imageId}
+          existingTradeSetup={existingTradeSetup}
+          existingSnapshot={existingSnapshot}
+          imageData={imageData}
+          previousStatuses={previousStatuses}
+          tpslEntries={tpslEntries}
         />
       </div>
     </div>

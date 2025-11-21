@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Timeframe } from "@/config/timeframe-order";
+import { useDialog } from "@/contexts/dialog-context";
 import { useAttachSnapshot } from "@/hooks/snapshots/use-attach-snapshot";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Id } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { Loader } from "lucide-react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
@@ -17,39 +19,43 @@ import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
 import StatusOptions from "../features/status-options";
 import TimeframesGeneric from "../features/timeframes-generic";
-import { useExistingValues } from "../hooks/use-existing-values";
+import { TPSLOverview } from "../features/tpsl-overview";
 import {
   attachTradeSchema,
   OrchestratedTradeSetupSchema,
   splitAttachTradeData,
   UnionKeys,
 } from "../schemas/add-trade-schema";
+import { TPSLFormData, TPSLFormInput } from "../schemas/tpsl-schema";
+import { transformTpslEntriesToFormInput } from "../utils";
 
 interface Props {
   imageId: Id<"tradingview_images">;
   snapshotId: Id<"snapshots">;
   tradeSetupId: Id<"trade_setups">;
   disabledFields?: UnionKeys<OrchestratedTradeSetupSchema>[];
+  existingTradeSetup?: Doc<"trade_setups"> | null;
+  existingSnapshot?: Doc<"snapshots"> | null;
+  imageData?: (Doc<"tradingview_images"> & { url: string | null }) | null;
+  previousStatuses: Doc<"snapshots">["status"][];
+  tpslEntries: Doc<"tpsl_entries">[];
 }
 
 const AttachTradeForm = ({
-  snapshotId,
   imageId,
   tradeSetupId,
   disabledFields,
+  existingTradeSetup,
+  existingSnapshot,
+  imageData,
+  previousStatuses,
+  tpslEntries,
 }: Props) => {
   const navigate = useNavigate();
   const search = useSearch({ from: "/trade_onboarding/attach_trade" });
-  const {
-    existingSnapshot,
-    existingTradeSetup,
-    imageData,
-    isLoading,
-    previousStatuses,
-  } = useExistingValues({
-    snapshotId,
-    imageId,
-  });
+  const { openDialog } = useDialog();
+
+  const transformedTpsl = transformTpslEntriesToFormInput(tpslEntries);
 
   const form = useForm<z.infer<typeof attachTradeSchema>>({
     resolver: zodResolver(attachTradeSchema),
@@ -62,13 +68,14 @@ const AttachTradeForm = ({
       emotion: existingSnapshot?.emotion || "calm",
       rMultiple: existingSnapshot?.rMultiple,
       trade_template: existingTradeSetup?.trade_template,
+      direction: existingTradeSetup?.direction,
+      tpsl: transformedTpsl,
     },
 
     mode: "onChange",
-    shouldUnregister: true,
   });
 
-  const { register, control, handleSubmit, watch } = form;
+  const { register, control, handleSubmit, watch, setValue } = form;
 
   function handleNavigate(args: {
     tradeSetupId: Id<"trade_setups">;
@@ -95,15 +102,35 @@ const AttachTradeForm = ({
 
   // Watch status to conditionally render result field
   const status = watch("status");
+  // Watch tpsl to keep it registered and reactive
+  const tpslValue = watch("tpsl");
+
+  const direction = watch("direction");
 
   const onSubmit = async (data: z.infer<typeof attachTradeSchema>) => {
-    const { tradeSetup, snapshot } = splitAttachTradeData(data, imageId);
+    const { tradeSetup, snapshot, tpsl } = splitAttachTradeData(data, imageId);
 
     await attachSnapshot({
       tradeSetup: { ...tradeSetup, id: tradeSetupId },
       snapshot,
+      tpsl,
     });
   };
+
+  function handleOpenTspl() {
+    if (direction) {
+      const currentTpsl = tpslValue || transformedTpsl;
+      openDialog("TPSL", {
+        direction,
+        initialValues: currentTpsl as TPSLFormInput | undefined,
+        onSave: (data: TPSLFormData) => {
+          setValue("tpsl", data, { shouldValidate: true });
+        },
+      });
+    } else {
+      toast.error("No direction");
+    }
+  }
 
   return (
     <FormProvider {...form}>
@@ -165,6 +192,7 @@ const AttachTradeForm = ({
           <Controller
             name="result"
             control={control}
+            shouldUnregister
             render={({ field }) => (
               <Result
                 field={field}
@@ -194,8 +222,26 @@ const AttachTradeForm = ({
           placeholder="5.3"
         />
 
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleOpenTspl}
+          disabled={!direction}
+          className="w-full"
+        >
+          Configure TP/SL
+        </Button>
+
+        {/* Display TP/SL summary if configured - wrapped in Controller to keep field registered */}
+        <Controller
+          name="tpsl"
+          control={control}
+          render={({ field }) => (
+            <TPSLOverview data={field.value} onEdit={handleOpenTspl} />
+          )}
+        />
         <SubmitButton
-          disabled={isPending || isLoading}
+          disabled={isPending}
           className="w-24 right-[40px]"
           label={
             isPending ? <Loader className="animate-spin size-3" /> : "Submit"

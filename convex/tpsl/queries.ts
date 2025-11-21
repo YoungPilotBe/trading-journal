@@ -1,24 +1,10 @@
-/**
-// Placeholder query for loading TP/SL entries by snapshot
-// This will be implemented later when we need to load TP/SL data back into the dialog
+import { v } from "convex/values";
+import { query } from "../_generated/server";
+
 export const getTpslEntriesBySnapshot = query({
   args: {
     snapshotId: v.id("snapshots"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("tpsl_entries"),
-      snapshotId: v.id("snapshots"),
-      type: v.union(v.literal("take_profit"), v.literal("stop_loss")),
-      price: v.number(),
-      margin: v.number(),
-      isHit: v.boolean(),
-      hitSnapshotId: v.optional(v.id("snapshots")),
-      hitAt: v.optional(v.number()),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-    })
-  ),
   handler: async (ctx, { snapshotId }) => {
     const entries = await ctx.db
       .query("tpsl_entries")
@@ -29,4 +15,28 @@ export const getTpslEntriesBySnapshot = query({
   },
 });
 
- */
+export const getTpslEntriesByTradeSetup = query({
+  args: {
+    tradeSetupId: v.optional(v.id("trade_setups")),
+  },
+  handler: async (ctx, { tradeSetupId }) => {
+    if (!tradeSetupId) return [];
+    // Get all snapshots for this trade setup
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup", (q) => q.eq("tradeSetupId", tradeSetupId))
+      .collect();
+
+    // Get all TP/SL entries for these snapshots
+    const allEntries = [];
+    for (const snapshot of snapshots) {
+      const entries = await ctx.db
+        .query("tpsl_entries")
+        .withIndex("by_snapshot", (q) => q.eq("snapshotId", snapshot._id))
+        .collect();
+      allEntries.push(...entries);
+    }
+
+    return allEntries;
+  },
+});

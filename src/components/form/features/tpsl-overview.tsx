@@ -6,10 +6,10 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useFormState } from "react-hook-form";
-import { TPSLFormData } from "../schemas/tpsl-schema";
+import { TPSLFormData, TPSLFormInput } from "../schemas/tpsl-schema";
 
 interface TPSLOverviewProps {
-  data?: TPSLFormData;
+  data?: TPSLFormInput | TPSLFormData;
   onEdit: () => void;
 }
 

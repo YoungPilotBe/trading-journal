@@ -73,45 +73,40 @@ export const templatesQueryOptions = (sortOrder: "asc" | "desc" = "desc") =>
     ...convexQuery(api.template.queries.getTemplates, { sortOrder }),
   });
 
-// Preloader function for the add trade form
+// TP/SL Entries by Snapshot Query Options
+export const tpslEntriesBySnapshotQueryOptions = (
+  snapshotId: Id<"snapshots">
+) =>
+  queryOptions({
+    ...convexQuery(api.tpsl.queries.getTpslEntriesBySnapshot, { snapshotId }),
+  });
+
+// TP/SL Entries by Trade Setup Query Options
+export const tpslEntriesByTradeSetupQueryOptions = (
+  tradeSetupId: Id<"trade_setups">
+) =>
+  queryOptions({
+    ...convexQuery(api.tpsl.queries.getTpslEntriesByTradeSetup, {
+      tradeSetupId,
+    }),
+  });
+
 // Preloader function for the add trade form
 export const preloadAddTradeFormData = async (
   queryClient: QueryClient,
-  imageId: Id<"tradingview_images">,
-  snapshotId?: Id<"snapshots">
+  imageId: Id<"tradingview_images">
 ) => {
-  const promises = [];
+  // Preload image and smart title
+  const [imageData, smartTitle] = await Promise.all([
+    queryClient.ensureQueryData(imageQueryOptions(imageId)),
+    queryClient.ensureQueryData(smartTitleQueryOptions()),
+  ]);
 
-  // Preload image
-  promises.push(queryClient.ensureQueryData(imageQueryOptions(imageId)));
-  // Preload smart title
-  promises.push(queryClient.ensureQueryData(smartTitleQueryOptions()));
-
-  // Preload snapshot and get trade setup from it
-  if (snapshotId) {
-    promises.push(
-      queryClient.ensureQueryData(snapshotQueryOptions(snapshotId))
-    );
-    promises.push(
-      queryClient.ensureQueryData(tradeSetupBySnapshotQueryOptions(snapshotId))
-    );
-  }
-
-  await Promise.all(promises);
-
-  // After snapshot and trade setup are loaded, get the trade setup ID
-  // and preload previous statuses
-  if (snapshotId) {
-    const tradeSetupData = await queryClient.ensureQueryData(
-      tradeSetupBySnapshotQueryOptions(snapshotId)
-    );
-
-    if (tradeSetupData?._id) {
-      await queryClient.ensureQueryData(
-        previousStatusesQueryOptions(tradeSetupData._id)
-      );
-    }
-  }
+  // Preload
+  return {
+    imageData,
+    smartTitle,
+  };
 };
 
 // Template R-Multiple Chart Query Options
@@ -123,6 +118,48 @@ export const templateRMultipleChartQueryOptions = (
       filterType,
     }),
   });
+
+// Preloader function for the attach trade form
+export const preloadAttachTradeFormData = async (
+  queryClient: QueryClient,
+  imageId: Id<"tradingview_images">,
+  tradeSetupId: Id<"trade_setups">,
+  snapshotId?: Id<"snapshots">
+) => {
+  // Preload image
+  const imageData = await queryClient.ensureQueryData(
+    imageQueryOptions(imageId)
+  );
+
+  // Preload trade setup by ID
+  const existingTradeSetup = await queryClient.ensureQueryData(
+    tradeSetupQueryOptions(tradeSetupId)
+  );
+
+  // Preload snapshot if provided
+  let existingSnapshot = undefined;
+  if (snapshotId) {
+    existingSnapshot = await queryClient.ensureQueryData(
+      snapshotQueryOptions(snapshotId)
+    );
+  }
+
+  // Preload previous statuses and TP/SL entries by trade setup
+  const [previousStatuses, tpslEntries] = await Promise.all([
+    queryClient.ensureQueryData(previousStatusesQueryOptions(tradeSetupId)),
+    queryClient.ensureQueryData(
+      tpslEntriesByTradeSetupQueryOptions(tradeSetupId)
+    ),
+  ]);
+
+  return {
+    imageData,
+    existingTradeSetup,
+    existingSnapshot,
+    previousStatuses: previousStatuses || [],
+    tpslEntries: tpslEntries || [],
+  };
+};
 
 // Preloader function for the setup route
 export const preloadSetupRouteData = async (

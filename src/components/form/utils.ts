@@ -1,4 +1,6 @@
 import { Timeframe } from "@/config/timeframe-order";
+import { Doc } from "convex/_generated/dataModel";
+import { TPSLFormInput } from "./schemas/tpsl-schema";
 
 export function oneOf<T>(input: T): T {
   return input;
@@ -35,3 +37,40 @@ export function addTimeframeToTimeframes(
   // Return the existing array if timeframe is already included
   return currentTimeframes;
 }
+
+export const transformTpslEntriesToFormInput = (
+  entries: Doc<"tpsl_entries">[]
+): TPSLFormInput | undefined => {
+  if (!entries || entries.length === 0) {
+    return undefined;
+  }
+
+  const takeProfits = entries
+    .filter((entry) => entry.type === "take_profit")
+    .map((entry) => ({
+      price: entry.price,
+      margin: entry.margin,
+    }));
+
+  const stopLosses = entries
+    .filter((entry) => entry.type === "stop_loss")
+    .map((entry) => ({
+      price: entry.price,
+      margin: entry.margin,
+    }));
+
+  // Return undefined if both arrays are empty
+  if (takeProfits.length === 0 && stopLosses.length === 0) {
+    return undefined;
+  }
+
+  // Always return a structure with arrays, even if empty (with default placeholder)
+  return {
+    takeProfits:
+      takeProfits.length > 0
+        ? takeProfits
+        : [{ price: undefined, margin: 100 }],
+    stopLosses:
+      stopLosses.length > 0 ? stopLosses : [{ price: undefined, margin: 100 }],
+  };
+};
