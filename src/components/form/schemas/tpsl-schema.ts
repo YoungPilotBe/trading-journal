@@ -31,9 +31,26 @@ const tpslArraySchema = z
   )
   .refine(
     (data) => {
+      // If an entry has weight > 0, it must have a valid price set
+      const allEntriesWithWeightHavePrice = data.every((entry) => {
+        if (entry.weight > 0) {
+          return entry.price !== undefined && entry.price > 0;
+        }
+        return true; // Entries with weight 0 don't need a price
+      });
+      return allEntriesWithWeightHavePrice;
+    },
+    {
+      message: "Entries with weight must have a price set",
+    }
+  )
+  .refine(
+    (data) => {
       // Only validate total weight if all entries have weights > 0
       // This prevents errors when adding new entries with weight 0
-      const allWeightsFilled = data.every((entry) => entry.weight > 0);
+      const allWeightsFilled = data.every(
+        (entry) => entry.weight > 0 || entry.weight === undefined
+      );
       if (!allWeightsFilled) {
         return true; // Skip validation if any entry has weight 0
       }
@@ -55,11 +72,20 @@ export function createTpslFormSchema(direction: "long" | "short") {
     })
     .refine(
       (data) => {
-        // At least one entry required in TP or SL
-        return data.takeProfits.length > 0 || data.stopLosses.length > 0;
+        // At least one complete entry required (with both price and weight set)
+        const hasCompleteTP = data.takeProfits.some(
+          (entry) =>
+            entry.price !== undefined && entry.price > 0 && entry.weight > 0
+        );
+        const hasCompleteSL = data.stopLosses.some(
+          (entry) =>
+            entry.price !== undefined && entry.price > 0 && entry.weight > 0
+        );
+        return hasCompleteTP || hasCompleteSL;
       },
       {
-        message: "At least one Take Profit or Stop Loss entry is required",
+        message:
+          "At least one complete entry (with both price and weight) is required",
       }
     )
     .superRefine((data, ctx) => {

@@ -93,6 +93,18 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
     return Math.max(0, 100 - otherWeightsSum);
   };
 
+  // Helper function to calculate leftover weight for a new entry
+  const calculateLeftoverWeightForNewEntry = (
+    arrayName: "takeProfits" | "stopLosses"
+  ): number => {
+    const currentArray = getValues(arrayName);
+    const totalWeight = currentArray.reduce(
+      (sum, entry) => sum + (entry.weight || 0),
+      0
+    );
+    return Math.max(0, 100 - totalWeight);
+  };
+
   // Helper function to handle weight change with auto-adjustment
   const handleWeightChange = (
     arrayName: "takeProfits" | "stopLosses",
@@ -167,7 +179,11 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendTP({ price: undefined, weight: 0 })}
+                  onClick={() => {
+                    const leftover =
+                      calculateLeftoverWeightForNewEntry("takeProfits");
+                    appendTP({ price: undefined, weight: leftover });
+                  }}
                   disabled={tpTotal >= 100}
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -264,7 +280,11 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendSL({ price: undefined, weight: 0 })}
+                  onClick={() => {
+                    const leftover =
+                      calculateLeftoverWeightForNewEntry("stopLosses");
+                    appendSL({ price: undefined, weight: leftover });
+                  }}
                   disabled={slTotal >= 100}
                 >
                   <Plus className="h-4 w-4 mr-1" />
