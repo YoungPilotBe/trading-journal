@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Controller,
   FormProvider,
@@ -32,8 +32,8 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
   const form = useForm<TPSLFormData>({
     resolver: zodResolver(createTpslFormSchema(direction)),
     defaultValues: {
-      takeProfits: [{ price: undefined, weight: 100 }],
-      stopLosses: [{ price: undefined, weight: 100 }],
+      takeProfits: [{ price: undefined, margin: 100 }],
+      stopLosses: [{ price: undefined, margin: 100 }],
     },
     mode: "onChange",
   });
@@ -43,7 +43,6 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
     control,
     handleSubmit,
     watch,
-    reset,
     getValues,
     formState: { errors, isValid },
   } = form;
@@ -69,51 +68,41 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
   // Watch form state for debug display
   const formData = watch();
 
-  // Reset form when dialog closes
-  useEffect(() => {
-    if (!open) {
-      reset({
-        takeProfits: [{ price: undefined, weight: 100 }],
-        stopLosses: [{ price: undefined, weight: 100 }],
-      });
-    }
-  }, [open, reset]);
-
-  // Helper function to calculate leftover weight for an array
-  const calculateLeftoverWeight = (
+  // Helper function to calculate leftover margin for an array
+  const calculateLeftoverMargin = (
     arrayName: "takeProfits" | "stopLosses",
     currentIndex: number
   ): number => {
     const currentArray = getValues(arrayName);
-    const otherWeightsSum = currentArray.reduce(
+    const otherMarginsSum = currentArray.reduce(
       (sum, entry, index) =>
-        index !== currentIndex ? sum + (entry.weight || 0) : sum,
+        index !== currentIndex ? sum + (entry.margin || 0) : sum,
       0
     );
-    return Math.max(0, 100 - otherWeightsSum);
+    return Math.max(0, 100 - otherMarginsSum);
   };
 
-  // Helper function to calculate leftover weight for a new entry
-  const calculateLeftoverWeightForNewEntry = (
+  // Helper function to calculate leftover margin for a new entry
+  const calculateLeftoverMarginForNewEntry = (
     arrayName: "takeProfits" | "stopLosses"
   ): number => {
     const currentArray = getValues(arrayName);
-    const totalWeight = currentArray.reduce(
-      (sum, entry) => sum + (entry.weight || 0),
+    const totalMargin = currentArray.reduce(
+      (sum, entry) => sum + (entry.margin || 0),
       0
     );
-    return Math.max(0, 100 - totalWeight);
+    return Math.max(0, 100 - totalMargin);
   };
 
-  // Helper function to handle weight change with auto-adjustment
-  const handleWeightChange = (
+  // Helper function to handle margin change with auto-adjustment
+  const handleMarginChange = (
     arrayName: "takeProfits" | "stopLosses",
     index: number,
     value: number,
     onChange: (value: number) => void,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const leftover = calculateLeftoverWeight(arrayName, index);
+    const leftover = calculateLeftoverMargin(arrayName, index);
     const finalValue = Math.min(value, leftover);
 
     onChange(finalValue);
@@ -126,14 +115,14 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
     }
   };
 
-  // Calculate total weight for each section separately
+  // Calculate total margin for each section separately
   const tpTotal =
     formData.takeProfits?.reduce(
-      (sum, entry) => sum + (entry.weight || 0),
+      (sum, entry) => sum + (entry.margin || 0),
       0
     ) || 0;
   const slTotal =
-    formData.stopLosses?.reduce((sum, entry) => sum + (entry.weight || 0), 0) ||
+    formData.stopLosses?.reduce((sum, entry) => sum + (entry.margin || 0), 0) ||
     0;
 
   const onSubmit = () => {
@@ -181,8 +170,8 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                   size="sm"
                   onClick={() => {
                     const leftover =
-                      calculateLeftoverWeightForNewEntry("takeProfits");
-                    appendTP({ price: undefined, weight: leftover });
+                      calculateLeftoverMarginForNewEntry("takeProfits");
+                    appendTP({ price: undefined, margin: leftover });
                   }}
                   disabled={tpTotal >= 100}
                 >
@@ -196,10 +185,11 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                 return (
                   <div
                     key={field.id}
-                    className="grid grid-cols-[1fr_2.5rem] gap-2 items-start p-3 border rounded-lg"
+                    className="grid grid-cols-[1fr_2.5rem] gap-2 items-start p-3 border rounded-none"
                   >
                     <div className="space-y-2 min-w-0">
                       <NumberField
+                        tabIndex={-1}
                         {...register(`takeProfits.${index}.price`, {
                           valueAsNumber: true,
                           setValueAs: (v) => {
@@ -208,21 +198,25 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                             return isNaN(num) || num === 0 ? undefined : num;
                           },
                         })}
-                        label="Price"
+                        label={{
+                          value: "Price",
+                          className: "text-muted-foreground",
+                        }}
                         placeholder="86.000"
                       />
                       <Controller
-                        name={`takeProfits.${index}.weight`}
+                        name={`takeProfits.${index}.margin`}
                         control={control}
                         render={({
                           field: { value, onChange, onBlur, ...field },
                         }) => (
                           <NumberField
                             {...field}
+                            tabIndex={-1}
                             value={value ?? 0}
                             onChange={(e) => {
                               const numValue = parseFloat(e.target.value) || 0;
-                              handleWeightChange(
+                              handleMarginChange(
                                 "takeProfits",
                                 index,
                                 numValue,
@@ -232,7 +226,7 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                             }}
                             onBlur={(e) => {
                               const numValue = parseFloat(e.target.value) || 0;
-                              const leftover = calculateLeftoverWeight(
+                              const leftover = calculateLeftoverMargin(
                                 "takeProfits",
                                 index
                               );
@@ -241,16 +235,19 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                               }
                               onBlur();
                             }}
-                            label="Weight (%)"
+                            label={{
+                              value: "Margin (%)",
+                              className: "text-muted-foreground",
+                            }}
                             placeholder="0"
                           />
                         )}
                       />
                       {(errors.takeProfits?.[index]?.price ||
-                        errors.takeProfits?.[index]?.weight) && (
+                        errors.takeProfits?.[index]?.margin) && (
                         <div className="text-xs text-destructive">
                           {errors.takeProfits?.[index]?.price?.message ||
-                            errors.takeProfits?.[index]?.weight?.message}
+                            errors.takeProfits?.[index]?.margin?.message}
                         </div>
                       )}
                     </div>
@@ -282,8 +279,8 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                   size="sm"
                   onClick={() => {
                     const leftover =
-                      calculateLeftoverWeightForNewEntry("stopLosses");
-                    appendSL({ price: undefined, weight: leftover });
+                      calculateLeftoverMarginForNewEntry("stopLosses");
+                    appendSL({ price: undefined, margin: leftover });
                   }}
                   disabled={slTotal >= 100}
                 >
@@ -297,7 +294,7 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                 return (
                   <div
                     key={field.id}
-                    className="grid grid-cols-[1fr_2.5rem] gap-2 items-start p-3 border rounded-lg"
+                    className="grid grid-cols-[1fr_2.5rem] gap-2 items-start p-3 border rounded-none"
                   >
                     <div className="space-y-2 min-w-0">
                       <NumberField
@@ -309,11 +306,15 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                             return isNaN(num) || num === 0 ? undefined : num;
                           },
                         })}
-                        label="Price"
+                        tabIndex={-1}
+                        label={{
+                          value: "Price",
+                          className: "text-muted-foreground",
+                        }}
                         placeholder="86.000"
                       />
                       <Controller
-                        name={`stopLosses.${index}.weight`}
+                        name={`stopLosses.${index}.margin`}
                         control={control}
                         render={({
                           field: { value, onChange, onBlur, ...field },
@@ -321,9 +322,10 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                           <NumberField
                             {...field}
                             value={value ?? 0}
+                            tabIndex={-1}
                             onChange={(e) => {
                               const numValue = parseFloat(e.target.value) || 0;
-                              handleWeightChange(
+                              handleMarginChange(
                                 "stopLosses",
                                 index,
                                 numValue,
@@ -333,7 +335,7 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                             }}
                             onBlur={(e) => {
                               const numValue = parseFloat(e.target.value) || 0;
-                              const leftover = calculateLeftoverWeight(
+                              const leftover = calculateLeftoverMargin(
                                 "stopLosses",
                                 index
                               );
@@ -342,16 +344,19 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                               }
                               onBlur();
                             }}
-                            label="Weight (%)"
+                            label={{
+                              value: "Margin (%)",
+                              className: "text-muted-foreground",
+                            }}
                             placeholder="0"
                           />
                         )}
                       />
                       {(errors.stopLosses?.[index]?.price ||
-                        errors.stopLosses?.[index]?.weight) && (
+                        errors.stopLosses?.[index]?.margin) && (
                         <div className="text-xs text-destructive">
                           {errors.stopLosses?.[index]?.price?.message ||
-                            errors.stopLosses?.[index]?.weight?.message}
+                            errors.stopLosses?.[index]?.margin?.message}
                         </div>
                       )}
                     </div>

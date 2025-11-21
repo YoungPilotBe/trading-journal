@@ -8,13 +8,13 @@ const tpslEntrySchema = z.object({
       z.undefined(),
     ])
     .optional(),
-  weight: z
+  margin: z
     .number()
-    .min(0, "Weight must be at least 0")
-    .max(100, "Weight cannot exceed 100"),
+    .min(0, "Margin must be at least 0")
+    .max(100, "Margin cannot exceed 100"),
 });
 
-// Array schema with total weight validation
+// Array schema with total margin validation
 const tpslArraySchema = z
   .array(tpslEntrySchema)
   .refine(
@@ -31,35 +31,35 @@ const tpslArraySchema = z
   )
   .refine(
     (data) => {
-      // If an entry has weight > 0, it must have a valid price set
-      const allEntriesWithWeightHavePrice = data.every((entry) => {
-        if (entry.weight > 0) {
+      // If an entry has margin > 0, it must have a valid price set
+      const allEntriesWithMarginHavePrice = data.every((entry) => {
+        if (entry.margin > 0) {
           return entry.price !== undefined && entry.price > 0;
         }
-        return true; // Entries with weight 0 don't need a price
+        return true; // Entries with margin 0 don't need a price
       });
-      return allEntriesWithWeightHavePrice;
+      return allEntriesWithMarginHavePrice;
     },
     {
-      message: "Entries with weight must have a price set",
+      message: "Entries with margin must have a price set",
     }
   )
   .refine(
     (data) => {
-      // Only validate total weight if all entries have weights > 0
-      // This prevents errors when adding new entries with weight 0
-      const allWeightsFilled = data.every(
-        (entry) => entry.weight > 0 || entry.weight === undefined
+      // Only validate total margin if all entries have margins > 0
+      // This prevents errors when adding new entries with margin 0
+      const allMarginsFilled = data.every(
+        (entry) => entry.margin > 0 || entry.margin === undefined
       );
-      if (!allWeightsFilled) {
-        return true; // Skip validation if any entry has weight 0
+      if (!allMarginsFilled) {
+        return true; // Skip validation if any entry has margin 0
       }
-      // Total weight of the array must equal exactly 100%
-      const totalWeight = data.reduce((sum, entry) => sum + entry.weight, 0);
-      return totalWeight === 100;
+      // Total margin of the array must equal exactly 100%
+      const totalMargin = data.reduce((sum, entry) => sum + entry.margin, 0);
+      return totalMargin === 100;
     },
     {
-      message: "Total weight must equal exactly 100%",
+      message: "Total margin must equal exactly 100%",
     }
   );
 
@@ -72,20 +72,20 @@ export function createTpslFormSchema(direction: "long" | "short") {
     })
     .refine(
       (data) => {
-        // At least one complete entry required (with both price and weight set)
+        // At least one complete entry required (with both price and margin set)
         const hasCompleteTP = data.takeProfits.some(
           (entry) =>
-            entry.price !== undefined && entry.price > 0 && entry.weight > 0
+            entry.price !== undefined && entry.price > 0 && entry.margin > 0
         );
         const hasCompleteSL = data.stopLosses.some(
           (entry) =>
-            entry.price !== undefined && entry.price > 0 && entry.weight > 0
+            entry.price !== undefined && entry.price > 0 && entry.margin > 0
         );
         return hasCompleteTP || hasCompleteSL;
       },
       {
         message:
-          "At least one complete entry (with both price and weight) is required",
+          "At least one complete entry (with both price and margin) is required",
       }
     )
     .superRefine((data, ctx) => {
