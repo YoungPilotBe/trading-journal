@@ -6,7 +6,9 @@ import "@blocknote/xl-ai/style.css";
 import { BlockNoteEditor } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/shadcn";
 import { AIMenuController } from "@blocknote/xl-ai";
+import { useState } from "react";
 import { FormattingToolbarWithAI, SuggestionMenuWithAI } from "../menu";
+import { ExcalidrawEditor } from "./excalidraw-editor";
 
 export interface BlockNoteEditorComponentProps {
   editor: BlockNoteEditor;
@@ -25,19 +27,70 @@ export function BlockNoteEditorComponent({
   editable = true,
   children,
 }: BlockNoteEditorComponentProps) {
+  const [isExcalidrawOpen, setIsExcalidrawOpen] = useState(false);
+
+  const handleExcalidrawSave = async (imageBlob: Blob) => {
+    try {
+      // Convert blob to data URL
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageBlob);
+      });
+
+      // Insert image block into BlockNote
+      // Get the current block or use the last block if no cursor position
+      let currentBlockId: string;
+      try {
+        const cursorPosition = editor.getTextCursorPosition();
+        currentBlockId = cursorPosition.block.id;
+      } catch {
+        // If no cursor position, insert at the end of the document
+        const blocks = editor.document;
+        currentBlockId = blocks[blocks.length - 1]?.id || blocks[0]?.id;
+      }
+
+      editor.insertBlocks(
+        [
+          {
+            type: "image",
+            props: {
+              url: dataUrl,
+            },
+          },
+        ],
+        currentBlockId,
+        "after"
+      );
+    } catch (error) {
+      console.error("Error inserting Excalidraw image:", error);
+    }
+  };
+
   return (
-    <BlockNoteView
-      className={className}
-      style={style}
-      editable={editable}
-      editor={editor}
-      onChange={onChange}
-      data-theming-css-demo
-    >
-      <FormattingToolbarWithAI />
-      <SuggestionMenuWithAI editor={editor} />
-      <AIMenuController />
-      {children}
-    </BlockNoteView>
+    <>
+      <BlockNoteView
+        className={className}
+        style={style}
+        editable={editable}
+        editor={editor}
+        onChange={onChange}
+        data-theming-css-demo
+      >
+        <FormattingToolbarWithAI />
+        <SuggestionMenuWithAI
+          editor={editor}
+          onOpenExcalidraw={() => setIsExcalidrawOpen(true)}
+        />
+        <AIMenuController />
+        {children}
+      </BlockNoteView>
+      <ExcalidrawEditor
+        open={isExcalidrawOpen}
+        onOpenChange={setIsExcalidrawOpen}
+        onSave={handleExcalidrawSave}
+      />
+    </>
   );
 }
