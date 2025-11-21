@@ -18,9 +18,8 @@ import TimeframesGeneric from "../features/timeframes-generic";
 import { useExistingValues } from "../hooks/use-existing-values";
 import {
   addTradeSetupSchema,
-  createSnapshotSchema,
-  createTradeSetupSchema,
   OrchestratedTradeSetupSchema,
+  splitAddTradeSetupData,
   UnionKeys,
 } from "../schemas/add-trade-schema";
 import { createAddTradeSetupDefaultValues } from "../schemas/default-values";
@@ -88,8 +87,7 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
   const status = watch("status");
 
   const onSubmit = (data: OrchestratedTradeSetupSchema) => {
-    const snapshot = createSnapshotSchema.parse(data);
-    const tradeSetup = createTradeSetupSchema.parse(data);
+    const { snapshot, tradeSetup } = splitAddTradeSetupData(data);
     createTradeSetup({ tradeSetup, snapshot, imageId });
   };
 

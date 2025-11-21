@@ -28,8 +28,7 @@ import TimeframesGeneric from "../features/timeframes-generic";
 import {
   TradeDetailsSchema,
   tradeDetailsSchema,
-  updateSnapshotSchema,
-  updateTradeSetupSchema,
+  tradeDetailsSchemaWithSplit,
 } from "../schemas/add-trade-schema";
 import { createTradeDetailsDefaultValues } from "../schemas/trade-details-schema";
 
@@ -87,8 +86,9 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
     );
   }, [form, snapshot, tradeSetup, aggregatedTimeframes]);
 
-  const { control, handleSubmit, setValue, reset, register } = form;
+  const { control, handleSubmit, setValue, reset, register, watch } = form;
   const { isDirty, isSubmitting } = useFormState({ control });
+  const status = watch("status");
 
   const isPending =
     isPendingSnapshotUpdate ||
@@ -178,13 +178,8 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
   };
 
   const onSubmit = async (data: TradeDetailsSchema) => {
-    const tradeSetupData = updateTradeSetupSchema.parse({
-      ...data,
-    });
-
-    const snapshotData = updateSnapshotSchema.parse({
-      ...data,
-    });
+    const { tradeSetup: tradeSetupData, snapshot: snapshotData } =
+      tradeDetailsSchemaWithSplit.parse(data);
     await updateTradeSetup({ ...tradeSetupData, id: tradeSetup._id });
     await updateSnapshot({ ...snapshotData, snapshotId: snapshot._id });
 

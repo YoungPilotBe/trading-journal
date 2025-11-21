@@ -20,9 +20,8 @@ import TimeframesGeneric from "../features/timeframes-generic";
 import { useExistingValues } from "../hooks/use-existing-values";
 import {
   attachTradeSchema,
-  attachTradeSetupSchema,
-  createSnapshotSchema,
   OrchestratedTradeSetupSchema,
+  splitAttachTradeData,
   UnionKeys,
 } from "../schemas/add-trade-schema";
 
@@ -55,7 +54,6 @@ const AttachTradeForm = ({
   const form = useForm<z.infer<typeof attachTradeSchema>>({
     resolver: zodResolver(attachTradeSchema),
     defaultValues: {
-      tradeSetupId,
       imageId,
       timeframes: imageData?.timeframe
         ? [imageData.timeframe as Timeframe]
@@ -99,10 +97,7 @@ const AttachTradeForm = ({
   const status = watch("status");
 
   const onSubmit = async (data: z.infer<typeof attachTradeSchema>) => {
-    const tradeSetup = attachTradeSetupSchema.parse({
-      ...data,
-    });
-    const snapshot = createSnapshotSchema.parse({ ...data, imageId });
+    const { tradeSetup, snapshot } = splitAttachTradeData(data, imageId);
 
     await attachSnapshot({
       tradeSetup: { ...tradeSetup, id: tradeSetupId },

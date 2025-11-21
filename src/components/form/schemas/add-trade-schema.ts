@@ -13,8 +13,19 @@ export const emotionSchema = z.enum([
   "revenge",
 ]);
 
-// Base schema object for all trade setups
-const baseTradeSetupObject = {
+const statusEnum = z.enum([
+  "idea",
+  "watching",
+  "executed",
+  "reviewed",
+  "canceled",
+  "closed",
+]);
+
+const resultEnum = z.enum(["win", "loss", "breakeven"]);
+
+// Base schema with all possible fields
+const baseTradeFormSchema = z.object({
   asset: z.string(),
   timeframes: timeframesSchema,
   creationTime: z.string(),
@@ -22,93 +33,123 @@ const baseTradeSetupObject = {
   direction: z.enum(["long", "short"]),
   emotion: emotionSchema,
   rMultiple: z.optional(z.number()),
-};
+  status: statusEnum,
+  result: resultEnum.optional(),
+  // Additional fields for mutations
+  trade_template: z.custom<Id<"trade_templates">>().optional(),
+  imageId: z.custom<Id<"tradingview_images">>().optional(),
+  tradeSetupId: z.custom<Id<"trade_setups">>().optional(),
+});
 
-// Object for when status is 'closed' - result is required
-const closedTradeSetupObject = {
-  ...baseTradeSetupObject,
-  status: z.literal("closed"),
-  result: z.enum(["win", "loss", "breakeven"]),
-};
+// Discriminated union for form validation - result required when status is closed
+const closedTradeSetupSchema = baseTradeFormSchema
+  .omit({ status: true, result: true })
+  .extend({
+    status: z.literal("closed"),
+    result: resultEnum,
+  });
 
-// Object for all other statuses - no result field at all
-const otherStatusTradeSetupObject = {
-  ...baseTradeSetupObject,
-  status: z.enum(["idea", "watching", "executed", "reviewed", "canceled"]),
-  // Note: result is intentionally omitted here
-};
+const otherStatusTradeSetupSchema = baseTradeFormSchema
+  .omit({ status: true, result: true })
+  .extend({
+    status: z.enum(["idea", "watching", "executed", "reviewed", "canceled"]),
+  });
 
-// Convert objects to Zod schemas
-const closedTradeSetupSchema = z.object(closedTradeSetupObject);
-const otherStatusTradeSetupSchema = z.object(otherStatusTradeSetupObject);
-
-// Discriminated union based on status
 export const addTradeSetupSchema = z.discriminatedUnion("status", [
   closedTradeSetupSchema,
   otherStatusTradeSetupSchema,
 ]);
 
-// Export the inferred types
-export type OrchestratedTradeSetupSchema = z.infer<typeof addTradeSetupSchema>;
-export type TimeframesArrayType = z.infer<typeof timeframesSchema>;
+// Derived schemas using composition
+// Snapshot schema without imageId (for createTradeSetupWithSnapshot)
+const snapshotSchemaWithoutImageId = baseTradeFormSchema.pick({
+  timeframes: true,
+  status: true,
+  emotion: true,
+  rMultiple: true,
+});
 
-export type UnionKeys<T> = T extends T ? keyof T : never;
-
-// Schema for createSnapshot mutation - only the fields it needs
-export const createSnapshotSchema = z.object({
-  tradeSetupId: z.custom<Id<"trade_setups">>(),
-  timeframes: timeframesSchema,
-  status: z.enum([
-    "idea",
-    "watching",
-    "executed",
-    "reviewed",
-    "canceled",
-    "closed",
-  ]),
+// Snapshot schema with imageId (for createSnapshot mutation)
+export const createSnapshotSchema = snapshotSchemaWithoutImageId.extend({
   imageId: z.custom<Id<"tradingview_images">>(),
-  rMultiple: z.optional(z.number()),
-  emotion: z.optional(emotionSchema),
 });
 
-// Schema for createTradeSetup mutation - only the fields it needs
-export const createTradeSetupSchema = z.object({
-  asset: z.string(),
-  title: z.string().min(1).max(100),
-  direction: z.enum(["long", "short"]),
-  result: z.enum(["win", "loss", "breakeven"]).optional(),
+export const createTradeSetupSchema = baseTradeFormSchema.pick({
+  asset: true,
+  title: true,
+  direction: true,
+  result: true,
 });
 
-// Schema for updateTradeSetup mutation - only the fields it needs
-export const updateTradeSetupSchema = z.object({
-  title: z.string().min(1).max(100).optional(),
-  direction: z.optional(z.enum(["long", "short"])),
-  trade_template: z.custom<Id<"trade_templates">>().optional(),
-  result: z.enum(["win", "loss", "breakeven"]).optional(),
-});
+export const updateTradeSetupSchema = baseTradeFormSchema
+  .pick({
+    title: true,
+    direction: true,
+    result: true,
+    trade_template: true,
+  })
+  .partial();
 
-export const attachTradeSetupSchema = z.object({
-  trade_template: z.custom<Id<"trade_templates">>().optional(),
-  result: z.enum(["win", "loss", "breakeven"]).optional(),
-});
+export const updateSnapshotSchema = baseTradeFormSchema
+  .pick({
+    timeframes: true,
+    status: true,
+    rMultiple: true,
+    emotion: true,
+  })
+  .partial();
 
-export const updateSnapshotSchema = z.object({
-  timeframes: z.optional(timeframesSchema),
-  status: z.optional(
-    z.enum(["idea", "watching", "executed", "reviewed", "canceled", "closed"])
-  ),
-  rMultiple: z.optional(z.number()),
-  emotion: z.optional(emotionSchema),
-});
+export const attachTradeSetupSchema = baseTradeFormSchema
+  .pick({
+    trade_template: true,
+    result: true,
+  })
+  .partial();
 
+// Merged schemas
 export const tradeDetailsSchema =
   updateTradeSetupSchema.merge(updateSnapshotSchema);
 
 export const attachTradeSchema =
   attachTradeSetupSchema.merge(createSnapshotSchema);
 
+// Transformed schemas that automatically split data
+// For addTradeSetupSchema, imageId is passed separately to the mutation
+export function splitAddTradeSetupData<
+  T extends z.infer<typeof addTradeSetupSchema>,
+>(data: T) {
+  // Use schema without imageId since it's passed separately to the mutation
+  const snapshot = snapshotSchemaWithoutImageId.parse({
+    timeframes: data.timeframes,
+    status: data.status,
+    emotion: data.emotion,
+    rMultiple: data.rMultiple,
+  });
+  const tradeSetup = createTradeSetupSchema.parse(data);
+  return { snapshot, tradeSetup };
+}
+
+export const tradeDetailsSchemaWithSplit = tradeDetailsSchema.transform(
+  (data) => {
+    const tradeSetup = updateTradeSetupSchema.parse(data);
+    const snapshot = updateSnapshotSchema.parse(data);
+    return { tradeSetup, snapshot };
+  }
+);
+
+export function splitAttachTradeData<
+  T extends z.infer<typeof attachTradeSchema>,
+>(data: T, imageId: Id<"tradingview_images">) {
+  const tradeSetup = attachTradeSetupSchema.parse(data);
+  const snapshot = createSnapshotSchema.parse({ ...data, imageId });
+  return { tradeSetup, snapshot };
+}
+
+// Export the inferred types
+export type OrchestratedTradeSetupSchema = z.infer<typeof addTradeSetupSchema>;
+export type TimeframesArrayType = z.infer<typeof timeframesSchema>;
+export type UnionKeys<T> = T extends T ? keyof T : never;
 export type AttachTradeSchema = z.infer<typeof attachTradeSchema>;
-// Export the inferred types for the new schemas
 export type CreateSnapshotData = z.infer<typeof createSnapshotSchema>;
 export type CreateTradeSetupData = z.infer<typeof createTradeSetupSchema>;
 export type UpdateTradeSetupData = z.infer<typeof updateTradeSetupSchema>;
