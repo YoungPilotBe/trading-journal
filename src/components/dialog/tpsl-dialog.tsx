@@ -5,6 +5,7 @@ import {
   createTpslFormSchema,
 } from "@/components/form/schemas/tpsl-schema";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,144 @@ interface TPSLDialogProps {
   onSave?: (data: TPSLFormData) => void;
 }
 
+// Component for a single TP/SL entry row
+function TpslEntryRow({
+  entry,
+  index,
+  arrayName,
+  control,
+  register,
+  errors,
+  isSingleEntry,
+  onRemove,
+  calculateLeftoverMargin,
+  handleMarginChange,
+}: {
+  entry:
+    | TPSLFormInput["takeProfits"][number]
+    | TPSLFormInput["stopLosses"][number];
+  index: number;
+  arrayName: "takeProfits" | "stopLosses";
+  control: any;
+  register: any;
+  errors: any;
+  isSingleEntry: boolean;
+  onRemove: () => void;
+  calculateLeftoverMargin: (
+    arrayName: "takeProfits" | "stopLosses",
+    currentIndex: number
+  ) => number;
+  handleMarginChange: (
+    arrayName: "takeProfits" | "stopLosses",
+    index: number,
+    value: number,
+    onChange: (value: number) => void,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => void;
+}) {
+  // Check if entry was already hit in a previous submission (has hitSnapshotId)
+  const wasAlreadyHit = !!entry?.hitSnapshotId;
+  const isHit = entry?.isHit ?? false;
+  // Entry is hit if it was previously hit OR currently marked as hit
+  const entryIsHit = wasAlreadyHit || isHit;
+  // Disable if:
+  // 1. Entry has a snapshotId AND that snapshot has subsequent snapshots, OR
+  // 2. Entry was already hit (cannot unhit)
+  const isDisabled = wasAlreadyHit;
+
+  return (
+    <div className="grid grid-cols-[2.5rem_1fr_2.5rem] gap-2 items-start p-3 border rounded-none">
+      {/* Checkbox column on the left */}
+      <div className="flex items-center justify-center pt-2">
+        <Controller
+          name={`${arrayName}.${index}.isHit`}
+          control={control}
+          render={({ field: checkboxField }) => (
+            <Checkbox
+              checked={checkboxField.value ?? false}
+              disabled={isDisabled}
+              onCheckedChange={(checked) => {
+                checkboxField.onChange(checked);
+              }}
+              aria-label="Entry hit"
+              className="size-6"
+            />
+          )}
+        />
+      </div>
+
+      {/* Main content column */}
+      <div className="space-y-2 min-w-0">
+        <NumberField
+          tabIndex={-1}
+          disabled={isDisabled}
+          {...register(`${arrayName}.${index}.price`, {
+            valueAsNumber: true,
+            setValueAs: (v: string | number) => {
+              const num = typeof v === "string" ? parseFloat(v) : v;
+              return isNaN(num) || num === 0 ? undefined : num;
+            },
+          })}
+          label={{
+            value: "Price",
+            className: "text-muted-foreground",
+          }}
+          placeholder="86.000"
+        />
+        <Controller
+          name={`${arrayName}.${index}.margin`}
+          control={control}
+          render={({ field: { value, onChange, onBlur, ...field } }) => (
+            <NumberField
+              {...field}
+              tabIndex={-1}
+              disabled={isDisabled}
+              value={value ?? 0}
+              onChange={(e) => {
+                const numValue = parseFloat(e.target.value) || 0;
+                handleMarginChange(arrayName, index, numValue, onChange, e);
+              }}
+              onBlur={(e) => {
+                const numValue = parseFloat(e.target.value) || 0;
+                const leftover = calculateLeftoverMargin(arrayName, index);
+                if (numValue > leftover) {
+                  onChange(leftover);
+                }
+                onBlur();
+              }}
+              label={{
+                value: "Margin (%)",
+                className: "text-muted-foreground",
+              }}
+              placeholder="0"
+            />
+          )}
+        />
+        {(errors[arrayName]?.[index]?.price ||
+          errors[arrayName]?.[index]?.margin) && (
+          <div className="text-xs text-destructive">
+            {errors[arrayName]?.[index]?.price?.message ||
+              errors[arrayName]?.[index]?.margin?.message}
+          </div>
+        )}
+      </div>
+      {/* Trash icon column on the right */}
+      {isSingleEntry || entryIsHit ? (
+        <div className="w-10" />
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onRemove}
+          className="mt-2 h-6 w-6 p-0 hover:text-rose-500"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function TPSLDialog({
   open,
   onOpenChange,
@@ -48,19 +187,6 @@ export function TPSLDialog({
     defaultValues,
     mode: "onChange",
   });
-
-  // Reset form when initialValues or direction changes
-  useEffect(() => {
-    if (open) {
-      const valuesToUse: TPSLFormInput = initialValues || {
-        takeProfits: [{ price: undefined, margin: 100 }],
-        stopLosses: [{ price: undefined, margin: 100 }],
-      };
-      form.reset(valuesToUse);
-      form.clearErrors();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, direction]);
 
   // Update resolver when direction changes
   useEffect(() => {
@@ -207,7 +333,11 @@ export function TPSLDialog({
                   onClick={() => {
                     const leftover =
                       calculateLeftoverMarginForNewEntry("takeProfits");
-                    appendTP({ price: undefined, margin: leftover });
+                    appendTP({
+                      price: undefined,
+                      margin: leftover,
+                      isHit: false,
+                    });
                   }}
                   disabled={tpTotal >= 100}
                 >
@@ -218,89 +348,21 @@ export function TPSLDialog({
 
               {tpFields.map((field, index) => {
                 const isSingleEntry = tpFields.length === 1;
+                const entry = formData.takeProfits?.[index];
                 return (
-                  <div
+                  <TpslEntryRow
                     key={field.id}
-                    className="grid grid-cols-[1fr_2.5rem] gap-2 items-start p-3 border rounded-none"
-                  >
-                    <div className="space-y-2 min-w-0">
-                      <NumberField
-                        tabIndex={-1}
-                        {...register(`takeProfits.${index}.price`, {
-                          valueAsNumber: true,
-                          setValueAs: (v) => {
-                            const num =
-                              typeof v === "string" ? parseFloat(v) : v;
-                            return isNaN(num) || num === 0 ? undefined : num;
-                          },
-                        })}
-                        label={{
-                          value: "Price",
-                          className: "text-muted-foreground",
-                        }}
-                        placeholder="86.000"
-                      />
-                      <Controller
-                        name={`takeProfits.${index}.margin`}
-                        control={control}
-                        render={({
-                          field: { value, onChange, onBlur, ...field },
-                        }) => (
-                          <NumberField
-                            {...field}
-                            tabIndex={-1}
-                            value={value ?? 0}
-                            onChange={(e) => {
-                              const numValue = parseFloat(e.target.value) || 0;
-                              handleMarginChange(
-                                "takeProfits",
-                                index,
-                                numValue,
-                                onChange,
-                                e
-                              );
-                            }}
-                            onBlur={(e) => {
-                              const numValue = parseFloat(e.target.value) || 0;
-                              const leftover = calculateLeftoverMargin(
-                                "takeProfits",
-                                index
-                              );
-                              if (numValue > leftover) {
-                                onChange(leftover);
-                              }
-                              onBlur();
-                            }}
-                            label={{
-                              value: "Margin (%)",
-                              className: "text-muted-foreground",
-                            }}
-                            placeholder="0"
-                          />
-                        )}
-                      />
-                      {(errors.takeProfits?.[index]?.price ||
-                        errors.takeProfits?.[index]?.margin) && (
-                        <div className="text-xs text-destructive">
-                          {errors.takeProfits?.[index]?.price?.message ||
-                            errors.takeProfits?.[index]?.margin?.message}
-                        </div>
-                      )}
-                    </div>
-                    {isSingleEntry ? (
-                      <div className="w-10" />
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeTP(index)}
-                        className="mt-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+                    entry={entry}
+                    index={index}
+                    arrayName="takeProfits"
+                    control={control}
+                    register={register}
+                    errors={errors}
+                    isSingleEntry={isSingleEntry}
+                    onRemove={() => removeTP(index)}
+                    calculateLeftoverMargin={calculateLeftoverMargin}
+                    handleMarginChange={handleMarginChange}
+                  />
                 );
               })}
             </div>
@@ -316,7 +378,11 @@ export function TPSLDialog({
                   onClick={() => {
                     const leftover =
                       calculateLeftoverMarginForNewEntry("stopLosses");
-                    appendSL({ price: undefined, margin: leftover });
+                    appendSL({
+                      price: undefined,
+                      margin: leftover,
+                      isHit: false,
+                    });
                   }}
                   disabled={slTotal >= 100}
                 >
@@ -327,89 +393,21 @@ export function TPSLDialog({
 
               {slFields.map((field, index) => {
                 const isSingleEntry = slFields.length === 1;
+                const entry = formData.stopLosses?.[index];
                 return (
-                  <div
+                  <TpslEntryRow
                     key={field.id}
-                    className="grid grid-cols-[1fr_2.5rem] gap-2 items-start p-3 border rounded-none"
-                  >
-                    <div className="space-y-2 min-w-0">
-                      <NumberField
-                        {...register(`stopLosses.${index}.price`, {
-                          valueAsNumber: true,
-                          setValueAs: (v) => {
-                            const num =
-                              typeof v === "string" ? parseFloat(v) : v;
-                            return isNaN(num) || num === 0 ? undefined : num;
-                          },
-                        })}
-                        tabIndex={-1}
-                        label={{
-                          value: "Price",
-                          className: "text-muted-foreground",
-                        }}
-                        placeholder="86.000"
-                      />
-                      <Controller
-                        name={`stopLosses.${index}.margin`}
-                        control={control}
-                        render={({
-                          field: { value, onChange, onBlur, ...field },
-                        }) => (
-                          <NumberField
-                            {...field}
-                            value={value ?? 0}
-                            tabIndex={-1}
-                            onChange={(e) => {
-                              const numValue = parseFloat(e.target.value) || 0;
-                              handleMarginChange(
-                                "stopLosses",
-                                index,
-                                numValue,
-                                onChange,
-                                e
-                              );
-                            }}
-                            onBlur={(e) => {
-                              const numValue = parseFloat(e.target.value) || 0;
-                              const leftover = calculateLeftoverMargin(
-                                "stopLosses",
-                                index
-                              );
-                              if (numValue > leftover) {
-                                onChange(leftover);
-                              }
-                              onBlur();
-                            }}
-                            label={{
-                              value: "Margin (%)",
-                              className: "text-muted-foreground",
-                            }}
-                            placeholder="0"
-                          />
-                        )}
-                      />
-                      {(errors.stopLosses?.[index]?.price ||
-                        errors.stopLosses?.[index]?.margin) && (
-                        <div className="text-xs text-destructive">
-                          {errors.stopLosses?.[index]?.price?.message ||
-                            errors.stopLosses?.[index]?.margin?.message}
-                        </div>
-                      )}
-                    </div>
-                    {isSingleEntry ? (
-                      <div className="w-10" />
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeSL(index)}
-                        className="mt-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+                    entry={entry}
+                    index={index}
+                    arrayName="stopLosses"
+                    control={control}
+                    register={register}
+                    errors={errors}
+                    isSingleEntry={isSingleEntry}
+                    onRemove={() => removeSL(index)}
+                    calculateLeftoverMargin={calculateLeftoverMargin}
+                    handleMarginChange={handleMarginChange}
+                  />
                 );
               })}
             </div>

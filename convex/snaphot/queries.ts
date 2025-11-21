@@ -157,3 +157,29 @@ export const countSnapshotsWithTimeframe = query({
     return count;
   },
 });
+
+export const hasSubsequentSnapshots = query({
+  args: {
+    snapshotId: v.id("snapshots"),
+  },
+  handler: async (ctx, { snapshotId }) => {
+    // Get the current snapshot to find its tradeSetupId and creation time
+    const currentSnapshot = await ctx.db.get(snapshotId);
+    if (!currentSnapshot) {
+      return false;
+    }
+
+    // Check if there are any snapshots created after this one in the same trade setup
+    const subsequentSnapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", currentSnapshot.tradeSetupId)
+      )
+      .filter((q) =>
+        q.gt(q.field("_creationTime"), currentSnapshot._creationTime)
+      )
+      .first();
+
+    return !!subsequentSnapshots;
+  },
+});
