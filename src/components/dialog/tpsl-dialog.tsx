@@ -32,8 +32,8 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
   const form = useForm<TPSLFormData>({
     resolver: zodResolver(createTpslFormSchema(direction)),
     defaultValues: {
-      takeProfits: [{ price: 0, weight: 100 }],
-      stopLosses: [{ price: 0, weight: 100 }],
+      takeProfits: [{ price: undefined, weight: 100 }],
+      stopLosses: [{ price: undefined, weight: 100 }],
     },
     mode: "onChange",
   });
@@ -73,8 +73,8 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
   useEffect(() => {
     if (!open) {
       reset({
-        takeProfits: [{ price: 0, weight: 100 }],
-        stopLosses: [{ price: 0, weight: 100 }],
+        takeProfits: [{ price: undefined, weight: 100 }],
+        stopLosses: [{ price: undefined, weight: 100 }],
       });
     }
   }, [open, reset]);
@@ -138,14 +138,26 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
 
         <FormProvider {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Form-level direction validation error */}
-            {errors.takeProfits &&
+            {/* Form-level validation errors */}
+            {((errors.takeProfits &&
               typeof errors.takeProfits === "object" &&
-              "message" in errors.takeProfits && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg border border-destructive/20">
-                  {errors.takeProfits.message as string}
-                </div>
-              )}
+              "message" in errors.takeProfits) ||
+              (errors.stopLosses &&
+                typeof errors.stopLosses === "object" &&
+                "message" in errors.stopLosses) ||
+              errors.root) && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg border border-destructive/20">
+                {(errors.takeProfits &&
+                  typeof errors.takeProfits === "object" &&
+                  "message" in errors.takeProfits &&
+                  (errors.takeProfits.message as string)) ||
+                  (errors.stopLosses &&
+                    typeof errors.stopLosses === "object" &&
+                    "message" in errors.stopLosses &&
+                    (errors.stopLosses.message as string)) ||
+                  errors.root?.message}
+              </div>
+            )}
 
             {/* Take Profits Section */}
             <div className="space-y-3">
@@ -155,7 +167,7 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendTP({ price: 0, weight: 0 })}
+                  onClick={() => appendTP({ price: undefined, weight: 0 })}
                   disabled={tpTotal >= 100}
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -168,15 +180,20 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                 return (
                   <div
                     key={field.id}
-                    className="flex items-start gap-2 p-3 border rounded-lg"
+                    className="grid grid-cols-[1fr_2.5rem] gap-2 items-start p-3 border rounded-lg"
                   >
-                    <div className="flex-1 space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <NumberField
                         {...register(`takeProfits.${index}.price`, {
                           valueAsNumber: true,
+                          setValueAs: (v) => {
+                            const num =
+                              typeof v === "string" ? parseFloat(v) : v;
+                            return isNaN(num) || num === 0 ? undefined : num;
+                          },
                         })}
                         label="Price"
-                        placeholder="0.00"
+                        placeholder="86.000"
                       />
                       <Controller
                         name={`takeProfits.${index}.weight`}
@@ -221,16 +238,19 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                         </div>
                       )}
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeTP(index)}
-                      disabled={isSingleEntry}
-                      className="mt-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {isSingleEntry ? (
+                      <div className="w-10" />
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeTP(index)}
+                        className="mt-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 );
               })}
@@ -244,7 +264,7 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendSL({ price: 0, weight: 0 })}
+                  onClick={() => appendSL({ price: undefined, weight: 0 })}
                   disabled={slTotal >= 100}
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -257,15 +277,20 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                 return (
                   <div
                     key={field.id}
-                    className="flex items-start gap-2 p-3 border rounded-lg"
+                    className="grid grid-cols-[1fr_2.5rem] gap-2 items-start p-3 border rounded-lg"
                   >
-                    <div className="flex-1 space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <NumberField
                         {...register(`stopLosses.${index}.price`, {
                           valueAsNumber: true,
+                          setValueAs: (v) => {
+                            const num =
+                              typeof v === "string" ? parseFloat(v) : v;
+                            return isNaN(num) || num === 0 ? undefined : num;
+                          },
                         })}
                         label="Price"
-                        placeholder="0.00"
+                        placeholder="86.000"
                       />
                       <Controller
                         name={`stopLosses.${index}.weight`}
@@ -310,43 +335,22 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                         </div>
                       )}
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeSL(index)}
-                      disabled={isSingleEntry}
-                      className="mt-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {isSingleEntry ? (
+                      <div className="w-10" />
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeSL(index)}
+                        className="mt-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 );
               })}
-            </div>
-
-            {/* Total Weight Display */}
-            <div className="p-3 bg-muted rounded-lg space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Take Profits Total:</span>
-                <span
-                  className={`text-sm font-semibold ${
-                    tpTotal > 100 ? "text-destructive" : "text-foreground"
-                  }`}
-                >
-                  {tpTotal.toFixed(2)}%
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Stop Losses Total:</span>
-                <span
-                  className={`text-sm font-semibold ${
-                    slTotal > 100 ? "text-destructive" : "text-foreground"
-                  }`}
-                >
-                  {slTotal.toFixed(2)}%
-                </span>
-              </div>
             </div>
 
             {/* Debug JSON Display */}

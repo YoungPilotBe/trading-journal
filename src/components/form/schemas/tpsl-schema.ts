@@ -2,7 +2,12 @@ import { z } from "zod";
 
 // Entry schema for individual TP/SL entries
 const tpslEntrySchema = z.object({
-  price: z.number().positive("Price must be a positive number"),
+  price: z
+    .union([
+      z.number().positive("Price must be a positive number"),
+      z.undefined(),
+    ])
+    .optional(),
   weight: z
     .number()
     .min(0, "Weight must be at least 0")
@@ -14,8 +19,10 @@ const tpslArraySchema = z
   .array(tpslEntrySchema)
   .refine(
     (data) => {
-      // Prices must be unique within the array
-      const prices = data.map((entry) => entry.price);
+      // Prices must be unique within the array (only check defined prices)
+      const prices = data
+        .map((entry) => entry.price)
+        .filter((price): price is number => price !== undefined);
       return new Set(prices).size === prices.length;
     },
     {
@@ -24,12 +31,18 @@ const tpslArraySchema = z
   )
   .refine(
     (data) => {
-      // Total weight of the array must not exceed 100%
+      // Only validate total weight if all entries have weights > 0
+      // This prevents errors when adding new entries with weight 0
+      const allWeightsFilled = data.every((entry) => entry.weight > 0);
+      if (!allWeightsFilled) {
+        return true; // Skip validation if any entry has weight 0
+      }
+      // Total weight of the array must equal exactly 100%
       const totalWeight = data.reduce((sum, entry) => sum + entry.weight, 0);
-      return totalWeight <= 100;
+      return totalWeight === 100;
     },
     {
-      message: "Total weight cannot exceed 100%",
+      message: "Total weight must equal exactly 100%",
     }
   );
 
@@ -50,13 +63,13 @@ export function createTpslFormSchema(direction: "long" | "short") {
       }
     )
     .superRefine((data, ctx) => {
-      // Filter out entries with invalid prices (0 or less) for validation
+      // Filter out entries with invalid or undefined prices for validation
       const validTPPrices = data.takeProfits
         .map((entry) => entry.price)
-        .filter((price) => price > 0);
+        .filter((price): price is number => price !== undefined && price > 0);
       const validSLPrices = data.stopLosses
         .map((entry) => entry.price)
-        .filter((price) => price > 0);
+        .filter((price): price is number => price !== undefined && price > 0);
 
       // Skip validation if either array has no valid prices
       if (validTPPrices.length === 0 || validSLPrices.length === 0) {
