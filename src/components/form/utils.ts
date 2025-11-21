@@ -45,11 +45,20 @@ export const transformTpslEntriesToFormInput = (
     return undefined;
   }
 
+  // Preserve ALL fields from database documents
   const takeProfits = entries
     .filter((entry) => entry.type === "take_profit")
     .map((entry) => ({
       price: entry.price,
       margin: entry.margin,
+      _id: entry._id,
+      snapshotId: entry.snapshotId,
+      type: entry.type,
+      isHit: entry.isHit,
+      hitSnapshotId: entry.hitSnapshotId,
+      hitAt: entry.hitAt,
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
     }));
 
   const stopLosses = entries
@@ -57,6 +66,14 @@ export const transformTpslEntriesToFormInput = (
     .map((entry) => ({
       price: entry.price,
       margin: entry.margin,
+      _id: entry._id,
+      snapshotId: entry.snapshotId,
+      type: entry.type,
+      isHit: entry.isHit,
+      hitSnapshotId: entry.hitSnapshotId,
+      hitAt: entry.hitAt,
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
     }));
 
   // Return undefined if both arrays are empty

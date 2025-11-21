@@ -168,9 +168,9 @@ export const attachSnapshot = mutation({
       }
     );
 
-    // Create TP/SL entries if provided
+    // Upsert TP/SL entries if provided (updates existing entries with _id, creates new ones without)
     if (args.tpsl) {
-      await ctx.runMutation(api.tpsl.mutations.createTpslEntries, {
+      await ctx.runMutation(api.tpsl.mutations.upsertTpslEntries, {
         snapshotId: snapshot.snapshotId,
         tpsl: args.tpsl,
       });

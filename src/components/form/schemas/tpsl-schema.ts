@@ -1,7 +1,10 @@
+import { Id } from "convex/_generated/dataModel";
 import { z } from "zod";
 
 // Entry schema for individual TP/SL entries
+// Hybrid schema: supports both basic user input (price, margin) and full database documents
 const tpslEntrySchema = z.object({
+  // Required fields for form validation
   price: z
     .union([
       z.number().positive("Price must be a positive number"),
@@ -12,6 +15,15 @@ const tpslEntrySchema = z.object({
     .number()
     .min(0, "Margin must be at least 0")
     .max(100, "Margin cannot exceed 100"),
+  // Optional database fields (present when editing existing entries)
+  _id: z.custom<Id<"tpsl_entries">>().optional(),
+  snapshotId: z.custom<Id<"snapshots">>().optional(),
+  type: z.enum(["take_profit", "stop_loss"]).optional(),
+  isHit: z.boolean().optional(),
+  hitSnapshotId: z.custom<Id<"snapshots">>().optional(),
+  hitAt: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
 });
 
 // Array schema with total margin validation
@@ -134,13 +146,14 @@ export function createTpslFormSchema(direction: "long" | "short") {
     .transform((data) => {
       // Filter out entries with undefined prices AFTER validation passes
       // This ensures the output only contains entries with valid prices
+      // Preserve all database fields when filtering
       return {
         takeProfits: data.takeProfits.filter(
-          (entry): entry is { price: number; margin: number } =>
+          (entry): entry is typeof entry & { price: number } =>
             entry.price !== undefined && entry.price > 0
         ),
         stopLosses: data.stopLosses.filter(
-          (entry): entry is { price: number; margin: number } =>
+          (entry): entry is typeof entry & { price: number } =>
             entry.price !== undefined && entry.price > 0
         ),
       };

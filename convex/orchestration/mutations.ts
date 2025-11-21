@@ -52,7 +52,7 @@ export const createTradeSetupWithSnapshot = mutation({
       createdAt: now,
     });
 
-    await ctx.runMutation(api.tpsl.mutations.createTpslEntries, {
+    await ctx.runMutation(api.tpsl.mutations.upsertTpslEntries, {
       snapshotId,
       tpsl,
     });

@@ -36,12 +36,34 @@ export const tpslSchema = v.optional(
       v.object({
         price: v.number(),
         margin: v.number(),
+        // Optional database fields for hybrid schema (present when updating existing entries)
+        _id: v.optional(v.id("tpsl_entries")),
+        snapshotId: v.optional(v.id("snapshots")),
+        type: v.optional(
+          v.union(v.literal("take_profit"), v.literal("stop_loss"))
+        ),
+        isHit: v.optional(v.boolean()),
+        hitSnapshotId: v.optional(v.id("snapshots")),
+        hitAt: v.optional(v.number()),
+        createdAt: v.optional(v.number()),
+        updatedAt: v.optional(v.number()),
       })
     ),
     stopLosses: v.array(
       v.object({
         price: v.number(),
         margin: v.number(),
+        // Optional database fields for hybrid schema (present when updating existing entries)
+        _id: v.optional(v.id("tpsl_entries")),
+        snapshotId: v.optional(v.id("snapshots")),
+        type: v.optional(
+          v.union(v.literal("take_profit"), v.literal("stop_loss"))
+        ),
+        isHit: v.optional(v.boolean()),
+        hitSnapshotId: v.optional(v.id("snapshots")),
+        hitAt: v.optional(v.number()),
+        createdAt: v.optional(v.number()),
+        updatedAt: v.optional(v.number()),
       })
     ),
   })
