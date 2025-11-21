@@ -32,6 +32,7 @@ export const emotionUnion = v.union(
 
 export const tpslSchema = v.optional(
   v.object({
+    entryPrice: v.number(),
     takeProfits: v.array(
       v.object({
         price: v.number(),

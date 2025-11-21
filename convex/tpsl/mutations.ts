@@ -46,6 +46,11 @@ export const createTpslEntries = mutation({
         updatedAt: now,
       });
     }
+
+    // Update snapshot with entry price
+    await ctx.db.patch(snapshotId, {
+      entryPrice: tpsl.entryPrice,
+    });
   },
 });
 
@@ -219,5 +224,10 @@ export const upsertTpslEntries = mutation({
         await ctx.db.delete(existingEntry._id);
       }
     }
+
+    // Update snapshot with entry price
+    await ctx.db.patch(snapshotId, {
+      entryPrice: tpsl.entryPrice,
+    });
   },
 });

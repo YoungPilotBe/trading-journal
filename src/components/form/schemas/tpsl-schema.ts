@@ -79,6 +79,14 @@ const tpslArraySchema = z
 export function createTpslFormSchema(direction: "long" | "short") {
   return z
     .object({
+      entryPrice: z
+        .union([
+          z.number().positive("Entry price must be a positive number"),
+          z.undefined(),
+        ])
+        .refine((val) => val !== undefined, {
+          message: "Entry price is required",
+        }),
       takeProfits: tpslArraySchema,
       stopLosses: tpslArraySchema,
     })
@@ -109,7 +117,7 @@ export function createTpslFormSchema(direction: "long" | "short") {
         .map((entry) => entry.price)
         .filter((price): price is number => price !== undefined && price > 0);
 
-      // Skip validation if either array has no valid prices
+      // Skip TP/SL validation if either array has no valid prices
       if (validTPPrices.length === 0 || validSLPrices.length === 0) {
         return;
       }
@@ -130,6 +138,26 @@ export function createTpslFormSchema(direction: "long" | "short") {
             path: ["takeProfits"],
           });
         }
+
+        // Entry price validation for long: entryPrice > max SL && entryPrice < min TP
+        if (data.entryPrice !== undefined) {
+          if (data.entryPrice <= maxSL) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                "Entry price must be greater than the highest stop loss price",
+              path: ["entryPrice"],
+            });
+          }
+          if (data.entryPrice >= minTP) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                "Entry price must be less than the lowest take profit price",
+              path: ["entryPrice"],
+            });
+          }
+        }
       } else if (direction === "short") {
         // For shorts: All TP prices must be lower than all SL prices
         // This means: max TP < min SL
@@ -141,6 +169,26 @@ export function createTpslFormSchema(direction: "long" | "short") {
             path: ["takeProfits"],
           });
         }
+
+        // Entry price validation for short: entryPrice < min SL && entryPrice > max TP
+        if (data.entryPrice !== undefined) {
+          if (data.entryPrice >= minSL) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                "Entry price must be less than the lowest stop loss price",
+              path: ["entryPrice"],
+            });
+          }
+          if (data.entryPrice <= maxTP) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                "Entry price must be greater than the highest take profit price",
+              path: ["entryPrice"],
+            });
+          }
+        }
       }
     })
     .transform((data) => {
@@ -148,6 +196,7 @@ export function createTpslFormSchema(direction: "long" | "short") {
       // This ensures the output only contains entries with valid prices
       // Preserve all database fields when filtering
       return {
+        entryPrice: data.entryPrice,
         takeProfits: data.takeProfits.filter(
           (entry): entry is typeof entry & { price: number } =>
             entry.price !== undefined && entry.price > 0

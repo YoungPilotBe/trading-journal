@@ -117,6 +117,9 @@ export default defineSchema({
     rMultiple: v.optional(v.number()),
 
     emotion: v.optional(emotionUnion),
+
+    // Entry price for TP/SL configuration
+    entryPrice: v.optional(v.number()),
   })
     .index("by_trade_setup", ["tradeSetupId"])
     .index("by_created_at", ["createdAt"])

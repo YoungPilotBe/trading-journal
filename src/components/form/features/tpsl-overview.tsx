@@ -85,6 +85,16 @@ export function TPSLOverview({ data, onEdit }: TPSLOverviewProps) {
       onClick={onEdit}
     >
       <div className="space-y-2 text-xs">
+        {data?.entryPrice !== undefined && data.entryPrice > 0 && (
+          <div>
+            <div className="font-medium text-muted-foreground mb-1">
+              Entry Price
+            </div>
+            <div className="ml-2 text-muted-foreground">
+              {data.entryPrice.toFixed(3)}
+            </div>
+          </div>
+        )}
         {validTPs.length > 0 && (
           <div>
             <div className="font-medium text-muted-foreground mb-1">

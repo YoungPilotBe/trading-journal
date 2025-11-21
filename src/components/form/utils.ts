@@ -42,7 +42,8 @@ export function addTimeframeToTimeframes(
 }
 
 export const transformTpslEntriesToFormInput = (
-  entries: Doc<"tpsl_entries">[]
+  entries: Doc<"tpsl_entries">[],
+  entryPrice?: number
 ): TPSLFormInput | undefined => {
   if (!entries || entries.length === 0) {
     return undefined;
@@ -86,6 +87,7 @@ export const transformTpslEntriesToFormInput = (
 
   // Always return a structure with arrays, even if empty (with default placeholder)
   return {
+    entryPrice: entryPrice,
     takeProfits:
       takeProfits.length > 0
         ? takeProfits

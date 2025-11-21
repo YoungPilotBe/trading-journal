@@ -54,7 +54,10 @@ const AttachTradeForm = ({
   const search = useSearch({ from: "/trade_onboarding/attach_trade" });
   const { openDialog } = useDialog();
 
-  const transformedTpsl = transformTpslEntriesToFormInput(tpslEntries);
+  const transformedTpsl = transformTpslEntriesToFormInput(
+    tpslEntries,
+    existingSnapshot?.entryPrice
+  );
 
   const form = useForm<z.infer<typeof attachTradeSchema>>({
     resolver: zodResolver(attachTradeSchema),

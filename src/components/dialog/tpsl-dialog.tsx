@@ -176,6 +176,7 @@ export function TPSLDialog({
   onSave,
 }: TPSLDialogProps) {
   const defaultValues: TPSLFormInput = initialValues || {
+    entryPrice: undefined,
     takeProfits: [{ price: undefined, margin: 100 }],
     stopLosses: [{ price: undefined, margin: 100 }],
   };
@@ -244,6 +245,41 @@ export function TPSLDialog({
 
         <FormProvider {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Entry Price Section */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-mono text-muted-foreground">
+                Entry Price
+              </h3>
+              <div className="grid grid-cols-[2.5rem_1fr_2.5rem] gap-2 items-start p-3 border rounded-none">
+                {/* Empty column on the left to match checkbox column */}
+                <div className="w-10" />
+
+                {/* Main content column */}
+                <div className="space-y-2 min-w-0">
+                  <NumberField
+                    tabIndex={-1}
+                    {...register("entryPrice", {
+                      valueAsNumber: true,
+                      required: "Entry price is required",
+                    })}
+                    label={{
+                      value: "Price",
+                      className: "text-muted-foreground",
+                    }}
+                    placeholder="86.000"
+                  />
+                  {errors.entryPrice && (
+                    <div className="text-xs text-destructive">
+                      {errors.entryPrice.message}
+                    </div>
+                  )}
+                </div>
+
+                {/* Empty column on the right to match trash icon column */}
+                <div className="w-10" />
+              </div>
+            </div>
+
             {/* Form-level validation errors */}
             {((errors.takeProfits &&
               typeof errors.takeProfits === "object" &&
@@ -268,7 +304,9 @@ export function TPSLDialog({
             {/* Take Profits Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Take Profits</h3>
+                <h3 className="text-xs font-mono text-muted-foreground">
+                  Take Profits
+                </h3>
                 <Button
                   type="button"
                   variant="outline"
@@ -313,7 +351,9 @@ export function TPSLDialog({
             {/* Stop Losses Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Stop Losses</h3>
+                <h3 className="text-xs font-mono text-muted-foreground">
+                  Stop Losses
+                </h3>
                 <Button
                   type="button"
                   variant="outline"
