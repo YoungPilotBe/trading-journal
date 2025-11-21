@@ -39,6 +39,7 @@ interface TPSLDialogProps {
   direction: "long" | "short";
   initialValues?: TPSLFormInput;
   onSave?: (data: TPSLFormData) => void;
+  readonly?: boolean;
 }
 
 interface TpslEntryRowProps {
@@ -53,6 +54,7 @@ interface TpslEntryRowProps {
   isSingleEntry: boolean;
   onRemove: () => void;
   array: TPSLFormInput["takeProfits"] | TPSLFormInput["stopLosses"];
+  readonly?: boolean;
 }
 
 // Component for a single TP/SL entry row
@@ -66,14 +68,15 @@ function TpslEntryRow({
   isSingleEntry,
   onRemove,
   array,
+  readonly = false,
 }: TpslEntryRowProps) {
   // Check if entry was already hit in a previous submission (has hitSnapshotId)
   const wasAlreadyHit = !!entry?.hitSnapshotId;
   const isHit = entry?.isHit ?? false;
   // Entry is hit if it was previously hit OR currently marked as hit
   const entryIsHit = wasAlreadyHit || isHit;
-  // Disable if entry was already hit (cannot unhit or modify)
-  const isDisabled = wasAlreadyHit;
+  // Disable if entry was already hit (cannot unhit or modify) or if readonly
+  const isDisabled = wasAlreadyHit || readonly;
 
   return (
     <div className="grid grid-cols-[2.5rem_1fr_2.5rem] gap-2 items-start p-3 border rounded-none">
@@ -152,7 +155,7 @@ function TpslEntryRow({
         )}
       </div>
       {/* Trash icon column on the right */}
-      {isSingleEntry || entryIsHit ? (
+      {isSingleEntry || entryIsHit || readonly ? (
         <div className="w-10" />
       ) : (
         <Button
@@ -174,6 +177,7 @@ export function TPSLDialog({
   direction,
   initialValues,
   onSave,
+  readonly = false,
 }: TPSLDialogProps) {
   const defaultValues: TPSLFormInput = initialValues || {
     entryPrice: undefined,
@@ -240,7 +244,9 @@ export function TPSLDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Configure Take Profit / Stop Loss</DialogTitle>
+          <DialogTitle>
+            {readonly ? "View Take Profit / Stop Loss" : "Configure Take Profit / Stop Loss"}
+          </DialogTitle>
         </DialogHeader>
 
         <FormProvider {...form}>
@@ -258,6 +264,7 @@ export function TPSLDialog({
                 <div className="space-y-2 min-w-0">
                   <NumberField
                     tabIndex={-1}
+                    disabled={readonly}
                     {...register("entryPrice", {
                       valueAsNumber: true,
                       required: "Entry price is required",
@@ -307,25 +314,27 @@ export function TPSLDialog({
                 <h3 className="text-xs font-mono text-muted-foreground">
                   Take Profits
                 </h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const leftover = calculateLeftoverMarginForNewEntry(
-                      formData.takeProfits || []
-                    );
-                    appendTP({
-                      price: undefined,
-                      margin: leftover,
-                      isHit: false,
-                    });
-                  }}
-                  disabled={tpTotal >= 100}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
+                {!readonly && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const leftover = calculateLeftoverMarginForNewEntry(
+                        formData.takeProfits || []
+                      );
+                      appendTP({
+                        price: undefined,
+                        margin: leftover,
+                        isHit: false,
+                      });
+                    }}
+                    disabled={tpTotal >= 100}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                )}
               </div>
 
               {tpFields.map((field, index) => {
@@ -343,6 +352,7 @@ export function TPSLDialog({
                     isSingleEntry={isSingleEntry}
                     onRemove={() => removeTP(index)}
                     array={formData.takeProfits || []}
+                    readonly={readonly}
                   />
                 );
               })}
@@ -354,25 +364,27 @@ export function TPSLDialog({
                 <h3 className="text-xs font-mono text-muted-foreground">
                   Stop Losses
                 </h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const leftover = calculateLeftoverMarginForNewEntry(
-                      formData.stopLosses || []
-                    );
-                    appendSL({
-                      price: undefined,
-                      margin: leftover,
-                      isHit: false,
-                    });
-                  }}
-                  disabled={slTotal >= 100}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
+                {!readonly && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const leftover = calculateLeftoverMarginForNewEntry(
+                        formData.stopLosses || []
+                      );
+                      appendSL({
+                        price: undefined,
+                        margin: leftover,
+                        isHit: false,
+                      });
+                    }}
+                    disabled={slTotal >= 100}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                )}
               </div>
 
               {slFields.map((field, index) => {
@@ -390,6 +402,7 @@ export function TPSLDialog({
                     isSingleEntry={isSingleEntry}
                     onRemove={() => removeSL(index)}
                     array={formData.stopLosses || []}
+                    readonly={readonly}
                   />
                 );
               })}
@@ -408,11 +421,13 @@ export function TPSLDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {readonly ? "Close" : "Cancel"}
               </Button>
-              <Button type="submit" disabled={!isValid}>
-                Save
-              </Button>
+              {!readonly && (
+                <Button type="submit" disabled={!isValid}>
+                  Save
+                </Button>
+              )}
             </DialogFooter>
           </form>
         </FormProvider>

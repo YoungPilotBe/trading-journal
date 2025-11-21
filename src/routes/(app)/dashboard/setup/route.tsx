@@ -1,5 +1,7 @@
 import { AnalyticsSection } from "@/components/analytics-section";
 import TradeDetailsForm from "@/components/form/forms/trade-details-form";
+import { transformTpslEntriesToFormInput } from "@/components/form/utils";
+import { TPSLFormData } from "@/components/form/schemas/tpsl-schema";
 import ImageSidebar from "@/components/image-sidebar";
 import ResultBadge from "@/components/result-badge";
 import SimilarTradesTable from "@/components/similar-trades-table";
@@ -23,12 +25,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useDialog } from "@/contexts/dialog-context";
+import { useGetTpslEntriesBySnapshot } from "@/hooks/tpsl/use-get-tpsl-entries-by-snapshot";
+import { useUpsertTpslEntries } from "@/hooks/tpsl/use-upsert-tpsl-entries";
+import { useGetMostRecentSnapshot } from "@/hooks/snapshots/use-get-most-recent-snapshot";
 import { useGetSnapshot } from "@/hooks/snapshots/use-get-snapshot";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { preloadSetupRouteData } from "@/lib/preloadRoutes";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
-import { Archive, MoreVertical, Tags, Trash2Icon } from "lucide-react";
+import { Archive, MoreVertical, Tags, Target, Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -69,6 +75,29 @@ function RouteComponent() {
 
   const { data: snapshot } = useGetSnapshot({
     id: snapshotId as Id<"snapshots">,
+  });
+
+  // Fetch TPSL entries for the current snapshot
+  const { data: tpslEntries = [] } = useGetTpslEntriesBySnapshot({
+    snapshotId: snapshotId as Id<"snapshots">,
+  });
+
+  // Check if current snapshot is the latest
+  const { data: mostRecentSnapshot } = useGetMostRecentSnapshot({
+    tradeSetupId: tradeSetupId as Id<"trade_setups">,
+  });
+  const isLatestSnapshot =
+    mostRecentSnapshot?._id === snapshotId ||
+    (mostRecentSnapshot === null && snapshotId !== undefined);
+
+  // Mutation for updating TPSL entries
+  const { mutateAsync: upsertTpslEntries } = useUpsertTpslEntries({
+    onSuccess: () => {
+      toast.success("TPSL updated successfully");
+    },
+    onError: (error) => {
+      toast.error(`Failed to update TPSL: ${error.message}`);
+    },
   });
 
   return (
@@ -128,6 +157,39 @@ function RouteComponent() {
                   >
                     <Tags />
                     View Tags
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="justify-between"
+                    onClick={() => {
+                      if (!snapshot || !tradeSetup?.direction) {
+                        toast.error("Missing snapshot or trade setup direction");
+                        return;
+                      }
+
+                      // Transform TPSL entries to form input
+                      const transformedTpsl = transformTpslEntriesToFormInput(
+                        tpslEntries,
+                        snapshot.entryPrice
+                      );
+
+                      openDialog("TPSL", {
+                        direction: tradeSetup.direction,
+                        initialValues: transformedTpsl,
+                        readonly: !isLatestSnapshot,
+                        onSave: async (data: TPSLFormData) => {
+                          if (!isLatestSnapshot) {
+                            return; // Should not happen, but safety check
+                          }
+                          await upsertTpslEntries({
+                            snapshotId: snapshotId as Id<"snapshots">,
+                            tpsl: data,
+                          });
+                        },
+                      });
+                    }}
+                  >
+                    <Target />
+                    View TPSL
                   </DropdownMenuItem>
                   <DropdownMenuItem className="justify-between">
                     <Archive />
