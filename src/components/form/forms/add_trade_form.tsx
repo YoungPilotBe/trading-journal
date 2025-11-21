@@ -207,6 +207,7 @@ const AddTradeForm = ({
           render={({ field }) => (
             <TPSLOverview
               data={field.value}
+              direction={direction}
               onEdit={() => {
                 openDialog("TPSL", {
                   direction,

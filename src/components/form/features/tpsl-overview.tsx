@@ -8,13 +8,15 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { useFormState } from "react-hook-form";
 import { TPSLFormData, TPSLFormInput } from "../schemas/tpsl-schema";
+import { calculateRMultiple } from "../utils";
 
 interface TPSLOverviewProps {
   data?: TPSLFormInput | TPSLFormData;
   onEdit: () => void;
+  direction?: "long" | "short";
 }
 
-export function TPSLOverview({ data, onEdit }: TPSLOverviewProps) {
+export function TPSLOverview({ data, onEdit, direction }: TPSLOverviewProps) {
   // Get form errors for tpsl field
   const { errors } = useFormState();
   const tpslError = errors.tpsl;
@@ -76,6 +78,17 @@ export function TPSLOverview({ data, onEdit }: TPSLOverviewProps) {
     );
   }
 
+  // Calculate R-multiple if we have all required data
+  const rMultiple =
+    direction && data?.entryPrice
+      ? calculateRMultiple(
+          data.entryPrice,
+          data.takeProfits || [],
+          data.stopLosses || [],
+          direction
+        )
+      : undefined;
+
   const content = (
     <div
       className={cn(
@@ -84,45 +97,53 @@ export function TPSLOverview({ data, onEdit }: TPSLOverviewProps) {
       )}
       onClick={onEdit}
     >
-      <div className="space-y-2 text-xs">
-        {data?.entryPrice !== undefined && data.entryPrice > 0 && (
-          <div>
-            <div className="font-medium text-muted-foreground mb-1">
-              Entry Price
+      <div className="flex justify-between items-start gap-4">
+        <div className="space-y-2 text-xs flex-1">
+          {data?.entryPrice !== undefined && data.entryPrice > 0 && (
+            <div>
+              <div className="font-medium text-muted-foreground mb-1">
+                Entry Price
+              </div>
+              <div className="ml-2 text-muted-foreground">
+                {data.entryPrice.toFixed(3)}
+              </div>
             </div>
-            <div className="ml-2 text-muted-foreground">
-              {data.entryPrice.toFixed(3)}
+          )}
+          {validTPs.length > 0 && (
+            <div>
+              <div className="font-medium text-muted-foreground mb-1">
+                Take Profits: {validTPs.length}{" "}
+                {validTPs.length === 1 ? "entry" : "entries"}
+              </div>
+              <div className="ml-2 space-y-0.5">
+                {validTPs.map((tp, idx) => (
+                  <div key={idx} className="text-muted-foreground">
+                    {tp.price?.toFixed(3)} @ {tp.margin}%
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-        {validTPs.length > 0 && (
-          <div>
-            <div className="font-medium text-muted-foreground mb-1">
-              Take Profits: {validTPs.length}{" "}
-              {validTPs.length === 1 ? "entry" : "entries"}
+          )}
+          {validSLs.length > 0 && (
+            <div>
+              <div className="font-medium text-muted-foreground mb-1">
+                Stop Losses: {validSLs.length}{" "}
+                {validSLs.length === 1 ? "entry" : "entries"}
+              </div>
+              <div className="ml-2 space-y-0.5">
+                {validSLs.map((sl, idx) => (
+                  <div key={idx} className="text-muted-foreground">
+                    {sl.price?.toFixed(3)} @ {sl.margin}%
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="ml-2 space-y-0.5">
-              {validTPs.map((tp, idx) => (
-                <div key={idx} className="text-muted-foreground">
-                  {tp.price?.toFixed(3)} @ {tp.margin}%
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {validSLs.length > 0 && (
-          <div>
-            <div className="font-medium text-muted-foreground mb-1">
-              Stop Losses: {validSLs.length}{" "}
-              {validSLs.length === 1 ? "entry" : "entries"}
-            </div>
-            <div className="ml-2 space-y-0.5">
-              {validSLs.map((sl, idx) => (
-                <div key={idx} className="text-muted-foreground">
-                  {sl.price?.toFixed(3)} @ {sl.margin}%
-                </div>
-              ))}
-            </div>
+          )}
+        </div>
+        {rMultiple !== undefined && (
+          <div className="text-xs text-muted-foreground text-right">
+            <div className="font-medium mb-1">R-Multiple</div>
+            <div className="font-mono">{rMultiple.toFixed(2)}R</div>
           </div>
         )}
       </div>

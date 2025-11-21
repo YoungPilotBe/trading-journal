@@ -229,7 +229,11 @@ const AttachTradeForm = ({
           name="tpsl"
           control={control}
           render={({ field }) => (
-            <TPSLOverview data={field.value} onEdit={handleOpenTspl} />
+            <TPSLOverview
+              data={field.value}
+              direction={direction}
+              onEdit={handleOpenTspl}
+            />
           )}
         />
         <SubmitButton
