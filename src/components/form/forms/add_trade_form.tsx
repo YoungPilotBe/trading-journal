@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useDialog } from "@/contexts/dialog-context";
 import { useCreateTradeSetup } from "@/hooks/trade-setup/use-create-trade-setup";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useSearch } from "@tanstack/react-router";
@@ -33,6 +35,7 @@ interface Props {
 const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
   const navigate = useNavigate();
   const search = useSearch({ from: "/trade_onboarding/add_trade" });
+  const { openDialog } = useDialog();
   const {
     existingSnapshot,
     existingTradeSetup,
@@ -60,6 +63,7 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
   });
 
   const { register, control, handleSubmit, watch } = form;
+  const direction = watch("direction");
 
   function handleNavigate(args: {
     tradeSetupId: Id<"trade_setups">;
@@ -197,6 +201,20 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
           label="R-Multiple"
           placeholder="5.4"
         />
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            if (direction) {
+              openDialog("TPSL", { direction });
+            }
+          }}
+          disabled={!direction}
+          className="w-full"
+        >
+          Configure TP/SL
+        </Button>
 
         <SubmitButton
           disabled={isPending || isLoading}

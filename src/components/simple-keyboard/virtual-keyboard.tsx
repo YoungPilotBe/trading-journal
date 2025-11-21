@@ -26,8 +26,8 @@ const KEYBOARD_BUTTON_THEME = [
 // Keyboard styling and configuration
 const KEYBOARD_THEME = "hg-theme-default hg-layout-numeric numeric-theme";
 const KEYBOARD_ANIMATION_CLASS =
-  "fixed z-50 animate-in zoom-in-95 fade-in-0 duration-200";
-const KEYBOARD_CONTAINER_CLASS = "bg-card border-2 border-border shadow-lg p-3";
+  "fixed z-[60] pointer-events-auto animate-in zoom-in-95 fade-in-0 duration-200";
+const KEYBOARD_CONTAINER_CLASS = "bg-card border-2 border-border shadow-lg p-3 pointer-events-auto";
 
 interface VirtualKeyboardProps {
   enable?: boolean;
@@ -108,6 +108,8 @@ const VirtualKeyboard = ({
         top: `${position.top}px`,
         left: `${position.left}px`,
       }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       <div className={KEYBOARD_CONTAINER_CLASS}>
         <div className="numeric-keyboard-container">

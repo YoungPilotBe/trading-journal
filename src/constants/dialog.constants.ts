@@ -5,6 +5,7 @@ import { FindDrawingDialog } from "@/components/dialog/find-drawing-dialog";
 import NotesDialog from "@/components/dialog/notes-dialog";
 import { RemoveTimeframeConfirmationDialog } from "@/components/dialog/remove-timeframe-confirmation-dialog";
 import { StatusChangeConfirmationDialog } from "@/components/dialog/status-change-confirmation-dialog";
+import { TPSLDialog } from "@/components/dialog/tpsl-dialog";
 import TagViewTable from "@/components/tag-view-table";
 import { ComponentType } from "react";
 
@@ -51,6 +52,10 @@ export const DIALOGS = {
   FIND_DRAWING: {
     key: "FIND_DRAWING" as const,
     component: FindDrawingDialog,
+  },
+  TPSL: {
+    key: "TPSL" as const,
+    component: TPSLDialog,
   },
 } as const;
 
