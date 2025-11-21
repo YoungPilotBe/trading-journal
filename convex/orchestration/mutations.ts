@@ -121,6 +121,29 @@ export const deleteNotesBySnapshotId = internalMutation({
   },
 });
 
+export const deleteTpslEntriesBySnapshotId = internalMutation({
+  args: {
+    snapshotId: v.id("snapshots"),
+  },
+  handler: async (ctx, { snapshotId }) => {
+    // Find all TP/SL entries linked to this snapshot
+    const tpslEntries = await ctx.db
+      .query("tpsl_entries")
+      .withIndex("by_snapshot", (q) => q.eq("snapshotId", snapshotId))
+      .collect();
+
+    const deletedIds = [];
+
+    // Delete each TP/SL entry
+    for (const entry of tpslEntries) {
+      await ctx.db.delete(entry._id);
+      deletedIds.push(entry._id);
+    }
+
+    return deletedIds; // Return array of deleted TP/SL entry IDs
+  },
+});
+
 export const deleteSnapshotsByTradeSetupId = internalMutation({
   args: {
     tradeSetupId: v.id("trade_setups"),

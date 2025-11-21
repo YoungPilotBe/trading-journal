@@ -8,9 +8,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { Loader } from "lucide-react";
-import { useEffect } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import NumberField from "../components/number-field";
 import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
@@ -64,10 +62,6 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
     mode: "onChange",
     shouldUnregister: true,
   });
-
-  useEffect(() => {
-    toast.error(JSON.stringify(form.formState.errors.tpsl));
-  }, [form.formState.errors.tpsl]);
 
   const { register, control, handleSubmit, watch, setValue } = form;
   const direction = watch("direction");
