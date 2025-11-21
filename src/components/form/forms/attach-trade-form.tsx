@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Timeframe } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
@@ -221,16 +220,6 @@ const AttachTradeForm = ({
           label="R-Multiple"
           placeholder="5.3"
         />
-
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleOpenTspl}
-          disabled={!direction}
-          className="w-full"
-        >
-          Configure TP/SL
-        </Button>
 
         {/* Display TP/SL summary if configured - wrapped in Controller to keep field registered */}
         <Controller

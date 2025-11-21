@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Timeframe } from "@/config/timeframe-order";
 import { useDialog } from "@/contexts/dialog-context";
@@ -201,26 +200,6 @@ const AddTradeForm = ({
           label="R-Multiple"
           placeholder="5.4"
         />
-
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            if (direction) {
-              openDialog("TPSL", {
-                direction,
-                initialValues: tpsl as TPSLFormInput | undefined,
-                onSave: (data: TPSLFormData) => {
-                  setValue("tpsl", data, { shouldValidate: true });
-                },
-              });
-            }
-          }}
-          disabled={!direction}
-          className="w-full"
-        >
-          Configure TP/SL
-        </Button>
 
         {/* Display TP/SL summary if configured */}
         <Controller

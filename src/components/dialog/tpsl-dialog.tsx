@@ -4,6 +4,12 @@ import {
   TPSLFormInput,
   createTpslFormSchema,
 } from "@/components/form/schemas/tpsl-schema";
+import {
+  calculateLeftoverMargin,
+  calculateLeftoverMarginForNewEntry,
+  calculateTotalMargin,
+  handleMarginChange,
+} from "@/components/form/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -15,10 +21,13 @@ import {
 } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import {
+  Control,
   Controller,
+  FieldErrors,
   FormProvider,
+  UseFormRegister,
   useFieldArray,
   useForm,
 } from "react-hook-form";
@@ -32,6 +41,20 @@ interface TPSLDialogProps {
   onSave?: (data: TPSLFormData) => void;
 }
 
+interface TpslEntryRowProps {
+  entry:
+    | TPSLFormInput["takeProfits"][number]
+    | TPSLFormInput["stopLosses"][number];
+  index: number;
+  arrayName: "takeProfits" | "stopLosses";
+  control: Control<TPSLFormInput>;
+  register: UseFormRegister<TPSLFormInput>;
+  errors: FieldErrors<TPSLFormInput>;
+  isSingleEntry: boolean;
+  onRemove: () => void;
+  array: TPSLFormInput["takeProfits"] | TPSLFormInput["stopLosses"];
+}
+
 // Component for a single TP/SL entry row
 function TpslEntryRow({
   entry,
@@ -42,39 +65,14 @@ function TpslEntryRow({
   errors,
   isSingleEntry,
   onRemove,
-  calculateLeftoverMargin,
-  handleMarginChange,
-}: {
-  entry:
-    | TPSLFormInput["takeProfits"][number]
-    | TPSLFormInput["stopLosses"][number];
-  index: number;
-  arrayName: "takeProfits" | "stopLosses";
-  control: any;
-  register: any;
-  errors: any;
-  isSingleEntry: boolean;
-  onRemove: () => void;
-  calculateLeftoverMargin: (
-    arrayName: "takeProfits" | "stopLosses",
-    currentIndex: number
-  ) => number;
-  handleMarginChange: (
-    arrayName: "takeProfits" | "stopLosses",
-    index: number,
-    value: number,
-    onChange: (value: number) => void,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
-}) {
+  array,
+}: TpslEntryRowProps) {
   // Check if entry was already hit in a previous submission (has hitSnapshotId)
   const wasAlreadyHit = !!entry?.hitSnapshotId;
   const isHit = entry?.isHit ?? false;
   // Entry is hit if it was previously hit OR currently marked as hit
   const entryIsHit = wasAlreadyHit || isHit;
-  // Disable if:
-  // 1. Entry has a snapshotId AND that snapshot has subsequent snapshots, OR
-  // 2. Entry was already hit (cannot unhit)
+  // Disable if entry was already hit (cannot unhit or modify)
   const isDisabled = wasAlreadyHit;
 
   return (
@@ -127,11 +125,11 @@ function TpslEntryRow({
               value={value ?? 0}
               onChange={(e) => {
                 const numValue = parseFloat(e.target.value) || 0;
-                handleMarginChange(arrayName, index, numValue, onChange, e);
+                handleMarginChange(array, index, numValue, onChange, e);
               }}
               onBlur={(e) => {
                 const numValue = parseFloat(e.target.value) || 0;
-                const leftover = calculateLeftoverMargin(arrayName, index);
+                const leftover = calculateLeftoverMargin(array, index);
                 if (numValue > leftover) {
                   onChange(leftover);
                 }
@@ -198,7 +196,6 @@ export function TPSLDialog({
     control,
     handleSubmit,
     watch,
-    getValues,
     formState: { errors, isValid },
   } = form;
 
@@ -220,65 +217,11 @@ export function TPSLDialog({
     name: "stopLosses",
   });
 
-  // Watch form state for debug display
   const formData = watch();
 
-  // Helper function to calculate leftover margin for an array
-  const calculateLeftoverMargin = (
-    arrayName: "takeProfits" | "stopLosses",
-    currentIndex: number
-  ): number => {
-    const currentArray = getValues(arrayName);
-    const otherMarginsSum = currentArray.reduce(
-      (sum, entry, index) =>
-        index !== currentIndex ? sum + (entry.margin || 0) : sum,
-      0
-    );
-    return Math.max(0, 100 - otherMarginsSum);
-  };
-
-  // Helper function to calculate leftover margin for a new entry
-  const calculateLeftoverMarginForNewEntry = (
-    arrayName: "takeProfits" | "stopLosses"
-  ): number => {
-    const currentArray = getValues(arrayName);
-    const totalMargin = currentArray.reduce(
-      (sum, entry) => sum + (entry.margin || 0),
-      0
-    );
-    return Math.max(0, 100 - totalMargin);
-  };
-
-  // Helper function to handle margin change with auto-adjustment
-  const handleMarginChange = (
-    arrayName: "takeProfits" | "stopLosses",
-    index: number,
-    value: number,
-    onChange: (value: number) => void,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const leftover = calculateLeftoverMargin(arrayName, index);
-    const finalValue = Math.min(value, leftover);
-
-    onChange(finalValue);
-
-    if (value > leftover) {
-      // Use setTimeout to ensure the value is set before blurring
-      setTimeout(() => {
-        event.target.blur();
-      }, 0);
-    }
-  };
-
   // Calculate total margin for each section separately
-  const tpTotal =
-    formData.takeProfits?.reduce(
-      (sum, entry) => sum + (entry.margin || 0),
-      0
-    ) || 0;
-  const slTotal =
-    formData.stopLosses?.reduce((sum, entry) => sum + (entry.margin || 0), 0) ||
-    0;
+  const tpTotal = calculateTotalMargin(formData.takeProfits || []);
+  const slTotal = calculateTotalMargin(formData.stopLosses || []);
 
   const onSubmit = (data: TPSLFormInput) => {
     // The schema transform will convert input to output (filtering undefined prices)
@@ -331,8 +274,9 @@ export function TPSLDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const leftover =
-                      calculateLeftoverMarginForNewEntry("takeProfits");
+                    const leftover = calculateLeftoverMarginForNewEntry(
+                      formData.takeProfits || []
+                    );
                     appendTP({
                       price: undefined,
                       margin: leftover,
@@ -360,8 +304,7 @@ export function TPSLDialog({
                     errors={errors}
                     isSingleEntry={isSingleEntry}
                     onRemove={() => removeTP(index)}
-                    calculateLeftoverMargin={calculateLeftoverMargin}
-                    handleMarginChange={handleMarginChange}
+                    array={formData.takeProfits || []}
                   />
                 );
               })}
@@ -376,8 +319,9 @@ export function TPSLDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const leftover =
-                      calculateLeftoverMarginForNewEntry("stopLosses");
+                    const leftover = calculateLeftoverMarginForNewEntry(
+                      formData.stopLosses || []
+                    );
                     appendSL({
                       price: undefined,
                       margin: leftover,
@@ -405,19 +349,10 @@ export function TPSLDialog({
                     errors={errors}
                     isSingleEntry={isSingleEntry}
                     onRemove={() => removeSL(index)}
-                    calculateLeftoverMargin={calculateLeftoverMargin}
-                    handleMarginChange={handleMarginChange}
+                    array={formData.stopLosses || []}
                   />
                 );
               })}
-            </div>
-
-            {/* Debug JSON Display */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold">Debug JSON:</h4>
-              <pre className="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-48">
-                {JSON.stringify(formData, null, 2)}
-              </pre>
             </div>
 
             {/* Form-level errors */}

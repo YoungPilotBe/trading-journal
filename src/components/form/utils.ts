@@ -1,6 +1,9 @@
 import { Timeframe } from "@/config/timeframe-order";
 import { Doc } from "convex/_generated/dataModel";
+import React from "react";
 import { TPSLFormInput } from "./schemas/tpsl-schema";
+
+type TpslArrayName = "takeProfits" | "stopLosses";
 
 export function oneOf<T>(input: T): T {
   return input;
@@ -91,3 +94,64 @@ export const transformTpslEntriesToFormInput = (
       stopLosses.length > 0 ? stopLosses : [{ price: undefined, margin: 100 }],
   };
 };
+
+/**
+ * Calculates the leftover margin available for a specific entry in a TP/SL array.
+ * This excludes the current entry's margin from the calculation.
+ */
+export function calculateLeftoverMargin(
+  array: TPSLFormInput[TpslArrayName],
+  currentIndex: number
+): number {
+  const otherMarginsSum = array.reduce(
+    (sum, entry, index) =>
+      index !== currentIndex ? sum + (entry.margin || 0) : sum,
+    0
+  );
+  return Math.max(0, 100 - otherMarginsSum);
+}
+
+/**
+ * Calculates the leftover margin available for a new entry in a TP/SL array.
+ */
+export function calculateLeftoverMarginForNewEntry(
+  array: TPSLFormInput[TpslArrayName]
+): number {
+  const totalMargin = array.reduce(
+    (sum, entry) => sum + (entry.margin || 0),
+    0
+  );
+  return Math.max(0, 100 - totalMargin);
+}
+
+/**
+ * Calculates the total margin used in a TP/SL array.
+ */
+export function calculateTotalMargin(
+  array: TPSLFormInput[TpslArrayName]
+): number {
+  return array.reduce((sum, entry) => sum + (entry.margin || 0), 0);
+}
+
+/**
+ * Handles margin change with auto-adjustment to prevent exceeding 100% total margin.
+ */
+export function handleMarginChange(
+  array: TPSLFormInput[TpslArrayName],
+  index: number,
+  value: number,
+  onChange: (value: number) => void,
+  event: React.ChangeEvent<HTMLInputElement>
+): void {
+  const leftover = calculateLeftoverMargin(array, index);
+  const finalValue = Math.min(value, leftover);
+
+  onChange(finalValue);
+
+  if (value > leftover) {
+    // Use setTimeout to ensure the value is set before blurring
+    setTimeout(() => {
+      event.target.blur();
+    }, 0);
+  }
+}

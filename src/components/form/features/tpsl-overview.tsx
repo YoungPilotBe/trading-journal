@@ -5,6 +5,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import { useFormState } from "react-hook-form";
 import { TPSLFormData, TPSLFormInput } from "../schemas/tpsl-schema";
 
@@ -22,7 +23,7 @@ export function TPSLOverview({ data, onEdit }: TPSLOverviewProps) {
   // Extract error message(s) from the error object
   const getErrorMessage = (): string => {
     if (!tpslError) return "";
-    
+
     // Handle nested error structure (from Zod validation)
     if (typeof tpslError === "object") {
       // Check for root-level message
@@ -43,28 +44,36 @@ export function TPSLOverview({ data, onEdit }: TPSLOverviewProps) {
         }
       }
     }
-    
+
     return "TP/SL validation error";
   };
 
   const errorMessage = getErrorMessage();
 
-  // Don't render if no data
-  if (!data) {
-    return null;
-  }
-
   // Filter entries with valid price and margin > 0
-  const validTPs = data.takeProfits.filter(
-    (tp) => tp.price !== undefined && tp.price > 0 && tp.margin > 0
-  );
-  const validSLs = data.stopLosses.filter(
-    (sl) => sl.price !== undefined && sl.price > 0 && sl.margin > 0
-  );
+  const validTPs =
+    data?.takeProfits.filter(
+      (tp) => tp.price !== undefined && tp.price > 0 && tp.margin > 0
+    ) || [];
+  const validSLs =
+    data?.stopLosses.filter(
+      (sl) => sl.price !== undefined && sl.price > 0 && sl.margin > 0
+    ) || [];
 
-  // Don't render if no valid entries
-  if (validTPs.length === 0 && validSLs.length === 0) {
-    return null;
+  // Show subtle button if no data or no valid entries
+  if (!data || (validTPs.length === 0 && validSLs.length === 0)) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onEdit}
+        className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Configure TP/SL
+      </Button>
+    );
   }
 
   const content = (
@@ -75,21 +84,6 @@ export function TPSLOverview({ data, onEdit }: TPSLOverviewProps) {
       )}
       onClick={onEdit}
     >
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="text-sm font-semibold">TP/SL Configured</h4>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          className="h-6 text-xs"
-        >
-          Edit
-        </Button>
-      </div>
       <div className="space-y-2 text-xs">
         {validTPs.length > 0 && (
           <div>
