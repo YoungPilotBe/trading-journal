@@ -121,33 +121,33 @@ export const upsertTpslEntries = mutation({
     // Always create new entries for the current snapshot
     // Process take profits
     for (const entry of tpsl.takeProfits) {
-      await ctx.db.insert("tpsl_entries", {
-        snapshotId,
-        type: "take_profit",
-        price: entry.price,
-        margin: entry.margin,
-        isHit: entry.isHit ?? false,
-        hitSnapshotId: entry.isHit ? snapshotId : undefined,
-        hitAt: entry.isHit ? now : undefined,
-        createdAt: now,
-        updatedAt: now,
-      });
+        await ctx.db.insert("tpsl_entries", {
+          snapshotId,
+          type: "take_profit",
+          price: entry.price,
+          margin: entry.margin,
+          isHit: entry.isHit ?? false,
+          hitSnapshotId: entry.isHit ? snapshotId : undefined,
+          hitAt: entry.isHit ? now : undefined,
+          createdAt: now,
+          updatedAt: now,
+        });
     }
 
     // Process stop losses
     for (const entry of tpsl.stopLosses) {
-      await ctx.db.insert("tpsl_entries", {
-        snapshotId,
-        type: "stop_loss",
-        price: entry.price,
-        margin: entry.margin,
-        isHit: entry.isHit ?? false,
-        hitSnapshotId: entry.isHit ? snapshotId : undefined,
-        hitAt: entry.isHit ? now : undefined,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
+        await ctx.db.insert("tpsl_entries", {
+          snapshotId,
+          type: "stop_loss",
+          price: entry.price,
+          margin: entry.margin,
+          isHit: entry.isHit ?? false,
+          hitSnapshotId: entry.isHit ? snapshotId : undefined,
+          hitAt: entry.isHit ? now : undefined,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
 
     // Update snapshot with entry price
     await ctx.db.patch(snapshotId, {

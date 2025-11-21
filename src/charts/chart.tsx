@@ -62,8 +62,7 @@ const ChartContent = <T extends ChartType>({
   if (chartType === "r-multiple") {
     const templateId =
       (props as ChartProps<"r-multiple">)?.templateId ?? undefined;
-    const filterType =
-      (props as ChartProps<"r-multiple">)?.filterType ?? "all";
+    const filterType = (props as ChartProps<"r-multiple">)?.filterType ?? "all";
     return (
       <TemplateView
         data={data as TemplateChartData[] | null}
@@ -77,12 +76,15 @@ const ChartContent = <T extends ChartType>({
   }
 
   if (chartType === "r-multiple-evolution") {
+    const tradeSetupId =
+      (props as ChartProps<"r-multiple-evolution">)?.tradeSetupId ?? undefined;
     return (
       <EvolutionLineChart
         data={data as EvolutionChartData[] | null}
         chartConfig={chartConfig}
         chartColors={chartColors as EvolutionChartColors | null}
         isLoading={isLoading}
+        tradeSetupId={tradeSetupId}
       />
     );
   }

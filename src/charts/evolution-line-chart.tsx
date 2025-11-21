@@ -1,6 +1,7 @@
 import StatusOption from "@/components/status-option";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Doc } from "convex/_generated/dataModel";
+import { useActualRMultipleEvolution } from "@/hooks/charts/use-actual-r-multiple-evolution";
+import type { Doc, Id } from "convex/_generated/dataModel";
 import {
   Area,
   Line,
@@ -22,6 +23,7 @@ type EvolutionLineChartProps = {
   chartConfig: BaseChartConfig | null;
   chartColors: EvolutionChartColors | null;
   isLoading?: boolean;
+  tradeSetupId?: Id<"trade_setups">;
 };
 
 export const EvolutionLineChart = ({
@@ -29,8 +31,13 @@ export const EvolutionLineChart = ({
   chartConfig,
   chartColors,
   isLoading = false,
+  tradeSetupId,
 }: EvolutionLineChartProps) => {
-  if (isLoading) {
+  // Fetch actual R-multiple data if tradeSetupId is provided
+  const { data: actualData, isLoading: isActualLoading } =
+    useActualRMultipleEvolution(tradeSetupId ?? null, !!tradeSetupId);
+
+  if (isLoading || isActualLoading) {
     return (
       <div className="w-full h-[400px] space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -61,18 +68,37 @@ export const EvolutionLineChart = ({
     return value.toFixed(2);
   };
 
-  // Filter out null rMultiple values for the line, but keep them for tooltips
-  const chartData = data.map((item) => ({
-    ...item,
-    rMultiple: item.rMultiple ?? 0, // Use 0 for null values so line can render
-  }));
+  // Merge actual R-multiple data with main data by snapshotId
+  const actualDataMap = new Map(
+    (actualData || []).map((item) => [item.snapshotId, item.rMultiple])
+  );
 
-  // Calculate min and max R-Multiple values for gradient positioning
-  const rMultipleValues = chartData
-    .map((item) => item.rMultiple)
-    .filter((val) => val !== null && val !== undefined) as number[];
-  const minValue = Math.min(...rMultipleValues, 0);
-  const maxValue = Math.max(...rMultipleValues, 1);
+  // Combine both datasets - store original null values for tooltip and min/max calculation
+  const chartData = data.map((item) => {
+    const actualRMultipleValue = actualDataMap.get(item.snapshotId) ?? null;
+    return {
+      ...item,
+      rMultiple: item.rMultiple ?? 0, // Use 0 for null values so line can render
+      actualRMultiple: actualRMultipleValue ?? 0, // Use 0 for null values so line can render
+      actualRMultipleOriginal: actualRMultipleValue, // Keep original for tooltip and calculations
+    };
+  });
+
+  // Calculate min and max R-Multiple values for gradient positioning (include both datasets)
+  // Use original values (not the 0 placeholders) for accurate min/max
+  const allRMultipleValues = [
+    ...data
+      .map((item) => item.rMultiple)
+      .filter((val) => val !== null && val !== undefined),
+    ...(actualData || [])
+      .map((item) => item.rMultiple)
+      .filter((val) => val !== null && val !== undefined),
+  ] as number[];
+
+  const minValue =
+    allRMultipleValues.length > 0 ? Math.min(...allRMultipleValues, 0) : 0;
+  const maxValue =
+    allRMultipleValues.length > 0 ? Math.max(...allRMultipleValues, 1) : 1;
 
   // Ensure domain includes 1 for proper gradient alignment
   const yDomainMin = Math.min(minValue, 0);
@@ -81,7 +107,8 @@ export const EvolutionLineChart = ({
 
   // Colors
   const roseRed = "oklch(0.65 0.18 15)"; // soft rose red
-  const neutralWhite = "oklch(0.985 0.001 106.423)"; // neutral white
+  const neutralWhite = "oklch(0.96 0.01 106.423)"; // more muted neutral white
+  const emeraldGreen = "oklch(0.696 0.17 162.48)"; // emerald green (chart-2)
 
   // Chart dimensions (accounting for margins)
   const chartHeight = 400;
@@ -145,6 +172,31 @@ export const EvolutionLineChart = ({
               {/* Bottom: rose red */}
               <stop offset="100%" stopColor={roseRed} stopOpacity={0.2} />
             </linearGradient>
+            {/* Gradient for actual R-Multiple line: emerald green above 1R, rose red below 1R */}
+            <linearGradient
+              id="actualRMultipleGradient"
+              gradientUnits="userSpaceOnUse"
+              x1="0"
+              y1={marginTop}
+              x2="0"
+              y2={chartHeight - marginBottom}
+            >
+              {/* Top of chart (maxValue) = emerald green for values above 1 */}
+              <stop offset="0%" stopColor={emeraldGreen} stopOpacity={1} />
+              {/* At y=1 transition point */}
+              <stop
+                offset={`${((y1PixelPosition - marginTop) / chartAreaHeight) * 100}%`}
+                stopColor={emeraldGreen}
+                stopOpacity={1}
+              />
+              <stop
+                offset={`${((y1PixelPosition - marginTop) / chartAreaHeight) * 100}%`}
+                stopColor={roseRed}
+                stopOpacity={1}
+              />
+              {/* Bottom of chart (minValue) = rose red for values below 1 */}
+              <stop offset="100%" stopColor={roseRed} stopOpacity={1} />
+            </linearGradient>
           </defs>
           <XAxis
             dataKey="index"
@@ -185,11 +237,14 @@ export const EvolutionLineChart = ({
             type="monotone"
             dataKey="rMultiple"
             stroke="url(#rMultipleGradient)"
-            strokeWidth={2}
+            strokeWidth={1}
+            strokeDasharray="4 4"
             dot={({ cx, cy, payload }) => {
               if (cx === undefined || cy === undefined) return null;
 
-              const item = payload as EvolutionChartData;
+              const item = payload as EvolutionChartData & {
+                actualRMultiple?: number | null;
+              };
               const value = item.rMultiple ?? 0;
               const isAboveOne = value >= 1;
               const dotColor = isAboveOne ? neutralWhite : roseRed;
@@ -222,10 +277,40 @@ export const EvolutionLineChart = ({
             activeDot={{ r: 6 }}
             connectNulls={false}
           />
+          {/* Actual R-Multiple line (calculated from TPSL entries) */}
+          {actualData && actualData.length > 0 && (
+            <Line
+              type="monotone"
+              dataKey="actualRMultiple"
+              stroke="url(#actualRMultipleGradient)"
+              strokeWidth={2}
+              dot={({ cx, cy, payload }) => {
+                if (cx === undefined || cy === undefined) return null;
+
+                const item = payload as EvolutionChartData & {
+                  actualRMultiple?: number;
+                  actualRMultipleOriginal?: number | null;
+                };
+                const value = item.actualRMultipleOriginal;
+                if (value === null || value === undefined) return null;
+
+                const isAboveOne = value >= 1;
+                const dotColor = isAboveOne ? emeraldGreen : roseRed;
+
+                return (
+                  <circle cx={cx} cy={cy} r={4} fill={dotColor} stroke="none" />
+                );
+              }}
+              activeDot={{ r: 6 }}
+              connectNulls={false}
+            />
+          )}
           <Tooltip
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
-                const data = payload[0].payload as EvolutionChartData;
+                const data = payload[0].payload as EvolutionChartData & {
+                  actualRMultipleOriginal?: number | null;
+                };
                 return (
                   <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
                     <div className="mb-2">
@@ -238,6 +323,15 @@ export const EvolutionLineChart = ({
                     <p className="text-xs text-muted-foreground">
                       R-Multiple: {formatRMultiple(data.rMultiple)}
                     </p>
+                    {data.actualRMultipleOriginal !== null &&
+                      data.actualRMultipleOriginal !== undefined && (
+                        <p className="text-xs text-muted-foreground">
+                          Actual R-Multiple:{" "}
+                          <span style={{ color: emeraldGreen }}>
+                            {formatRMultiple(data.actualRMultipleOriginal)}
+                          </span>
+                        </p>
+                      )}
                     <p className="text-xs text-muted-foreground">
                       Created: {new Date(data.createdAt).toLocaleDateString()}
                     </p>
