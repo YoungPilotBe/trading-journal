@@ -1,6 +1,7 @@
 import NumberField from "@/components/form/components/number-field";
 import {
   TPSLFormData,
+  TPSLFormInput,
   createTpslFormSchema,
 } from "@/components/form/schemas/tpsl-schema";
 import { Button } from "@/components/ui/button";
@@ -37,12 +38,12 @@ export function TPSLDialog({
   initialValues,
   onSave,
 }: TPSLDialogProps) {
-  const defaultValues: TPSLFormData = initialValues || {
+  const defaultValues: TPSLFormInput = initialValues || {
     takeProfits: [{ price: undefined, margin: 100 }],
     stopLosses: [{ price: undefined, margin: 100 }],
   };
 
-  const form = useForm<TPSLFormData>({
+  const form = useForm<TPSLFormInput>({
     resolver: zodResolver(createTpslFormSchema(direction)),
     defaultValues,
     mode: "onChange",
@@ -51,7 +52,7 @@ export function TPSLDialog({
   // Reset form when initialValues or direction changes
   useEffect(() => {
     if (open) {
-      const valuesToUse = initialValues || {
+      const valuesToUse: TPSLFormInput = initialValues || {
         takeProfits: [{ price: undefined, margin: 100 }],
         stopLosses: [{ price: undefined, margin: 100 }],
       };
@@ -153,10 +154,13 @@ export function TPSLDialog({
     formData.stopLosses?.reduce((sum, entry) => sum + (entry.margin || 0), 0) ||
     0;
 
-  const onSubmit = (data: TPSLFormData) => {
+  const onSubmit = (data: TPSLFormInput) => {
+    // The schema transform will convert input to output (filtering undefined prices)
+    const validatedData = createTpslFormSchema(direction).parse(data);
+
     // Call onSave callback if provided
     if (onSave) {
-      onSave(data);
+      onSave(validatedData);
     }
     toast.success("TP/SL configured successfully");
     onOpenChange(false);

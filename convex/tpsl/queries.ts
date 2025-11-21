@@ -1,6 +1,4 @@
-import { v } from "convex/values";
-import { query } from "../_generated/server";
-
+/**
 // Placeholder query for loading TP/SL entries by snapshot
 // This will be implemented later when we need to load TP/SL data back into the dialog
 export const getTpslEntriesBySnapshot = query({
@@ -31,3 +29,4 @@ export const getTpslEntriesBySnapshot = query({
   },
 });
 
+ */

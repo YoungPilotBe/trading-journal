@@ -29,3 +29,20 @@ export const emotionUnion = v.union(
   v.literal("calm"),
   v.literal("revenge")
 );
+
+export const tpslSchema = v.optional(
+  v.object({
+    takeProfits: v.array(
+      v.object({
+        price: v.number(),
+        margin: v.number(),
+      })
+    ),
+    stopLosses: v.array(
+      v.object({
+        price: v.number(),
+        margin: v.number(),
+      })
+    ),
+  })
+);

@@ -64,9 +64,9 @@ const addTradeSetupSchemaBase = z.discriminatedUnion("status", [
   otherStatusTradeSetupSchema,
 ]);
 
-// Add TP/SL validation against direction
-export const addTradeSetupSchema = addTradeSetupSchemaBase.superRefine(
-  (data, ctx) => {
+// Add TP/SL validation and transformation against direction
+export const addTradeSetupSchema = addTradeSetupSchemaBase
+  .superRefine((data, ctx) => {
     // Only validate TP/SL if it exists
     if (!data.tpsl) {
       return;
@@ -86,8 +86,19 @@ export const addTradeSetupSchema = addTradeSetupSchemaBase.superRefine(
         });
       });
     }
-  }
-);
+  })
+  .transform((data) => {
+    // Transform TP/SL data if it exists (filters out undefined prices)
+    if (data.tpsl) {
+      const tpslSchema = createTpslFormSchema(data.direction);
+      const result = tpslSchema.safeParse(data.tpsl);
+      return {
+        ...data,
+        tpsl: result.success ? result.data : data.tpsl,
+      };
+    }
+    return data;
+  });
 
 // Derived schemas using composition
 // Snapshot schema without imageId (for createTradeSetupWithSnapshot)
@@ -148,14 +159,10 @@ export function splitAddTradeSetupData<
   T extends z.infer<typeof addTradeSetupSchema>,
 >(data: T) {
   // Use schema without imageId since it's passed separately to the mutation
-  const snapshot = snapshotSchemaWithoutImageId.parse({
-    timeframes: data.timeframes,
-    status: data.status,
-    emotion: data.emotion,
-    rMultiple: data.rMultiple,
-  });
+  const snapshot = snapshotSchemaWithoutImageId.parse(data);
   const tradeSetup = createTradeSetupSchema.parse(data);
-  return { snapshot, tradeSetup };
+  const tpsl = data.tpsl;
+  return { snapshot, tradeSetup, tpsl };
 }
 
 export const tradeDetailsSchemaWithSplit = tradeDetailsSchema.transform(

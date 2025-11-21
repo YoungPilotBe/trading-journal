@@ -1,7 +1,12 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
-import { emotionUnion, resultUnion, statusUnion } from "../constants/unions";
+import {
+  emotionUnion,
+  resultUnion,
+  statusUnion,
+  tpslSchema,
+} from "../constants/unions";
 
 export const createTradeSetupWithSnapshot = mutation({
   args: {
@@ -18,12 +23,17 @@ export const createTradeSetupWithSnapshot = mutation({
       rMultiple: v.optional(v.number()),
     }),
     imageId: v.id("tradingview_images"),
+    tpsl: tpslSchema,
   },
   returns: {
     tradeSetupId: v.id("trade_setups"),
     snapshotId: v.id("snapshots"),
   },
-  handler: async (ctx, { tradeSetup, snapshot, imageId }) => {
+  handler: async (ctx, { tradeSetup, snapshot, imageId, tpsl }) => {
+    // tpsl is optional and will be processed in a future update
+    // For now, it's accepted but not persisted (client-side only)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    void tpsl;
     const now = Date.now();
 
     // Create the trade setup
@@ -40,6 +50,11 @@ export const createTradeSetupWithSnapshot = mutation({
       imageId,
       emotion: snapshot.emotion ?? undefined,
       createdAt: now,
+    });
+
+    await ctx.runMutation(api.tpsl.mutations.createTpslEntries, {
+      snapshotId,
+      tpsl,
     });
 
     // Link the image to this snapshot (use first timeframe for image field)

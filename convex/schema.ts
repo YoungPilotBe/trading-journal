@@ -130,4 +130,25 @@ export default defineSchema({
   })
     .index("by_title", ["title"])
     .index("by_created_at", ["createdAt"]),
+
+  tpsl_entries: defineTable({
+    // Reference to the snapshot this TP/SL entry belongs to
+    snapshotId: v.id("snapshots"),
+
+    // Type of entry: take_profit or stop_loss
+    type: v.union(v.literal("take_profit"), v.literal("stop_loss")),
+
+    // Price and margin for this entry
+    price: v.number(),
+    margin: v.number(),
+
+    // Hit tracking
+    isHit: v.boolean(),
+    hitSnapshotId: v.optional(v.id("snapshots")),
+    hitAt: v.optional(v.number()),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_snapshot", ["snapshotId"]),
 });

@@ -130,9 +130,28 @@ export function createTpslFormSchema(direction: "long" | "short") {
           });
         }
       }
+    })
+    .transform((data) => {
+      // Filter out entries with undefined prices AFTER validation passes
+      // This ensures the output only contains entries with valid prices
+      return {
+        takeProfits: data.takeProfits.filter(
+          (entry): entry is { price: number; margin: number } =>
+            entry.price !== undefined && entry.price > 0
+        ),
+        stopLosses: data.stopLosses.filter(
+          (entry): entry is { price: number; margin: number } =>
+            entry.price !== undefined && entry.price > 0
+        ),
+      };
     });
 }
 
+// Input type for form editing (allows undefined prices for placeholders)
+export type TPSLFormInput = z.input<ReturnType<typeof createTpslFormSchema>>;
+
+// Output type after validation (only entries with valid prices)
+export type TPSLFormData = z.infer<ReturnType<typeof createTpslFormSchema>>;
+
 // Export TypeScript types
 export type TPSLEntry = z.infer<typeof tpslEntrySchema>;
-export type TPSLFormData = z.infer<ReturnType<typeof createTpslFormSchema>>;
