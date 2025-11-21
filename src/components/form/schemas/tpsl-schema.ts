@@ -33,22 +33,67 @@ const tpslArraySchema = z
     }
   );
 
-// Main TP/SL form schema
-export const tpslFormSchema = z
-  .object({
-    takeProfits: tpslArraySchema,
-    stopLosses: tpslArraySchema,
-  })
-  .refine(
-    (data) => {
-      // At least one entry required in TP or SL
-      return data.takeProfits.length > 0 || data.stopLosses.length > 0;
-    },
-    {
-      message: "At least one Take Profit or Stop Loss entry is required",
-    }
-  );
+// Function to create TP/SL form schema with direction-based validation
+export function createTpslFormSchema(direction: "long" | "short") {
+  return z
+    .object({
+      takeProfits: tpslArraySchema,
+      stopLosses: tpslArraySchema,
+    })
+    .refine(
+      (data) => {
+        // At least one entry required in TP or SL
+        return data.takeProfits.length > 0 || data.stopLosses.length > 0;
+      },
+      {
+        message: "At least one Take Profit or Stop Loss entry is required",
+      }
+    )
+    .superRefine((data, ctx) => {
+      // Filter out entries with invalid prices (0 or less) for validation
+      const validTPPrices = data.takeProfits
+        .map((entry) => entry.price)
+        .filter((price) => price > 0);
+      const validSLPrices = data.stopLosses
+        .map((entry) => entry.price)
+        .filter((price) => price > 0);
+
+      // Skip validation if either array has no valid prices
+      if (validTPPrices.length === 0 || validSLPrices.length === 0) {
+        return;
+      }
+
+      const minTP = Math.min(...validTPPrices);
+      const maxTP = Math.max(...validTPPrices);
+      const minSL = Math.min(...validSLPrices);
+      const maxSL = Math.max(...validSLPrices);
+
+      if (direction === "long") {
+        // For longs: All TP prices must be higher than all SL prices
+        // This means: min TP > max SL
+        if (minTP <= maxSL) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              "For long positions, all Take Profit prices must be higher than all Stop Loss prices",
+            path: ["takeProfits"],
+          });
+        }
+      } else if (direction === "short") {
+        // For shorts: All TP prices must be lower than all SL prices
+        // This means: max TP < min SL
+        if (maxTP >= minSL) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              "For short positions, all Take Profit prices must be lower than all Stop Loss prices",
+            path: ["takeProfits"],
+          });
+        }
+      }
+    });
+}
 
 // Export TypeScript types
 export type TPSLEntry = z.infer<typeof tpslEntrySchema>;
-export type TPSLFormData = z.infer<typeof tpslFormSchema>;
+export type TPSLFormData = z.infer<ReturnType<typeof createTpslFormSchema>>;

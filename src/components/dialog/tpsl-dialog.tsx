@@ -1,7 +1,7 @@
 import NumberField from "@/components/form/components/number-field";
 import {
   TPSLFormData,
-  tpslFormSchema,
+  createTpslFormSchema,
 } from "@/components/form/schemas/tpsl-schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,10 +29,8 @@ interface TPSLDialogProps {
 }
 
 export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
-  // direction is available for future use (e.g., validation rules)
-  void direction;
   const form = useForm<TPSLFormData>({
-    resolver: zodResolver(tpslFormSchema),
+    resolver: zodResolver(createTpslFormSchema(direction)),
     defaultValues: {
       takeProfits: [{ price: 0, weight: 100 }],
       stopLosses: [{ price: 0, weight: 100 }],
@@ -47,7 +45,7 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
     watch,
     reset,
     getValues,
-    formState: { errors },
+    formState: { errors, isValid },
   } = form;
 
   const {
@@ -140,6 +138,15 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
 
         <FormProvider {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Form-level direction validation error */}
+            {errors.takeProfits &&
+              typeof errors.takeProfits === "object" &&
+              "message" in errors.takeProfits && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg border border-destructive/20">
+                  {errors.takeProfits.message as string}
+                </div>
+              )}
+
             {/* Take Profits Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -340,23 +347,6 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
                   {slTotal.toFixed(2)}%
                 </span>
               </div>
-              {(errors.takeProfits &&
-                typeof errors.takeProfits === "object" &&
-                "message" in errors.takeProfits) ||
-              (errors.stopLosses &&
-                typeof errors.stopLosses === "object" &&
-                "message" in errors.stopLosses) ? (
-                <p className="text-xs text-destructive mt-1">
-                  {(errors.takeProfits &&
-                    typeof errors.takeProfits === "object" &&
-                    "message" in errors.takeProfits &&
-                    (errors.takeProfits.message as string)) ||
-                    (errors.stopLosses &&
-                      typeof errors.stopLosses === "object" &&
-                      "message" in errors.stopLosses &&
-                      (errors.stopLosses.message as string))}
-                </p>
-              ) : null}
             </div>
 
             {/* Debug JSON Display */}
@@ -368,17 +358,9 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
             </div>
 
             {/* Form-level errors */}
-            {(errors.root ||
-              (errors.takeProfits &&
-                typeof errors.takeProfits === "object" &&
-                !Array.isArray(errors.takeProfits) &&
-                "message" in errors.takeProfits)) && (
+            {errors.root && (
               <div className="text-sm text-destructive p-2 bg-destructive/10 rounded">
-                {errors.root?.message ||
-                  (errors.takeProfits &&
-                    typeof errors.takeProfits === "object" &&
-                    "message" in errors.takeProfits &&
-                    (errors.takeProfits.message as string))}
+                {errors.root.message}
               </div>
             )}
 
@@ -390,7 +372,9 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={!isValid}>
+                Save
+              </Button>
             </DialogFooter>
           </form>
         </FormProvider>
