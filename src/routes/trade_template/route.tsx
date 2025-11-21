@@ -7,11 +7,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { BlockNoteEditorComponent, useBlockNoteEditor } from "@/editor";
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -21,11 +16,11 @@ import {
   MoveIcon,
   PlusIcon,
   SearchIcon,
-  TrashIcon,
 } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 
 import AutoSavePortal from "@/components/portals/auto-save-portal";
+import { TemplateAnalytics } from "@/components/template-analytics";
 import { useDialog } from "@/contexts/dialog-context";
 import { useMoveImage } from "@/hooks/drawings/use-move-image";
 import { useGetDrawing } from "@/hooks/drawings/useGetDrawing";
@@ -378,27 +373,21 @@ function RouteComponent() {
           </BreadcrumbList>
         </Breadcrumb>
 
-        <div className="top-1/2 absolute -translate-y-1/2 right-0 inline-flex flex-row gap-2">
+        <div className="top-1/2 absolute -translate-y-1/2 right-0 inline-flex flex-row gap-2 items-center">
           <AutoSavePortal isSaving={isUpdatingTemplate || isCreatingTemplate} />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => {
-                  if (existingTemplate) {
-                    openDialog("DELETE_TRADE_TEMPLATE", {
-                      template: existingTemplate,
-                    });
-                  }
-                }}
-                variant={"ghost"}
-              >
-                <TrashIcon className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Delete template</p>
-            </TooltipContent>
-          </Tooltip>
+          {templateId && (
+            <TemplateAnalytics
+              templateId={templateId as Id<"trade_templates">}
+              existingTemplate={existingTemplate}
+              onDelete={() => {
+                if (existingTemplate) {
+                  openDialog("DELETE_TRADE_TEMPLATE", {
+                    template: existingTemplate,
+                  });
+                }
+              }}
+            />
+          )}
         </div>
       </div>
 

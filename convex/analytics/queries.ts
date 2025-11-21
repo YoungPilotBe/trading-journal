@@ -85,7 +85,8 @@ export const findSimilarTradeSetups = query({
         // Only include results above the minimum similarity threshold
         if (similarity.similarityScore >= minSimilarityScore) {
           // Get most recent snapshot's rMultiple
-          const latestSnapshot = otherTradeSetup.snapshots[otherTradeSetup.snapshots.length - 1];
+          const latestSnapshot =
+            otherTradeSetup.snapshots[otherTradeSetup.snapshots.length - 1];
           similarities.push({
             ...similarity,
             asset: otherTradeSetup.asset,
@@ -377,5 +378,92 @@ export const getSnapshotByStatus = query({
 
     // If no exact match, return the most recent snapshot
     return snapshots[0] || null;
+  },
+});
+
+/**
+ * Get analytics for a specific trade template
+ * Returns count of trade setups using the template, win/loss statistics, and R-multiple averages
+ */
+export const getTemplateAnalytics = query({
+  args: {
+    templateId: v.id("trade_templates"),
+  },
+  handler: async (ctx, { templateId }) => {
+    // Query all trade setups that use this template
+    const tradeSetups = await ctx.db
+      .query("trade_setups")
+      .withIndex("by_trade_template", (q) => q.eq("trade_template", templateId))
+      .collect();
+
+    // Count total trade setups
+    const tradeSetupCount = tradeSetups.length;
+
+    // Calculate win/loss counts (excluding breakeven)
+    let winCount = 0;
+    let lossCount = 0;
+
+    // R-multiple calculations
+    let allRMultipleTotal = 0;
+    let allRMultipleCount = 0;
+    let closedRMultipleTotal = 0;
+    let closedRMultipleCount = 0;
+
+    for (const tradeSetup of tradeSetups) {
+      if (tradeSetup.result === "win") {
+        winCount++;
+      } else if (tradeSetup.result === "loss") {
+        lossCount++;
+      }
+      // Exclude breakeven trades from win/loss ratio
+
+      // Get all snapshots for this trade setup
+      const snapshots = await ctx.db
+        .query("snapshots")
+        .withIndex("by_trade_setup", (q) =>
+          q.eq("tradeSetupId", tradeSetup._id)
+        )
+        .collect();
+
+      // Calculate R-multiple for "all" filter (all statuses except canceled)
+      const allSnapshots = snapshots.filter(
+        (snapshot) =>
+          ["idea", "watching", "executed", "closed", "reviewed"].includes(
+            snapshot.status
+          ) &&
+          snapshot.rMultiple !== undefined &&
+          snapshot.rMultiple !== null
+      );
+
+      for (const snapshot of allSnapshots) {
+        allRMultipleTotal += snapshot.rMultiple!;
+        allRMultipleCount++;
+      }
+
+      // Calculate R-multiple for "closed" filter (only closed/reviewed)
+      const closedSnapshots = snapshots.filter(
+        (snapshot) =>
+          ["closed", "reviewed"].includes(snapshot.status) &&
+          snapshot.rMultiple !== undefined &&
+          snapshot.rMultiple !== null
+      );
+
+      for (const snapshot of closedSnapshots) {
+        closedRMultipleTotal += snapshot.rMultiple!;
+        closedRMultipleCount++;
+      }
+    }
+
+    return {
+      tradeSetupCount,
+      winCount,
+      lossCount,
+      avgRMultipleAll:
+        allRMultipleCount > 0 ? allRMultipleTotal / allRMultipleCount : null,
+      avgRMultipleClosed:
+        closedRMultipleCount > 0
+          ? closedRMultipleTotal / closedRMultipleCount
+          : null,
+    };
   },
 });

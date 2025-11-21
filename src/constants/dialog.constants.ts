@@ -1,6 +1,7 @@
 import { DeleteSnapshotDialog } from "@/components/dialog/delete-snapshot-dialog";
 import { DeleteTradeSetupDialog } from "@/components/dialog/delete-trade-setup-dialog";
 import { DeleteTradeTemplateDialog } from "@/components/dialog/delete-trade-template-dialog";
+import { ExcalidrawDialog } from "@/components/dialog/excalidraw-dialog";
 import { FindDrawingDialog } from "@/components/dialog/find-drawing-dialog";
 import NotesDialog from "@/components/dialog/notes-dialog";
 import { RemoveTimeframeConfirmationDialog } from "@/components/dialog/remove-timeframe-confirmation-dialog";
@@ -56,6 +57,10 @@ export const DIALOGS = {
   TPSL: {
     key: "TPSL" as const,
     component: TPSLDialog,
+  },
+  EXCALIDRAW: {
+    key: "EXCALIDRAW" as const,
+    component: ExcalidrawDialog,
   },
 } as const;
 

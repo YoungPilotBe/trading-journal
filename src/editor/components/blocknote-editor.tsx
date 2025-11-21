@@ -3,12 +3,11 @@ import "@blocknote/core/fonts/inter.css";
 import "@blocknote/shadcn/style.css";
 import "@blocknote/xl-ai/style.css";
 
+import { useDialog } from "@/contexts/dialog-context";
 import { BlockNoteEditor } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/shadcn";
 import { AIMenuController } from "@blocknote/xl-ai";
-import { useState } from "react";
 import { FormattingToolbarWithAI, SuggestionMenuWithAI } from "../menu";
-import { ExcalidrawEditor } from "./excalidraw-editor";
 
 export interface BlockNoteEditorComponentProps {
   editor: BlockNoteEditor;
@@ -27,7 +26,7 @@ export function BlockNoteEditorComponent({
   editable = true,
   children,
 }: BlockNoteEditorComponentProps) {
-  const [isExcalidrawOpen, setIsExcalidrawOpen] = useState(false);
+  const { openDialog } = useDialog();
 
   const handleExcalidrawSave = async (imageBlob: Blob) => {
     try {
@@ -81,16 +80,13 @@ export function BlockNoteEditorComponent({
         <FormattingToolbarWithAI />
         <SuggestionMenuWithAI
           editor={editor}
-          onOpenExcalidraw={() => setIsExcalidrawOpen(true)}
+          onOpenExcalidraw={() =>
+            openDialog("EXCALIDRAW", { onSave: handleExcalidrawSave })
+          }
         />
         <AIMenuController />
         {children}
       </BlockNoteView>
-      <ExcalidrawEditor
-        open={isExcalidrawOpen}
-        onOpenChange={setIsExcalidrawOpen}
-        onSave={handleExcalidrawSave}
-      />
     </>
   );
 }

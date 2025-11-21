@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { DialogHeader } from "@/components/ui/dialog";
 import { Excalidraw, exportToBlob } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
@@ -7,16 +7,11 @@ import { SaveIcon } from "lucide-react";
 import { useState } from "react";
 
 interface ExcalidrawEditorProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onSave: (imageBlob: Blob) => void;
+  onClose: () => void;
 }
 
-export function ExcalidrawEditor({
-  open,
-  onOpenChange,
-  onSave,
-}: ExcalidrawEditorProps) {
+export function ExcalidrawEditor({ onSave, onClose }: ExcalidrawEditorProps) {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
 
@@ -53,7 +48,7 @@ export function ExcalidrawEditor({
       });
 
       onSave(blob);
-      onOpenChange(false);
+      onClose();
     } catch (error) {
       console.error("Error exporting Excalidraw drawing:", error);
     } finally {
@@ -62,27 +57,29 @@ export function ExcalidrawEditor({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className=" !max-w-[90vw] !w-full !max-h-[90vh] !h-full flex flex-col p-0 overflow-hidden gap-0"
-        showCloseButton={false}
+    <>
+      <DialogHeader className="px-6 py-2 border-b flex-shrink-0">
+        <Button
+          variant={"default"}
+          className="w-fit"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          <SaveIcon className="size-3" />
+          {isSaving ? "Saving..." : "Save"}
+        </Button>
+      </DialogHeader>
+      <div 
+        className="flex-1 min-h-0 w-full h-full" 
+        style={{ 
+          position: "relative",
+          padding: 0,
+          margin: 0,
+          overflow: "hidden"
+        }}
       >
-        <DialogHeader className="px-6 py-2 border-b">
-          <Button
-            variant={"default"}
-            className="w-fit"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            <SaveIcon className="size-3" />
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
-        </DialogHeader>
-        <Excalidraw
-          excalidrawAPI={(api) => setExcalidrawAPI(api)}
-          theme="dark"
-        />
-      </DialogContent>
-    </Dialog>
+        <Excalidraw excalidrawAPI={(api) => setExcalidrawAPI(api)} theme="dark" />
+      </div>
+    </>
   );
 }
