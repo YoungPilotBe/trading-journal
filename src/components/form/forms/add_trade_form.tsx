@@ -63,9 +63,8 @@ const AddTradeForm = ({
     shouldUnregister: true,
   });
 
-  const { register, control, handleSubmit, watch, setValue } = form;
+  const { register, control, handleSubmit, watch } = form;
   const direction = watch("direction");
-  const tpsl = watch("tpsl");
 
   function handleNavigate(args: {
     tradeSetupId: Id<"trade_setups">;
