@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Controller,
   FormProvider,
@@ -26,17 +26,45 @@ interface TPSLDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   direction: "long" | "short";
+  initialValues?: TPSLFormData;
+  onSave?: (data: TPSLFormData) => void;
 }
 
-export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
+export function TPSLDialog({
+  open,
+  onOpenChange,
+  direction,
+  initialValues,
+  onSave,
+}: TPSLDialogProps) {
+  const defaultValues: TPSLFormData = initialValues || {
+    takeProfits: [{ price: undefined, margin: 100 }],
+    stopLosses: [{ price: undefined, margin: 100 }],
+  };
+
   const form = useForm<TPSLFormData>({
     resolver: zodResolver(createTpslFormSchema(direction)),
-    defaultValues: {
-      takeProfits: [{ price: undefined, margin: 100 }],
-      stopLosses: [{ price: undefined, margin: 100 }],
-    },
+    defaultValues,
     mode: "onChange",
   });
+
+  // Reset form when initialValues or direction changes
+  useEffect(() => {
+    if (open) {
+      const valuesToUse = initialValues || {
+        takeProfits: [{ price: undefined, margin: 100 }],
+        stopLosses: [{ price: undefined, margin: 100 }],
+      };
+      form.reset(valuesToUse);
+      form.clearErrors();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, direction]);
+
+  // Update resolver when direction changes
+  useEffect(() => {
+    form.clearErrors();
+  }, [direction, form]);
 
   const {
     register,
@@ -125,7 +153,11 @@ export function TPSLDialog({ open, onOpenChange, direction }: TPSLDialogProps) {
     formData.stopLosses?.reduce((sum, entry) => sum + (entry.margin || 0), 0) ||
     0;
 
-  const onSubmit = () => {
+  const onSubmit = (data: TPSLFormData) => {
+    // Call onSave callback if provided
+    if (onSave) {
+      onSave(data);
+    }
     toast.success("TP/SL configured successfully");
     onOpenChange(false);
   };

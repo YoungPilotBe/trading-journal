@@ -1,6 +1,7 @@
 import { TIMEFRAMES } from "@/config/timeframe-order";
 import { Id } from "convex/_generated/dataModel";
 import { z } from "zod";
+import { TPSLFormData, createTpslFormSchema } from "./tpsl-schema";
 
 // Define the valid timeframes as a union type
 export const timeframeSchema = z.enum(TIMEFRAMES);
@@ -35,6 +36,8 @@ const baseTradeFormSchema = z.object({
   rMultiple: z.optional(z.number()),
   status: statusEnum,
   result: resultEnum.optional(),
+  // TP/SL configuration (optional, validated against direction)
+  tpsl: z.custom<TPSLFormData>().optional(),
   // Additional fields for mutations
   trade_template: z.custom<Id<"trade_templates">>().optional(),
   imageId: z.custom<Id<"tradingview_images">>().optional(),
@@ -55,10 +58,36 @@ const otherStatusTradeSetupSchema = baseTradeFormSchema
     status: z.enum(["idea", "watching", "executed", "reviewed", "canceled"]),
   });
 
-export const addTradeSetupSchema = z.discriminatedUnion("status", [
+// Base schema with TP/SL validation
+const addTradeSetupSchemaBase = z.discriminatedUnion("status", [
   closedTradeSetupSchema,
   otherStatusTradeSetupSchema,
 ]);
+
+// Add TP/SL validation against direction
+export const addTradeSetupSchema = addTradeSetupSchemaBase.superRefine(
+  (data, ctx) => {
+    // Only validate TP/SL if it exists
+    if (!data.tpsl) {
+      return;
+    }
+
+    // Validate TP/SL data against the current direction
+    const tpslSchema = createTpslFormSchema(data.direction);
+    const result = tpslSchema.safeParse(data.tpsl);
+
+    if (!result.success) {
+      // Add validation errors to the tpsl field
+      result.error.errors.forEach((error) => {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: error.message,
+          path: ["tpsl", ...(error.path || [])],
+        });
+      });
+    }
+  }
+);
 
 // Derived schemas using composition
 // Snapshot schema without imageId (for createTradeSetupWithSnapshot)

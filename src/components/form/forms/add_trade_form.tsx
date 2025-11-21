@@ -17,6 +17,7 @@ import EmotionOptions from "../features/emotion-selector";
 import Result from "../features/result";
 import StatusOptions from "../features/status-options";
 import TimeframesGeneric from "../features/timeframes-generic";
+import { TPSLOverview } from "../features/tpsl-overview";
 import { useExistingValues } from "../hooks/use-existing-values";
 import {
   addTradeSetupSchema,
@@ -25,6 +26,7 @@ import {
   UnionKeys,
 } from "../schemas/add-trade-schema";
 import { createAddTradeSetupDefaultValues } from "../schemas/default-values";
+import { TPSLFormData } from "../schemas/tpsl-schema";
 
 interface Props {
   imageId: Id<"tradingview_images">;
@@ -62,8 +64,9 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
     shouldUnregister: true,
   });
 
-  const { register, control, handleSubmit, watch } = form;
+  const { register, control, handleSubmit, watch, setValue } = form;
   const direction = watch("direction");
+  const tpsl = watch("tpsl");
 
   function handleNavigate(args: {
     tradeSetupId: Id<"trade_setups">;
@@ -207,7 +210,13 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
           variant="outline"
           onClick={() => {
             if (direction) {
-              openDialog("TPSL", { direction });
+              openDialog("TPSL", {
+                direction,
+                initialValues: tpsl,
+                onSave: (data: TPSLFormData) => {
+                  setValue("tpsl", data, { shouldValidate: true });
+                },
+              });
             }
           }}
           disabled={!direction}
@@ -215,6 +224,20 @@ const AddTradeForm = ({ snapshotId, imageId, disabledFields }: Props) => {
         >
           Configure TP/SL
         </Button>
+
+        {/* Display TP/SL summary if configured */}
+        <TPSLOverview
+          data={tpsl}
+          onEdit={() =>
+            openDialog("TPSL", {
+              direction,
+              initialValues: tpsl,
+              onSave: (data: TPSLFormData) => {
+                setValue("tpsl", data, { shouldValidate: true });
+              },
+            })
+          }
+        />
 
         <SubmitButton
           disabled={isPending || isLoading}
