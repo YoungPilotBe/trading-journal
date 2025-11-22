@@ -126,8 +126,8 @@ export const upsertTpslEntries = mutation({
         price: entry.price,
         margin: entry.margin,
         isHit: entry.isHit ?? false,
-        hitSnapshotId: entry.isHit ? snapshotId : undefined,
-        hitAt: entry.isHit ? now : undefined,
+        hitSnapshotId: entry.hitSnapshotId ?? (entry.isHit ? snapshotId : undefined),
+        hitAt: entry.hitAt ?? (entry.isHit ? now : undefined),
         createdAt: now,
         updatedAt: now,
       });
@@ -141,8 +141,8 @@ export const upsertTpslEntries = mutation({
         price: entry.price,
         margin: entry.margin,
         isHit: entry.isHit ?? false,
-        hitSnapshotId: entry.isHit ? snapshotId : undefined,
-        hitAt: entry.isHit ? now : undefined,
+        hitSnapshotId: entry.hitSnapshotId ?? (entry.isHit ? snapshotId : undefined),
+        hitAt: entry.hitAt ?? (entry.isHit ? now : undefined),
         createdAt: now,
         updatedAt: now,
       });
