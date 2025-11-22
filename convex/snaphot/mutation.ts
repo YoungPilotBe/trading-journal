@@ -127,6 +127,7 @@ export const attachSnapshot = mutation({
       id: v.id("trade_setups"),
       title: v.optional(v.string()),
       result: v.optional(resultUnion),
+      trade_template: v.optional(v.id("trade_templates")),
     }),
     snapshot: v.object({
       timeframes: v.array(v.string()),
