@@ -4,12 +4,13 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { Link } from "@tanstack/react-router";
 import type { Id } from "convex/_generated/dataModel";
 import { ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 const EvolutionLegend = () => {
   return (
@@ -63,18 +64,37 @@ export function AnalyticsSection({
   const { data: tradeSetup } = useGetTradeSetup({
     id: tradeSetupId,
   });
+  const [selectedChart, setSelectedChart] = useState<"r-multiple" | "emotion">(
+    "r-multiple"
+  );
 
   return (
     <div className="grid grid-cols-2 gap-2">
       <Card className="bg-transparent">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="font-mono text-sm font-medium text-muted-foreground/60">
-            R-Multiple Evolution
-          </CardTitle>
-          <EvolutionLegend />
+          <Tabs
+            value={selectedChart}
+            onValueChange={(value) =>
+              setSelectedChart(value as "r-multiple" | "emotion")
+            }
+          >
+            <TabsList className="h-7">
+              <TabsTrigger value="r-multiple" className="text-xs px-2.5">
+                R-Multiple
+              </TabsTrigger>
+              <TabsTrigger value="emotion" className="text-xs px-2.5">
+                Emotion
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {selectedChart === "r-multiple" && <EvolutionLegend />}
         </CardHeader>
         <CardContent className="">
-          <Chart chartType="r-multiple-evolution" props={{ tradeSetupId }} />
+          {selectedChart === "r-multiple" ? (
+            <Chart chartType="r-multiple-evolution" props={{ tradeSetupId }} />
+          ) : (
+            <Chart chartType="emotion" props={{}} />
+          )}
         </CardContent>
       </Card>
       <Card className="bg-transparent flex flex-col">

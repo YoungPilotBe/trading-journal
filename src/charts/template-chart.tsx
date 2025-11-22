@@ -109,7 +109,7 @@ export const TemplateChart = ({
             className="text-xs text-muted-foreground font-mono"
             tickFormatter={(value) => formatRMultiple(value)}
             tick={{ fontFamily: "monospace", fontSize: 12 }}
-            domain={["auto", "auto"]}
+            domain={[0, "auto"]}
           />
           <ReferenceLine
             y={0}

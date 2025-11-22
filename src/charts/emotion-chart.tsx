@@ -1,10 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatRMultiple } from "@/lib/utils";
 import {
   Bar,
   BarChart,
   Cell,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -59,11 +61,6 @@ export const EmotionChart = ({
     return emotion.charAt(0).toUpperCase() + emotion.slice(1);
   };
 
-  // Format R-Multiple to 2 decimal places
-  const formatRMultiple = (value: number) => {
-    return value.toFixed(2);
-  };
-
   // Render bar chart
   if (chartConfig.type === "bar") {
     return (
@@ -71,22 +68,61 @@ export const EmotionChart = ({
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            margin={{ top: 50, right: 30, left: 20, bottom: 60 }}
+            barCategoryGap="20%"
           >
+            <defs>
+              <pattern
+                id="hatch-red-emotion"
+                patternUnits="userSpaceOnUse"
+                width="4"
+                height="4"
+              >
+                <path
+                  d="M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2"
+                  stroke="rgb(225 29 72)"
+                  strokeWidth="0.5"
+                />
+              </pattern>
+              <pattern
+                id="hatch-white-emotion"
+                patternUnits="userSpaceOnUse"
+                width="4"
+                height="4"
+              >
+                <path
+                  d="M 0,4 l 4,-4 M -1,1 l 2,-2 M 3,5 l 2,-2"
+                  stroke="rgb(255 255 255)"
+                  strokeWidth="0.5"
+                />
+              </pattern>
+            </defs>
             <XAxis
               dataKey="emotion"
               tickFormatter={formatEmotion}
+              angle={-45}
+              textAnchor="end"
+              height={80}
               axisLine={false}
               tickLine={false}
+              padding={{ left: 20, right: 20 }}
               className="text-xs text-muted-foreground font-mono"
-              tick={{ fontFamily: "monospace", fontSize: 12 }}
+              tick={{ fontFamily: "monospace", fontSize: 11 }}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
               className="text-xs text-muted-foreground font-mono"
-              tickFormatter={formatRMultiple}
+              tickFormatter={(value) => formatRMultiple(value)}
               tick={{ fontFamily: "monospace", fontSize: 12 }}
+              domain={[0, "auto"]}
+            />
+            <ReferenceLine
+              y={0}
+              stroke="#525252"
+              strokeWidth={1}
+              strokeDasharray="4 4"
+              opacity={0.3}
             />
             <Tooltip
               content={({ active, payload }) => {
@@ -94,8 +130,18 @@ export const EmotionChart = ({
                   const data = payload[0].payload as EmotionChartData;
                   return (
                     <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
+                      <p className="text-xs text-foreground font-medium mb-1">
+                        {formatEmotion(data.emotion)}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatEmotion(data.emotion)}: {formatRMultiple(data.avgRMultiple)}
+                        R-Multiple:{" "}
+                        {formatRMultiple(data.avgRMultiple, {
+                          addPrefix: true,
+                        })}
+                        R
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Count: {data.count}
                       </p>
                     </div>
                   );
@@ -105,8 +151,47 @@ export const EmotionChart = ({
             />
             <Bar
               dataKey="avgRMultiple"
-              fill={chartColors.primary}
-              radius={[4, 4, 0, 0]}
+              barSize={20}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              shape={(props: any) => {
+                const { x, y, width, height, payload } = props;
+                if (
+                  typeof x !== "number" ||
+                  typeof y !== "number" ||
+                  typeof width !== "number" ||
+                  typeof height !== "number" ||
+                  !payload
+                ) {
+                  return <g />;
+                }
+
+                const isNegative = payload.avgRMultiple < 0;
+
+                // For negative bars, Recharts provides:
+                // - y: the zero line position
+                // - height: negative value (e.g., -50)
+                // We need to calculate the actual y position and use absolute height
+                const barY = isNegative ? y + height : y;
+                const barHeight = Math.abs(height);
+
+                return (
+                  <g>
+                    <rect
+                      x={x}
+                      y={barY}
+                      width={width}
+                      height={barHeight}
+                      fill={
+                        isNegative ? "url(#hatch-red-emotion)" : "url(#hatch-white-emotion)"
+                      }
+                      stroke={isNegative ? "rgb(225 29 72)" : "rgb(255 255 255)"}
+                      strokeWidth={1.5}
+                      rx={4}
+                      ry={4}
+                    />
+                  </g>
+                );
+              }}
             />
           </BarChart>
         </ResponsiveContainer>
@@ -114,14 +199,15 @@ export const EmotionChart = ({
     );
   }
 
-  // Render pie chart
+  // Render pie chart (using neutral colors similar to template chart)
   if (chartConfig.type === "pie") {
     // Prepare data for pie chart (using avgRMultiple as value)
-    const pieData = data.map((item, index) => ({
+    const pieData = data.map((item) => ({
       name: formatEmotion(item.emotion),
       value: item.avgRMultiple,
       count: item.count,
-      color: index % 2 === 0 ? chartColors.primary : chartColors.secondary,
+      // Use neutral colors - white for positive, muted gray for negative
+      color: item.avgRMultiple >= 0 ? "rgb(255 255 255)" : "rgb(163 163 163)",
     }));
 
     return (
@@ -181,8 +267,18 @@ export const EmotionChart = ({
                   const data = payload[0].payload as (typeof pieData)[0];
                   return (
                     <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
+                      <p className="text-xs text-foreground font-medium mb-1">
+                        {data.name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        {data.name}: {formatRMultiple(data.value)}
+                        R-Multiple:{" "}
+                        {formatRMultiple(data.value, {
+                          addPrefix: true,
+                        })}
+                        R
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Count: {data.count}
                       </p>
                     </div>
                   );
