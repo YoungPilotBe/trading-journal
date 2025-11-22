@@ -6,6 +6,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePreloadProgressionCharts } from "@/hooks/charts/use-preload-progression-charts";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
 import { Link, useSearch } from "@tanstack/react-router";
 import type { Id } from "convex/_generated/dataModel";
@@ -68,6 +69,9 @@ export function AnalyticsSection({
   const [selectedChart, setSelectedChart] = useState<
     "r-multiple" | "emotion" | "progression"
   >("r-multiple");
+
+  // Preload all progression charts for all snapshotIds
+  usePreloadProgressionCharts(tradeSetupId);
 
   return (
     <div className="grid grid-cols-2 gap-2">

@@ -146,6 +146,18 @@ export const templateRMultipleChartQueryOptions = (
     }),
   });
 
+// Progression Chart Query Options
+export const progressionChartQueryOptions = (
+  tradeSetupId: Id<"trade_setups">,
+  currentSnapshotId?: Id<"snapshots">
+) =>
+  queryOptions({
+    ...convexQuery(api.charts.progression.queries.getProgressionChart, {
+      tradeSetupId,
+      currentSnapshotId,
+    }),
+  });
+
 // Preloader function for the attach trade form
 export const preloadAttachTradeFormData = async (
   queryClient: QueryClient,
@@ -244,4 +256,38 @@ export const preloadSetupRouteData = async (
   );
 
   await Promise.all(promises);
+};
+
+// Preloader function to preload all progression charts for all snapshotIds
+export const preloadAllProgressionCharts = async (
+  queryClient: QueryClient,
+  tradeSetupId: Id<"trade_setups">
+) => {
+  // First, get all snapshots for this trade setup
+  const snapshots = await queryClient.ensureQueryData(
+    snapshotsByTradeSetupQueryOptions(tradeSetupId, "createdAt", "asc")
+  );
+
+  if (!snapshots || snapshots.length === 0) {
+    return;
+  }
+
+  // Extract all snapshot IDs
+  const snapshotIds = snapshots.map((snapshot) => snapshot._id);
+
+  // Preload progression chart for each snapshotId (including undefined for base chart)
+  const preloadPromises = [
+    // Preload base chart (no snapshotId)
+    queryClient.prefetchQuery(
+      progressionChartQueryOptions(tradeSetupId, undefined)
+    ),
+    // Preload charts for each snapshotId
+    ...snapshotIds.map((snapshotId) =>
+      queryClient.prefetchQuery(
+        progressionChartQueryOptions(tradeSetupId, snapshotId)
+      )
+    ),
+  ];
+
+  await Promise.all(preloadPromises);
 };

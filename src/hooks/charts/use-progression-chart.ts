@@ -41,5 +41,8 @@ export const useProgressionChart = (
     chartColors: queryResult.data?.chartColors ?? null,
     isLoading: queryResult.isLoading,
     error: queryResult.error,
+    rawData: queryResult.data?.data ?? null,
+    direction: queryResult.data?.direction ?? null,
+    currentSnapshotId: queryResult.data?.currentSnapshotId ?? null,
   };
 };

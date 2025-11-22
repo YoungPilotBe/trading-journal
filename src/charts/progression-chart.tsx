@@ -76,6 +76,42 @@ export const ProgressionChart = ({
     return null;
   };
 
+  // Calculate remaining position size percentage
+  const calculateRemainingPosition = (): number => {
+    if (!data || data.length === 0) return 100;
+
+    // Sum all margins from hit TP/SL entries (excluding ghost paths)
+    let totalHitMargin = 0;
+    const processedEntryIds = new Set<string>();
+
+    for (const point of data) {
+      // Only count actual hits, not ghost paths or start points
+      if (
+        point.isHit &&
+        !point.isGhost &&
+        point.margin !== undefined &&
+        point.type !== "start" &&
+        point.tpslEntryId
+      ) {
+        // Avoid double-counting if same entry appears multiple times
+        const entryId = point.tpslEntryId;
+        if (!processedEntryIds.has(entryId)) {
+          processedEntryIds.add(entryId);
+          const marginValue = parseMarginValue(point.margin);
+          if (marginValue !== null && !isNaN(marginValue) && marginValue >= 0) {
+            totalHitMargin += marginValue;
+          }
+        }
+      }
+    }
+
+    // Remaining position = 100% - total hit margin
+    const remaining = Math.max(0, Math.min(100, 100 - totalHitMargin));
+    return remaining;
+  };
+
+  const remainingPosition = calculateRemainingPosition();
+
   const getPointColor = (point: ProgressionChartData | undefined) => {
     if (!point) return "#8884d8";
     if (point.type === "tp") return "oklch(0.696 0.17 162.48)";
@@ -119,6 +155,133 @@ export const ProgressionChart = ({
     return leftEdgeX + maxX * xScale;
   };
 
+  // Helper function to find the start point (zero point)
+  const findStartPoint = (
+    points: ProgressionChartData[]
+  ): ProgressionChartData | null => {
+    return points.find((p) => p.type === "start") || null;
+  };
+
+  // Helper function to group points by type and sort by x-coordinate
+  const groupPointsByType = (
+    points: ProgressionChartData[],
+    type: "tp" | "sl"
+  ): ProgressionChartData[] => {
+    return points.filter((p) => p.type === type).sort((a, b) => a.x - b.x);
+  };
+
+  // Helper function to determine line color based on ending point status
+  const getLineColor = (point: ProgressionChartData): string => {
+    if (point.isHit) {
+      return "oklch(0.96 0.01 106.423)"; // white
+    }
+    return "oklch(0.553 0.013 58.071)"; // neutral
+  };
+
+  // Helper function to create line segments based on reference point system
+  // When a point is hit, it becomes the new reference and connects to next TP and current SL
+  const createLineSegmentsWithReference = (
+    startPoint: ProgressionChartData,
+    tpPoints: ProgressionChartData[],
+    slPoints: ProgressionChartData[]
+  ): Array<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    color: string;
+    fromPoint: ProgressionChartData;
+    toPoint: ProgressionChartData;
+  }> => {
+    const segments: Array<{
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      color: string;
+      fromPoint: ProgressionChartData;
+      toPoint: ProgressionChartData;
+    }> = [];
+
+    if (tpPoints.length === 0 && slPoints.length === 0) return segments;
+
+    // Helper to connect reference to a target point if consecutive
+    const connectIfConsecutive = (
+      reference: ProgressionChartData,
+      target: ProgressionChartData
+    ) => {
+      if (target.x === reference.x + 1) {
+        segments.push({
+          x1: reference.x,
+          y1: reference.y,
+          x2: target.x,
+          y2: target.y,
+          color: getLineColor(target),
+          fromPoint: reference,
+          toPoint: target,
+        });
+      }
+    };
+
+    // Start with zero point as reference
+    let currentReference: ProgressionChartData = startPoint;
+    let nextTpIndex = 0;
+    let currentSlIndex = 0; // Current SL (the one that hasn't been hit yet)
+
+    // From zero point, connect to first TP and first SL if consecutive
+    if (tpPoints.length > 0) {
+      connectIfConsecutive(currentReference, tpPoints[0]);
+    }
+    if (slPoints.length > 0) {
+      connectIfConsecutive(currentReference, slPoints[0]);
+    }
+
+    // Combine all points and sort by x-coordinate to process chronologically
+    const allPoints = [...tpPoints, ...slPoints].sort((a, b) => a.x - b.x);
+
+    // Process points chronologically
+    for (const point of allPoints) {
+      // Check if this point is consecutive from current reference
+      if (point.x === currentReference.x + 1) {
+        // Connect reference to this point
+        connectIfConsecutive(currentReference, point);
+
+        // If this point is hit, it becomes the new reference
+        if (point.isHit) {
+          currentReference = point;
+
+          // Update indices based on what was hit
+          if (point.type === "tp") {
+            // Find which TP index this was and move to next TP
+            const tpIdx = tpPoints.findIndex((tp) => tp.x === point.x);
+            if (tpIdx !== -1) {
+              nextTpIndex = tpIdx + 1;
+            }
+          } else if (point.type === "sl") {
+            // Find which SL index this was and move to next SL
+            const slIdx = slPoints.findIndex((sl) => sl.x === point.x);
+            if (slIdx !== -1) {
+              currentSlIndex = slIdx + 1;
+            }
+          }
+
+          // From new reference, connect to next TP and current SL if consecutive
+          // Connect to next TP
+          if (nextTpIndex < tpPoints.length) {
+            connectIfConsecutive(currentReference, tpPoints[nextTpIndex]);
+          }
+
+          // Connect to current SL (the one that hasn't been hit yet)
+          if (currentSlIndex < slPoints.length) {
+            connectIfConsecutive(currentReference, slPoints[currentSlIndex]);
+          }
+        }
+      }
+    }
+
+    return segments;
+  };
+
   const allYValues = data.map((d) => d.y);
   const minValue = allYValues.length > 0 ? Math.min(...allYValues, 0) : -1;
   const maxValue = allYValues.length > 0 ? Math.max(...allYValues, 1) : 1;
@@ -147,6 +310,25 @@ export const ProgressionChart = ({
     originalPoint: point,
   }));
 
+  // Find start point and create line segments based on reference point system
+  const startPoint = findStartPoint(data);
+  const tpPoints = groupPointsByType(data, "tp");
+  const slPoints = groupPointsByType(data, "sl");
+
+  // Create line segments using reference point logic
+  // This will create segments for both TP and SL based on which becomes reference
+  const allLineSegments = startPoint
+    ? createLineSegmentsWithReference(startPoint, tpPoints, slPoints)
+    : [];
+
+  // Separate segments by type for rendering
+  const tpLineSegments = allLineSegments.filter(
+    (seg) => seg.toPoint.type === "tp"
+  );
+  const slLineSegments = allLineSegments.filter(
+    (seg) => seg.toPoint.type === "sl"
+  );
+
   const uniqueYLines = new Map<
     number,
     { leftmostX: number; point: ProgressionChartData }
@@ -165,7 +347,51 @@ export const ProgressionChart = ({
   }
 
   return (
-    <div className="w-full h-[400px]">
+    <div className="w-full h-[400px] relative">
+      {/* Position Size Indicator - Top Right */}
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+        {/* Battery Indicator */}
+        <div className="flex flex-col items-center gap-1">
+          {/* Battery Container */}
+          <div
+            className="relative w-6 h-16 bg-background/50 overflow-hidden"
+            style={{
+              border: "1px solid oklch(0.85 0.01 106.423)",
+            }}
+          >
+            {/* Filled portion with hatching */}
+            {remainingPosition > 0 && (
+              <div
+                className="absolute bottom-0 left-0 right-0"
+                style={{
+                  height: `${remainingPosition}%`,
+                  backgroundColor: "transparent",
+                  backgroundImage: `repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 5px,
+                    white 5px,
+                    white 6px
+                  )`,
+                }}
+              />
+            )}
+            {/* Empty portion */}
+            {remainingPosition < 100 && (
+              <div
+                className="absolute top-0 left-0 right-0 bg-background/80"
+                style={{
+                  height: `${100 - remainingPosition}%`,
+                }}
+              />
+            )}
+          </div>
+          {/* Percentage Label */}
+          <span className="text-xs font-mono text-muted-foreground">
+            {remainingPosition.toFixed(0)}%
+          </span>
+        </div>
+      </div>
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={margin}>
           <XAxis
@@ -190,9 +416,158 @@ export const ProgressionChart = ({
             strokeDasharray="3 3"
             strokeWidth={1}
           />
+          {/* Render TP connecting lines */}
+          {tpLineSegments.length > 0 && (
+            <Scatter
+              name="TPLines"
+              isAnimationActive={false}
+              data={tpLineSegments.map((segment) => ({
+                x: segment.x2,
+                y: segment.y2,
+                x1: segment.x1,
+                y1: segment.y1,
+                color: segment.color,
+                isHit: segment.toPoint.isHit,
+              }))}
+              fill="transparent"
+              shape={(props: unknown) => {
+                const scatterProps = props as {
+                  cx?: number;
+                  cy?: number;
+                  payload?: {
+                    x: number;
+                    y: number;
+                    x1: number;
+                    y1: number;
+                    color: string;
+                    isHit?: boolean;
+                  };
+                };
+                const { cx, cy, payload } = scatterProps;
+
+                if (cx === undefined || cy === undefined || !payload) {
+                  return <g />;
+                }
+
+                // Calculate the start point's chart coordinates
+                // Using Recharts' scaling based on current point position
+                const yRange = maxValue - minValue || 1; // Avoid division by zero
+
+                // Calculate chart dimensions from current point's chart coordinates
+                // For x: cx = margin.left + (x2 / maxX) * chartWidth
+                const chartWidth =
+                  payload.x > 0 && maxX > 0
+                    ? ((cx - margin.left) * maxX) / payload.x
+                    : 400 - margin.left - margin.right;
+
+                // For y: cy is measured from top, and y increases downward
+                // Recharts YAxis: cy = margin.top + chartHeight - ((y2 - minValue) / yRange) * chartHeight
+                // So: cy - margin.top = chartHeight * (1 - (y2 - minValue) / yRange)
+                const normalizedY = (payload.y - minValue) / yRange;
+                const chartHeight =
+                  normalizedY < 1 && normalizedY >= 0
+                    ? (cy - margin.top) / (1 - normalizedY)
+                    : 400 - margin.top - margin.bottom;
+
+                // Calculate start point coordinates using the same scale
+                const startCx = margin.left + (payload.x1 / maxX) * chartWidth;
+                const startCy =
+                  margin.top +
+                  chartHeight -
+                  ((payload.y1 - minValue) / yRange) * chartHeight;
+
+                return (
+                  <g>
+                    <line
+                      x1={startCx}
+                      y1={startCy}
+                      x2={cx}
+                      y2={cy}
+                      stroke={payload.color}
+                      strokeWidth={1.5}
+                      {...(payload.isHit ? {} : { strokeDasharray: "3 3" })}
+                    />
+                  </g>
+                );
+              }}
+            />
+          )}
+          {/* Render SL connecting lines */}
+          {slLineSegments.length > 0 && (
+            <Scatter
+              name="SLLines"
+              isAnimationActive={false}
+              data={slLineSegments.map((segment) => ({
+                x: segment.x2,
+                y: segment.y2,
+                x1: segment.x1,
+                y1: segment.y1,
+                color: segment.color,
+                isHit: segment.toPoint.isHit,
+              }))}
+              fill="transparent"
+              shape={(props: unknown) => {
+                const scatterProps = props as {
+                  cx?: number;
+                  cy?: number;
+                  payload?: {
+                    x: number;
+                    y: number;
+                    x1: number;
+                    y1: number;
+                    color: string;
+                    isHit?: boolean;
+                  };
+                };
+                const { cx, cy, payload } = scatterProps;
+
+                if (cx === undefined || cy === undefined || !payload) {
+                  return <g />;
+                }
+
+                // Calculate the start point's chart coordinates
+                // Using Recharts' scaling based on current point position
+                const yRange = maxValue - minValue || 1; // Avoid division by zero
+
+                // Calculate chart dimensions from current point's chart coordinates
+                const chartWidth =
+                  payload.x > 0 && maxX > 0
+                    ? ((cx - margin.left) * maxX) / payload.x
+                    : 400 - margin.left - margin.right;
+
+                const normalizedY = (payload.y - minValue) / yRange;
+                const chartHeight =
+                  normalizedY < 1 && normalizedY >= 0
+                    ? (cy - margin.top) / (1 - normalizedY)
+                    : 400 - margin.top - margin.bottom;
+
+                // Calculate start point coordinates using the same scale
+                const startCx = margin.left + (payload.x1 / maxX) * chartWidth;
+                const startCy =
+                  margin.top +
+                  chartHeight -
+                  ((payload.y1 - minValue) / yRange) * chartHeight;
+
+                return (
+                  <g>
+                    <line
+                      x1={startCx}
+                      y1={startCy}
+                      x2={cx}
+                      y2={cy}
+                      stroke={payload.color}
+                      strokeWidth={1.5}
+                      {...(payload.isHit ? {} : { strokeDasharray: "3 3" })}
+                    />
+                  </g>
+                );
+              }}
+            />
+          )}
           {/* Render points as scatter plot */}
           <Scatter
             name="Points"
+            isAnimationActive={false}
             data={scatterData}
             fill="#8884d8"
             shape={(props: unknown) => {
@@ -258,6 +633,7 @@ export const ProgressionChart = ({
           {/* Create invisible points at right edge (maxX) to get their actual chart coordinates */}
           <Scatter
             name="RightEdgePoints"
+            isAnimationActive={false}
             data={Array.from(uniqueYLines.entries()).map(([y, { point }]) => ({
               x: maxX,
               y: y,
@@ -300,6 +676,7 @@ export const ProgressionChart = ({
           {/* Create a separate Scatter for line start points (leftmost at each Y) */}
           <Scatter
             name="LineStartPoints"
+            isAnimationActive={false}
             data={Array.from(uniqueYLines.entries()).map(
               ([y, { leftmostX, point }]) => ({
                 x: leftmostX,
