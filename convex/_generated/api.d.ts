@@ -19,6 +19,7 @@ import type * as base_titles_mutation from "../base_titles/mutation.js";
 import type * as base_titles_queries from "../base_titles/queries.js";
 import type * as base_titles_utilities from "../base_titles/utilities.js";
 import type * as charts_constants from "../charts/constants.js";
+import type * as charts_progression_queries from "../charts/progression/queries.js";
 import type * as charts_queries from "../charts/queries.js";
 import type * as charts_services_r_multiple from "../charts/services/r_multiple.js";
 import type * as config_analytics from "../config/analytics.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   "base_titles/queries": typeof base_titles_queries;
   "base_titles/utilities": typeof base_titles_utilities;
   "charts/constants": typeof charts_constants;
+  "charts/progression/queries": typeof charts_progression_queries;
   "charts/queries": typeof charts_queries;
   "charts/services/r_multiple": typeof charts_services_r_multiple;
   "config/analytics": typeof config_analytics;

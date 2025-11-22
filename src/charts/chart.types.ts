@@ -73,6 +73,9 @@ export interface ProgressionChartData {
   isHit: boolean; // whether this TP/SL was actually hit
   isGhost: boolean; // true for ghost paths, false for actual hits
   snapshotId?: Id<"snapshots">; // snapshot ID if applicable
+  isLastPoint?: boolean; // true if this is the last point (position fully closed)
+  margin?: number; // margin percentage for TP/SL entries
+  entryIndex?: number; // index of TP/SL entry (1-based) for labeling (TP1, TP2, etc.)
 }
 
 // Chart response types (what comes from queries)

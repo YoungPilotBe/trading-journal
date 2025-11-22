@@ -13,7 +13,6 @@ import type {
   EmotionChartData,
   EvolutionChartColors,
   EvolutionChartData,
-  ProgressionChartColors,
   ProgressionChartData,
   TemplateChartColors,
   TemplateChartData,

@@ -38,181 +38,131 @@ export const ProgressionChart = ({
     );
   }
 
-  if (!data || !Array.isArray(data) || data.length === 0) {
+  if (
+    !data ||
+    !Array.isArray(data) ||
+    data.length === 0 ||
+    (data.length === 1 && data[0].type === "start") ||
+    !chartColors ||
+    !chartConfig
+  ) {
     return (
       <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
-        <p>No progression data available</p>
+        <p>
+          {!data || data.length === 0
+            ? "No progression data available"
+            : !chartColors || !chartConfig
+              ? "Chart configuration missing"
+              : "Insufficient data to render progression chart"}
+        </p>
       </div>
     );
   }
 
-  // Early return if we don't have enough data to render
-  if (data.length === 1 && data[0].type === "start") {
-    return (
-      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
-        <p>Insufficient data to render progression chart</p>
-      </div>
-    );
-  }
-
-  if (!chartColors || !chartConfig) {
-    return (
-      <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
-        <p>Chart configuration missing</p>
-      </div>
-    );
-  }
-
-  // Format R-Multiple to 2 decimal places
   const formatRMultiple = (value: number | null) => {
     if (value === null || value === undefined) return "N/A";
     return value.toFixed(2);
   };
 
-  // Build a map of reference points by their coordinates
-  // This helps us find reference points when we need them
-  const referencePointsMap = new Map<string, ProgressionChartData>();
-
-  // Find the start point
-  const startPoint = data.find((d) => d.type === "start");
-  if (startPoint) {
-    // Map both "start" and "start-0" to the start point
-    referencePointsMap.set("start", startPoint);
-    referencePointsMap.set("start-0", startPoint);
-  }
-
-  // Find all hit points (these are also reference points)
-  // Store them by their coordinates for lookup
-  for (const point of data) {
-    if (point.isHit && !point.isGhost) {
-      const coordKey = `${point.x}-${point.y}`;
-      referencePointsMap.set(coordKey, point);
-      // Also store by referencePointId if it exists
-      if (point.referencePointId) {
-        referencePointsMap.set(point.referencePointId, point);
-      }
+  const parseMarginValue = (
+    margin: number | string | undefined | null
+  ): number | null => {
+    if (margin === undefined || margin === null) return null;
+    if (typeof margin === "number") return margin;
+    if (typeof margin === "string") {
+      const parsed = parseFloat(margin);
+      return !isNaN(parsed) ? parsed : null;
     }
-  }
+    return null;
+  };
 
-  // Group children by their reference point ID
-  const childrenByRef = new Map<string, ProgressionChartData[]>();
-  for (const point of data) {
-    if (point.type === "start") continue;
+  const getPointColor = (point: ProgressionChartData | undefined) => {
+    if (!point) return "#8884d8";
+    if (point.type === "tp") return "oklch(0.696 0.17 162.48)";
+    if (point.type === "sl") return "oklch(0.65 0.18 15)";
+    return "oklch(0.553 0.013 58.071)";
+  };
 
-    const refId = point.referencePointId;
-    if (!childrenByRef.has(refId)) {
-      childrenByRef.set(refId, []);
+  const getPointRadius = (point: ProgressionChartData | undefined) => {
+    if (!point) return 4;
+    if (point.isHit) return 5;
+    if (point.isGhost) return 3;
+    return 4;
+  };
+
+  const generateBadgeLabel = (
+    point: ProgressionChartData | undefined
+  ): string => {
+    if (!point || point.type === "start") return "";
+    const typeLabel = point.type === "tp" ? "TP" : "SL";
+    const index = point.entryIndex ?? 1;
+    const marginValue = parseMarginValue(point.margin);
+    if (marginValue !== null && !isNaN(marginValue) && marginValue >= 0) {
+      return `${typeLabel}${index} @ ${marginValue}%`;
     }
-    childrenByRef.get(refId)!.push(point);
-  }
+    return `${typeLabel}${index}`;
+  };
 
-  // Build line segments: each reference point connects to its children
-  const lineSegments: Array<{
-    points: Array<{ x: number; y: number }>;
-    isGhost: boolean;
-    type: "tp" | "sl" | "start";
-    key: string;
-  }> = [];
+  const getTypeLabel = (type: "tp" | "sl" | "start") => {
+    if (type === "tp") return "Take Profit";
+    if (type === "sl") return "Stop Loss";
+    return "Start";
+  };
 
-  // For each reference point ID, find the reference point and its children
-  for (const [refId, children] of childrenByRef.entries()) {
-    // Find the reference point
-    let refPoint = referencePointsMap.get(refId);
+  const calculateRightEdgePosition = (
+    cx: number,
+    currentX: number,
+    maxX: number,
+    leftEdgeX: number
+  ): number => {
+    const xScale = currentX > 0 ? (cx - leftEdgeX) / currentX : 0;
+    return leftEdgeX + maxX * xScale;
+  };
 
-    // If not found by ID, try to find by coordinates
-    // Look for a point that could be the reference (earlier snapshot, similar position)
-    if (!refPoint && children.length > 0) {
-      const firstChild = children[0];
-      // Look for hit points at earlier snapshots
-      const possibleRefs = data.filter(
-        (d) =>
-          (d.isHit && !d.isGhost && d.x < firstChild.x) ||
-          (d.type === "start" && d.x < firstChild.x)
-      );
-
-      // Find the closest match by Y coordinate
-      if (possibleRefs.length > 0) {
-        refPoint = possibleRefs.reduce((closest, current) => {
-          const closestDiff = Math.abs(closest.y - firstChild.y);
-          const currentDiff = Math.abs(current.y - firstChild.y);
-          return currentDiff < closestDiff ? current : closest;
-        });
-      }
-    }
-
-    if (!refPoint) {
-      // Fallback to start point
-      refPoint = startPoint;
-    }
-
-    if (!refPoint) continue;
-
-    // Create line segments from reference point to each child
-    for (const child of children) {
-      lineSegments.push({
-        points: [
-          { x: refPoint.x, y: refPoint.y },
-          { x: child.x, y: child.y },
-        ],
-        isGhost: child.isGhost,
-        type: child.type,
-        key: `line-${refPoint.x}-${refPoint.y}-${child.x}-${child.y}`,
-      });
-    }
-  }
-
-  // Calculate domain for Y axis
   const allYValues = data.map((d) => d.y);
   const minValue = allYValues.length > 0 ? Math.min(...allYValues, 0) : -1;
   const maxValue = allYValues.length > 0 ? Math.max(...allYValues, 1) : 1;
-
-  // Calculate domain for X axis - show all snapshots
   const allXValues = data.map((d) => d.x);
   const maxX = allXValues.length > 0 ? Math.max(...allXValues, 0) + 1 : 0;
-
-  // Colors
-  const tpColor = "oklch(0.696 0.17 162.48)"; // emerald green for TP
-  const slColor = "oklch(0.65 0.18 15)"; // rose red for SL
-  const startColor = "oklch(0.553 0.013 58.071)"; // muted foreground
-
-  // Create a unified dataset for all points (needed for Recharts to render properly)
-  // Include all unique points from all snapshots
-  const allPointsMap = new Map<string, { x: number; y: number }>();
-  for (const d of data) {
-    const key = `${d.x}-${d.y}`;
-    if (!allPointsMap.has(key)) {
-      allPointsMap.set(key, { x: d.x, y: d.y });
-    }
-  }
-  const allPoints = Array.from(allPointsMap.values());
-
-  const margin = { top: 20, right: 60, left: 60, bottom: 60 };
+  const margin = { top: 50, right: 120, left: 60, bottom: 60 };
 
   // Check if we have points to display
-  if (allPoints.length === 0) {
+  if (data.length === 0) {
     return (
       <div className="w-full h-[400px] flex items-center justify-center text-muted-foreground font-mono">
         <div className="text-center">
           <p>No points to display</p>
           <p className="text-xs mt-2">
-            {data.length > 0
-              ? "Try adding TP/SL entries to see progression paths"
-              : "No data available"}
+            Try adding TP/SL entries to see progression paths
           </p>
         </div>
       </div>
     );
   }
 
-  // Prepare scatter data with all necessary info
-  const scatterData = allPoints.map((p) => {
-    const originalPoint = data.find((d) => d.x === p.x && d.y === p.y);
-    return {
-      x: p.x,
-      y: p.y,
-      originalPoint,
-    };
-  });
+  // Pass complete point data directly as props - no matching needed
+  const scatterData = data.map((point) => ({
+    x: point.x,
+    y: point.y,
+    originalPoint: point,
+  }));
+
+  const uniqueYLines = new Map<
+    number,
+    { leftmostX: number; point: ProgressionChartData }
+  >();
+  for (const item of scatterData) {
+    const point = item.originalPoint;
+    if (point && point.type !== "start") {
+      const existing = uniqueYLines.get(item.y);
+      if (!existing || item.x < existing.leftmostX) {
+        uniqueYLines.set(item.y, {
+          leftmostX: item.x,
+          point,
+        });
+      }
+    }
+  }
 
   return (
     <div className="w-full h-[400px]">
@@ -222,49 +172,23 @@ export const ProgressionChart = ({
             type="number"
             dataKey="x"
             domain={[0, maxX]}
-            tickCount={maxX + 1}
-            axisLine={true}
-            tickLine={true}
-            tick={{ fill: "currentColor", fontSize: 12 }}
-            label={{
-              value: "Snapshot",
-              position: "insideBottom",
-              offset: -10,
-              style: { fill: "currentColor", fontSize: 12 },
-            }}
+            axisLine={false}
+            tickLine={false}
+            hide
           />
           <YAxis
             type="number"
             dataKey="y"
             domain={[minValue, maxValue]}
-            axisLine={true}
-            tickLine={true}
-            tick={{ fill: "currentColor", fontSize: 12 }}
-            label={{
-              value: "R-Multiple",
-              angle: -90,
-              position: "insideLeft",
-              style: { fill: "currentColor", fontSize: 12 },
-            }}
+            axisLine={false}
+            tickLine={false}
+            hide
           />
           <ReferenceLine
             y={0}
             stroke="oklch(0.553 0.013 58.071)"
             strokeDasharray="3 3"
             strokeWidth={1}
-          />
-          <ReferenceLine
-            y={1}
-            stroke="oklch(0.553 0.013 58.071)"
-            strokeDasharray="3 3"
-            strokeWidth={1}
-            label={{
-              value: "+1R",
-              position: "left",
-              fill: "oklch(0.553 0.013 58.071)",
-              fontSize: 12,
-              fontFamily: "monospace",
-            }}
           />
           {/* Render points as scatter plot */}
           <Scatter
@@ -287,32 +211,142 @@ export const ProgressionChart = ({
                 return <g />;
               }
 
-              // Always render something, even if no originalPoint
               const point = payload?.originalPoint;
-              const color = point
-                ? point.type === "tp"
-                  ? tpColor
-                  : point.type === "sl"
-                    ? slColor
-                    : startColor
-                : "#8884d8";
-              const radius = point
-                ? point.isHit
-                  ? 5
-                  : point.isGhost
-                    ? 3
-                    : 4
-                : 4;
+              const color = getPointColor(point);
+              const radius = getPointRadius(point);
+              const badgeLabel = generateBadgeLabel(point);
+              const isLastPoint = point?.isLastPoint ?? false;
+              const triangleSize = 6;
 
               return (
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={radius}
-                  fill={color}
-                  strokeWidth={point?.isHit ? 2 : 0}
-                  stroke="oklch(0.96 0.01 106.423)"
-                />
+                <g>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    fill={color}
+                    strokeWidth={point?.isHit ? 2 : 0}
+                    stroke="oklch(0.96 0.01 106.423)"
+                  />
+                  {isLastPoint && (
+                    <polygon
+                      points={`${cx},${cy - radius - triangleSize} ${cx - triangleSize / 2},${cy - radius} ${cx + triangleSize / 2},${cy - radius}`}
+                      fill={color}
+                      stroke="oklch(0.96 0.01 106.423)"
+                      strokeWidth={1}
+                    />
+                  )}
+                  {badgeLabel && (
+                    <foreignObject
+                      x={cx - 40}
+                      y={cy - radius - 25}
+                      width={80}
+                      height={20}
+                    >
+                      <div className="flex justify-center">
+                        <span className="text-xs font-mono text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded border border-border">
+                          {badgeLabel}
+                        </span>
+                      </div>
+                    </foreignObject>
+                  )}
+                </g>
+              );
+            }}
+          />
+          {/* Render dotted lines for unique Y values extending to right edge */}
+          {/* Create invisible points at right edge (maxX) to get their actual chart coordinates */}
+          <Scatter
+            name="RightEdgePoints"
+            data={Array.from(uniqueYLines.entries()).map(([y, { point }]) => ({
+              x: maxX,
+              y: y,
+              point,
+            }))}
+            fill="transparent"
+            shape={(props: unknown) => {
+              const scatterProps = props as {
+                cx?: number;
+                cy?: number;
+                payload?: {
+                  x: number;
+                  y: number;
+                  point?: ProgressionChartData;
+                };
+              };
+              const { cx, cy, payload } = scatterProps;
+
+              if (cx === undefined || cy === undefined || !payload) {
+                return <g />;
+              }
+
+              // Store the right edge cx position for this Y value
+              // We'll use this to draw lines from leftmost points
+              // For now, just render the R-Multiple label at the right edge
+              return (
+                <g>
+                  {/* R-Multiple label on the right */}
+                  <foreignObject x={cx + 5} y={cy - 10} width={60} height={20}>
+                    <div className="flex items-center">
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {formatRMultiple(payload.y)}R
+                      </span>
+                    </div>
+                  </foreignObject>
+                </g>
+              );
+            }}
+          />
+          {/* Create a separate Scatter for line start points (leftmost at each Y) */}
+          <Scatter
+            name="LineStartPoints"
+            data={Array.from(uniqueYLines.entries()).map(
+              ([y, { leftmostX, point }]) => ({
+                x: leftmostX,
+                y: y,
+                point,
+                rightEdgeX: maxX, // Include maxX for calculation
+              })
+            )}
+            fill="transparent"
+            shape={(props: unknown) => {
+              const scatterProps = props as {
+                cx?: number;
+                cy?: number;
+                payload?: {
+                  x: number;
+                  y: number;
+                  point?: ProgressionChartData;
+                  rightEdgeX?: number;
+                };
+              };
+              const { cx, cy, payload } = scatterProps;
+
+              if (cx === undefined || cy === undefined || !payload) {
+                return <g />;
+              }
+
+              const chartRightEdge = calculateRightEdgePosition(
+                cx,
+                payload.x,
+                maxX,
+                margin.left
+              );
+
+              return (
+                <g>
+                  {/* Dotted line extending to the right edge (maxX) */}
+                  <line
+                    x1={cx}
+                    y1={cy}
+                    x2={chartRightEdge}
+                    y2={cy}
+                    stroke="oklch(0.553 0.013 58.071)"
+                    strokeDasharray="3 3"
+                    strokeWidth={1}
+                    opacity={0.5}
+                  />
+                </g>
               );
             }}
           />
@@ -324,33 +358,28 @@ export const ProgressionChart = ({
                   y: number;
                   originalPoint?: ProgressionChartData;
                 };
-                const point =
-                  pointData.originalPoint ||
-                  data.find((d) => d.x === pointData.x && d.y === pointData.y);
-
+                const point = pointData.originalPoint;
                 if (!point) return null;
 
+                const typeLabel = getTypeLabel(point.type);
+                const badgeText = generateBadgeLabel(point) || null;
+
                 return (
-                  <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono max-w-md">
-                    <p className="text-xs text-muted-foreground font-semibold mb-2">
-                      Point Details
-                    </p>
+                  <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
+                    {badgeText && (
+                      <p className="text-xs font-semibold mb-2">{badgeText}</p>
+                    )}
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold">Snapshot Index:</span>{" "}
-                        {point.x}
+                        <span className="font-semibold">Type:</span> {typeLabel}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         <span className="font-semibold">R-Multiple:</span>{" "}
                         {formatRMultiple(point.y)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold">Type:</span>{" "}
-                        {point.type === "tp"
-                          ? "Take Profit"
-                          : point.type === "sl"
-                            ? "Stop Loss"
-                            : "Start"}
+                        <span className="font-semibold">Snapshot:</span>{" "}
+                        {point.x}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         <span className="font-semibold">Status:</span>{" "}
@@ -360,35 +389,12 @@ export const ProgressionChart = ({
                             ? "Ghost Path"
                             : "Not Hit"}
                       </p>
-                      {point.tpslEntryId && (
-                        <p className="text-xs text-muted-foreground break-all">
-                          <span className="font-semibold">TP/SL Entry ID:</span>{" "}
-                          {point.tpslEntryId}
-                        </p>
-                      )}
-                      {point.snapshotId && (
-                        <p className="text-xs text-muted-foreground break-all">
-                          <span className="font-semibold">Snapshot ID:</span>{" "}
-                          {point.snapshotId}
-                        </p>
-                      )}
-                      {point.referencePointId && (
-                        <p className="text-xs text-muted-foreground break-all">
-                          <span className="font-semibold">
-                            Reference Point ID:
-                          </span>{" "}
-                          {point.referencePointId}
-                        </p>
-                      )}
-                      <div className="pt-2 mt-2 border-t border-border">
-                        <p className="text-xs text-muted-foreground font-semibold mb-1">
-                          Debug Flags:
-                        </p>
+                      {point.margin !== undefined && (
                         <p className="text-xs text-muted-foreground">
-                          isHit: {point.isHit ? "true" : "false"} | isGhost:{" "}
-                          {point.isGhost ? "true" : "false"}
+                          <span className="font-semibold">Margin:</span>{" "}
+                          {point.margin}%
                         </p>
-                      </div>
+                      )}
                     </div>
                   </div>
                 );

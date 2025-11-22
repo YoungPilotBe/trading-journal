@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { api } from "../_generated/api";
+import { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { tpslSchema } from "../constants/unions";
 
@@ -109,43 +110,76 @@ export const upsertTpslEntries = mutation({
       { snapshotId }
     );
 
-    // Delete existing entries for this snapshot (except hit ones)
-    // Hit entries cannot be removed
-    for (const existingEntry of existingEntries) {
-      if (!existingEntry.isHit) {
-        await ctx.db.delete(existingEntry._id);
-      }
-    }
+    // Create a map of existing entries by their _id for quick lookup
+    const existingEntriesMap = new Map(
+      existingEntries.map((entry) => [entry._id, entry])
+    );
 
-    // Always create new entries for the current snapshot
-    // Process take profits
-    for (const entry of tpsl.takeProfits) {
+    // Track which entry IDs we're keeping (updating or creating)
+    const keptEntryIds = new Set<Id<"tpsl_entries">>();
+
+    // Helper function to process an entry (update if exists, create if not)
+    const processEntry = async (
+      entry: {
+        price: number;
+        margin: number;
+        _id?: Id<"tpsl_entries">;
+        isHit?: boolean;
+        hitSnapshotId?: Id<"snapshots">;
+        hitAt?: number;
+        createdAt?: number;
+      },
+      type: "take_profit" | "stop_loss"
+    ) => {
+      // If entry has an _id, try to update it
+      if (entry._id) {
+        const existingEntry = existingEntriesMap.get(entry._id);
+        if (existingEntry) {
+          // Entry exists, update it while preserving hit tracking fields
+          keptEntryIds.add(entry._id);
+          // Only update price, margin, and updatedAt
+          // Never overwrite hit tracking fields (isHit, hitSnapshotId, hitAt, createdAt)
+          // These are set when the order is hit and should never change
+          await ctx.db.patch(entry._id, {
+            price: entry.price,
+            margin: entry.margin,
+            updatedAt: now,
+          });
+          return;
+        }
+      }
+
+      // Entry doesn't have _id or doesn't exist, create a new one
       await ctx.db.insert("tpsl_entries", {
         snapshotId,
-        type: "take_profit",
+        type,
         price: entry.price,
         margin: entry.margin,
         isHit: entry.isHit ?? false,
-        hitSnapshotId: entry.hitSnapshotId ?? (entry.isHit ? snapshotId : undefined),
+        hitSnapshotId:
+          entry.hitSnapshotId ?? (entry.isHit ? snapshotId : undefined),
         hitAt: entry.hitAt ?? (entry.isHit ? now : undefined),
-        createdAt: now,
+        createdAt: entry.createdAt ?? now,
         updatedAt: now,
       });
+    };
+
+    // Process take profits
+    for (const entry of tpsl.takeProfits) {
+      await processEntry(entry, "take_profit");
     }
 
     // Process stop losses
     for (const entry of tpsl.stopLosses) {
-      await ctx.db.insert("tpsl_entries", {
-        snapshotId,
-        type: "stop_loss",
-        price: entry.price,
-        margin: entry.margin,
-        isHit: entry.isHit ?? false,
-        hitSnapshotId: entry.hitSnapshotId ?? (entry.isHit ? snapshotId : undefined),
-        hitAt: entry.hitAt ?? (entry.isHit ? now : undefined),
-        createdAt: now,
-        updatedAt: now,
-      });
+      await processEntry(entry, "stop_loss");
+    }
+
+    // Delete existing entries that are not in the new tpsl data (except hit ones)
+    // Hit entries cannot be removed, and entries we updated/created are already kept
+    for (const existingEntry of existingEntries) {
+      if (!existingEntry.isHit && !keptEntryIds.has(existingEntry._id)) {
+        await ctx.db.delete(existingEntry._id);
+      }
     }
 
     // Update snapshot with entry price

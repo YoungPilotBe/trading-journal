@@ -27,6 +27,7 @@ type ReferencePoint = {
   cumulativeWeightedProfit: number; // Sum of (profit * margin / 100) for hit TPs
   cumulativeWeightedRisk: number; // Sum of (risk * margin / 100) for hit SLs
   cumulativeHitTPWeight: number; // Total weight of hit TPs (to calculate remaining position)
+  cumulativeHitSLWeight: number; // Total weight of hit SLs (to calculate remaining position)
 };
 
 /**
@@ -69,67 +70,53 @@ function calculateCumulativeRMultiple(
   weightedProfit: number;
   weightedRisk: number;
   cumulativeHitTPWeight: number;
+  cumulativeHitSLWeight: number;
 } {
   let newWeightedProfit = previousRefPoint.cumulativeWeightedProfit;
   let newWeightedRisk = previousRefPoint.cumulativeWeightedRisk;
   let newCumulativeHitTPWeight = previousRefPoint.cumulativeHitTPWeight;
+  let newCumulativeHitSLWeight = previousRefPoint.cumulativeHitSLWeight;
 
   if (direction === "long") {
     if (newEntry.type === "take_profit") {
       const profit = newEntry.price - entryPrice;
-      newWeightedProfit += profit * (newEntry.margin / 100);
+      const contribution = profit * (newEntry.margin / 100);
+      newWeightedProfit += contribution;
       newCumulativeHitTPWeight += newEntry.margin;
     } else {
-      // For stop loss: calculate remaining position weight
-      const remainingPositionWeight = 100 - newCumulativeHitTPWeight;
-      // Apply SL margin to remaining position only
-      const effectiveSLMargin =
-        newEntry.margin * (remainingPositionWeight / 100);
       const risk = entryPrice - newEntry.price;
-      const normalizedRisk = Math.max(risk, entryPrice * 0.001);
-      // Subtract the loss from weighted profit (SL has negative effect)
-      const loss = -(normalizedRisk * (effectiveSLMargin / 100));
-      newWeightedProfit += loss;
-      newWeightedRisk += normalizedRisk * (effectiveSLMargin / 100);
+      if (risk > 0) {
+        const loss = -(risk * (newEntry.margin / 100));
+        newWeightedProfit += loss;
+        newWeightedRisk += risk * (newEntry.margin / 100);
+      }
+      newCumulativeHitSLWeight += newEntry.margin;
     }
   } else {
     if (newEntry.type === "take_profit") {
       const profit = entryPrice - newEntry.price;
-      newWeightedProfit += profit * (newEntry.margin / 100);
+      const contribution = profit * (newEntry.margin / 100);
+      newWeightedProfit += contribution;
       newCumulativeHitTPWeight += newEntry.margin;
     } else {
-      // For stop loss: calculate remaining position weight
-      const remainingPositionWeight = 100 - newCumulativeHitTPWeight;
-      // Apply SL margin to remaining position only
-      const effectiveSLMargin =
-        newEntry.margin * (remainingPositionWeight / 100);
       const risk = newEntry.price - entryPrice;
-      const normalizedRisk = Math.max(risk, entryPrice * 0.001);
-      // Subtract the loss from weighted profit (SL has negative effect)
-      const loss = -(normalizedRisk * (effectiveSLMargin / 100));
-      newWeightedProfit += loss;
-      newWeightedRisk += normalizedRisk * (effectiveSLMargin / 100);
+      if (risk > 0) {
+        const loss = -(risk * (newEntry.margin / 100));
+        newWeightedProfit += loss;
+        newWeightedRisk += risk * (newEntry.margin / 100);
+      }
+      newCumulativeHitSLWeight += newEntry.margin;
     }
   }
 
-  // For R-multiple calculation, always use reference risk as the denominator
-  // This ensures consistent R-multiple calculation and proper comparison
-  // When SL is hit after TPs, the loss reduces weightedProfit,
-  // which decreases R-multiple relative to the reference point
-  const effectiveRisk = referenceRisk;
-
-  // R-multiple = weighted profit / reference risk
-  // When SL is hit after TPs:
-  // - weightedProfit decreases (loss subtracted)
-  // - denominator stays constant (referenceRisk)
-  // - Result: R-multiple decreases from reference point
-  const rMultiple = newWeightedProfit / effectiveRisk;
+  const rMultiple = newWeightedProfit / referenceRisk;
 
   return {
     rMultiple,
     weightedProfit: newWeightedProfit,
     weightedRisk: newWeightedRisk,
     cumulativeHitTPWeight: newCumulativeHitTPWeight,
+    cumulativeHitSLWeight: newCumulativeHitSLWeight,
   };
 }
 
@@ -175,6 +162,7 @@ export function calculateProgressionPaths(
     cumulativeWeightedProfit: 0,
     cumulativeWeightedRisk: 0,
     cumulativeHitTPWeight: 0,
+    cumulativeHitSLWeight: 0,
   };
   referencePoints.push(startPoint);
 
@@ -189,6 +177,8 @@ export function calculateProgressionPaths(
   });
 
   const processedEntryIds = new Set<Id<"tpsl_entries">>();
+  let tpIndex = 0;
+  let slIndex = 0;
 
   for (let i = 0; i <= currentSnapshotIndex; i++) {
     const snapshot = snapshots[i];
@@ -204,11 +194,18 @@ export function calculateProgressionPaths(
     // Process hit entries in order, building cumulatively
     // Each entry builds on the previous one's cumulative R-multiple
     if (hitEntries.length > 0) {
-      // Sort hit entries to process them in order (TPs first, then SLs)
+      // Sort hit entries chronologically by hitAt timestamp when available
+      // This ensures correct order when both TP and SL are hit in the same snapshot
       const sortedHitEntries = [...hitEntries].sort((a, b) => {
+        // If both have hitAt timestamps, sort chronologically
+        if (a.hitAt && b.hitAt) {
+          return a.hitAt - b.hitAt;
+        }
+        // Fallback to type-based sorting (TPs first) if timestamps are missing
         if (a.type !== b.type) {
           return a.type === "take_profit" ? -1 : 1;
         }
+        // If same type, sort by price
         return direction === "long" ? a.price - b.price : b.price - a.price;
       });
 
@@ -226,6 +223,14 @@ export function calculateProgressionPaths(
           referenceRisk
         );
 
+        // Track indices for labeling
+        const isTP = entry.type === "take_profit";
+        if (isTP) {
+          tpIndex++;
+        } else {
+          slIndex++;
+        }
+
         // Display each hit entry at its hit snapshot index
         // TP1 at index 1, TP2 at index 2 (with cumulative value), etc.
         paths.push({
@@ -237,13 +242,15 @@ export function calculateProgressionPaths(
           isHit: true,
           isGhost: false,
           snapshotId: snapshot.snapshotId,
+          margin: entry.margin,
+          entryIndex: isTP ? tpIndex : slIndex,
         });
 
         processedEntryIds.add(entry.id);
 
         // Update reference point after each entry to build cumulatively
         // This ensures TP2's calculation includes TP1's contribution
-        referencePoints.push({
+        const newRefPoint = {
           id: `hit-${entry.id}-${i}`,
           x: i,
           y: result.rMultiple,
@@ -251,7 +258,20 @@ export function calculateProgressionPaths(
           cumulativeWeightedProfit: result.weightedProfit,
           cumulativeWeightedRisk: result.weightedRisk,
           cumulativeHitTPWeight: result.cumulativeHitTPWeight,
-        });
+          cumulativeHitSLWeight: result.cumulativeHitSLWeight,
+        };
+        referencePoints.push(newRefPoint);
+
+        // Check if position becomes fully closed after this entry
+        const isPositionFullyClosed =
+          result.cumulativeHitTPWeight + result.cumulativeHitSLWeight >= 100;
+        if (isPositionFullyClosed) {
+          // Mark this as the last point
+          const lastPathIndex = paths.length - 1;
+          if (lastPathIndex >= 0) {
+            paths[lastPathIndex].isLastPoint = true;
+          }
+        }
       }
     }
   }
@@ -279,6 +299,23 @@ export function calculateProgressionPaths(
   const mostRecentRefPoint =
     referencePoints[referencePoints.length - 1] || startPoint;
 
+  // Check if position is fully closed (all TP/SL weight has been hit)
+  const isPositionFullyClosed =
+    mostRecentRefPoint.cumulativeHitTPWeight +
+      mostRecentRefPoint.cumulativeHitSLWeight >=
+    100;
+
+  // Mark the last hit point if position is fully closed
+  if (isPositionFullyClosed && paths.length > 0) {
+    // Find the last hit point (not ghost) and mark it
+    for (let i = paths.length - 1; i >= 0; i--) {
+      if (paths[i].isHit && !paths[i].isGhost) {
+        paths[i].isLastPoint = true;
+        break;
+      }
+    }
+  }
+
   const refSnapshotIndex = snapshots.findIndex(
     (s) => s.snapshotId === mostRecentRefPoint.snapshotId
   );
@@ -286,6 +323,11 @@ export function calculateProgressionPaths(
   if (refSnapshotIndex !== -1) {
     const refSnapshot = snapshots[refSnapshotIndex];
     if (refSnapshot.entryPrice) {
+      // Don't generate ghost paths if position is fully closed
+      if (isPositionFullyClosed) {
+        return paths;
+      }
+
       // Separate TPs and SLs, sort each group independently
       const unhitTPs = unhitEntries
         .filter((e) => e.type === "take_profit")
@@ -301,6 +343,7 @@ export function calculateProgressionPaths(
       // Process TPs: each TP positioned at referencePoint.x + (index + 1)
       // TP1 at index 1, TP2 at index 2, TP3 at index 3, etc.
       let cumulativeRefPointTP = mostRecentRefPoint;
+      let ghostTPIndex = tpIndex;
       for (let index = 0; index < unhitTPs.length; index++) {
         const entry = unhitTPs[index];
 
@@ -320,8 +363,10 @@ export function calculateProgressionPaths(
           cumulativeWeightedProfit: result.weightedProfit,
           cumulativeWeightedRisk: result.weightedRisk,
           cumulativeHitTPWeight: result.cumulativeHitTPWeight,
+          cumulativeHitSLWeight: result.cumulativeHitSLWeight,
         };
 
+        ghostTPIndex++;
         paths.push({
           x: mostRecentRefPoint.x + (index + 1),
           y: result.rMultiple,
@@ -331,12 +376,16 @@ export function calculateProgressionPaths(
           isHit: false,
           isGhost: true,
           snapshotId: currentSnapshot.snapshotId,
+          margin: entry.margin,
+          entryIndex: ghostTPIndex,
         });
       }
 
       // Process SLs: each SL positioned at referencePoint.x + (index + 1)
       // SL1 at index 1, SL2 at index 2, etc. (same indices as TPs, different Y values)
+      // Each SL ghost path shows cumulative effect (SL1, then SL1+SL2, etc.)
       let cumulativeRefPointSL = mostRecentRefPoint;
+      let ghostSLIndex = slIndex;
       for (let index = 0; index < unhitSLs.length; index++) {
         const entry = unhitSLs[index];
 
@@ -356,8 +405,10 @@ export function calculateProgressionPaths(
           cumulativeWeightedProfit: result.weightedProfit,
           cumulativeWeightedRisk: result.weightedRisk,
           cumulativeHitTPWeight: result.cumulativeHitTPWeight,
+          cumulativeHitSLWeight: result.cumulativeHitSLWeight,
         };
 
+        ghostSLIndex++;
         paths.push({
           x: mostRecentRefPoint.x + (index + 1),
           y: result.rMultiple,
@@ -367,6 +418,8 @@ export function calculateProgressionPaths(
           isHit: false,
           isGhost: true,
           snapshotId: currentSnapshot.snapshotId,
+          margin: entry.margin,
+          entryIndex: ghostSLIndex,
         });
       }
     }
