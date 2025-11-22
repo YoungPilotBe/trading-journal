@@ -129,7 +129,11 @@ export type ChartProps<T extends ChartType> = T extends "r-multiple-evolution"
   : T extends "progression"
     ? { tradeSetupId: Id<"trade_setups">; snapshotId?: Id<"snapshots"> }
     : T extends "r-multiple"
-      ? { templateId?: Id<"trade_templates">; filterType?: "all" | "closed" }
+      ? {
+          templateId?: Id<"trade_templates">;
+          filterType?: "all" | "closed";
+          templateView?: "list" | "chart";
+        }
       : Record<string, never>;
 
 // Chart context value types (what's stored in context)

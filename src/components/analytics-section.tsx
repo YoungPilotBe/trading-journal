@@ -8,9 +8,10 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePreloadProgressionCharts } from "@/hooks/charts/use-preload-progression-charts";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
-import { Link, useSearch } from "@tanstack/react-router";
+import { Route } from "@/routes/(app)/dashboard/setup/route";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { Id } from "convex/_generated/dataModel";
-import { ChevronRight } from "lucide-react";
+import { BarChart3, CheckCircle2, ChevronRight, List } from "lucide-react";
 import { useState } from "react";
 
 const EvolutionLegend = () => {
@@ -65,13 +66,33 @@ export function AnalyticsSection({
   const { data: tradeSetup } = useGetTradeSetup({
     id: tradeSetupId,
   });
-  const { snapshotId } = useSearch({ from: "/(app)/dashboard/setup" });
+  const navigate = useNavigate({ from: Route.fullPath });
+  const search = Route.useSearch();
+  const { snapshotId, templateView } = search;
   const [selectedChart, setSelectedChart] = useState<
     "r-multiple" | "emotion" | "progression"
   >("r-multiple");
 
   // Preload all progression charts for all snapshotIds
   usePreloadProgressionCharts(tradeSetupId);
+
+  const handleTemplateFilterChange = (value: string) => {
+    navigate({
+      search: {
+        ...search,
+        templateFilter: value as "all" | "closed",
+      },
+    });
+  };
+
+  const handleTemplateViewChange = (value: string) => {
+    navigate({
+      search: {
+        ...search,
+        templateView: value as "list" | "chart",
+      },
+    });
+  };
 
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -116,12 +137,45 @@ export function AnalyticsSection({
         </CardContent>
       </Card>
       <Card className="bg-transparent flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          {/* Filter Tabs */}
+          <Tabs
+            value={templateFilter}
+            onValueChange={handleTemplateFilterChange}
+          >
+            <TabsList className="h-7">
+              <TabsTrigger value="all" className="text-xs px-2.5">
+                <List className="h-3 w-3 mr-1" />
+                All Trades
+              </TabsTrigger>
+              <TabsTrigger value="closed" className="text-xs px-2.5">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                Closed Trades
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {/* View Tabs */}
+          <Tabs
+            value={templateView ?? "list"}
+            onValueChange={handleTemplateViewChange}
+          >
+            <TabsList className="h-7">
+              <TabsTrigger value="list" className="text-xs px-2.5">
+                <List className="h-3 w-3" />
+              </TabsTrigger>
+              <TabsTrigger value="chart" className="text-xs px-2.5">
+                <BarChart3 className="h-3 w-3" />
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardHeader>
         <CardContent className="flex-1">
           <Chart
             chartType="r-multiple"
             props={{
               templateId: tradeSetup?.trade_template,
               filterType: templateFilter,
+              templateView: (templateView as "list" | "chart") ?? "list",
             }}
           />
         </CardContent>

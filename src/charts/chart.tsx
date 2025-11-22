@@ -65,6 +65,8 @@ const ChartContent = <T extends ChartType>({
     const templateId =
       (props as ChartProps<"r-multiple">)?.templateId ?? undefined;
     const filterType = (props as ChartProps<"r-multiple">)?.filterType ?? "all";
+    const templateView =
+      (props as ChartProps<"r-multiple">)?.templateView ?? "list";
     return (
       <TemplateView
         data={data as TemplateChartData[] | null}
@@ -73,6 +75,7 @@ const ChartContent = <T extends ChartType>({
         isLoading={isLoading}
         templateId={templateId}
         filterType={filterType}
+        templateView={templateView}
       />
     );
   }
