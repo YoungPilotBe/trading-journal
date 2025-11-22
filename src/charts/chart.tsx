@@ -7,11 +7,13 @@ import {
   type EmotionChartData,
   type EvolutionChartColors,
   type EvolutionChartData,
+  type ProgressionChartData,
   type TemplateChartColors,
   type TemplateChartData,
 } from "./chart-context";
 import { EmotionChart } from "./emotion-chart";
 import { EvolutionLineChart } from "./evolution-line-chart";
+import { ProgressionChart } from "./progression-chart";
 import { TemplateView } from "./template-view";
 
 type Props<T extends ChartType = ChartType> = {
@@ -81,6 +83,20 @@ const ChartContent = <T extends ChartType>({
     return (
       <EvolutionLineChart
         data={data as EvolutionChartData[] | null}
+        chartConfig={chartConfig}
+        chartColors={chartColors as EvolutionChartColors | null}
+        isLoading={isLoading}
+        tradeSetupId={tradeSetupId}
+      />
+    );
+  }
+
+  if (chartType === "progression") {
+    const tradeSetupId =
+      (props as ChartProps<"progression">)?.tradeSetupId ?? undefined;
+    return (
+      <ProgressionChart
+        data={data as ProgressionChartData[] | null}
         chartConfig={chartConfig}
         chartColors={chartColors as EvolutionChartColors | null}
         isLoading={isLoading}

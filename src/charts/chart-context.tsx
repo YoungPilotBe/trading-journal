@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEmotionChart } from "@/hooks/charts/use-emotion-chart";
+import { useProgressionChart } from "@/hooks/charts/use-progression-chart";
 import { useRMultipleChart } from "@/hooks/charts/use-r-multiple-chart";
 import { useRMultipleEvolution } from "@/hooks/charts/use-r-multiple-evolution";
 import React, { createContext } from "react";
@@ -12,6 +13,8 @@ import type {
   EmotionChartData,
   EvolutionChartColors,
   EvolutionChartData,
+  ProgressionChartColors,
+  ProgressionChartData,
   TemplateChartColors,
   TemplateChartData,
 } from "./chart.types";
@@ -50,6 +53,15 @@ export function ChartProvider<T extends ChartType>({
       : null,
     chartType === "r-multiple-evolution"
   );
+  const progressionData = useProgressionChart(
+    chartType === "progression"
+      ? ((props as ChartProps<"progression">)?.tradeSetupId ?? null)
+      : null,
+    chartType === "progression"
+      ? ((props as ChartProps<"progression">)?.snapshotId ?? null)
+      : null,
+    chartType === "progression"
+  );
 
   // Select the appropriate data based on chartType
   // Type assertions are safe here because we know the hook return types match the chart type
@@ -86,6 +98,16 @@ export function ChartProvider<T extends ChartType>({
       } as ChartContextValue<"r-multiple-evolution">;
       break;
     }
+    case "progression": {
+      value = {
+        data: progressionData.data as ProgressionChartData[] | null,
+        chartConfig: progressionData.chartConfig as BaseChartConfig | null,
+        chartColors: progressionData.chartColors as EvolutionChartColors | null,
+        isLoading: progressionData.isLoading,
+        error: progressionData.error ?? null,
+      } as ChartContextValue<"progression">;
+      break;
+    }
     default:
       // TypeScript should prevent this, but adding for safety
       throw new Error(`Unknown chart type: ${chartType satisfies never}`);
@@ -112,6 +134,8 @@ export type {
   EvolutionChartData,
   LineChartConfig,
   PieChartConfig,
+  ProgressionChartColors,
+  ProgressionChartData,
   TemplateChartColors,
   TemplateChartData,
 } from "./chart.types";

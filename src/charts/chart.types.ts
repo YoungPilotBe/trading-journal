@@ -5,13 +5,15 @@ import type {
   TEMPLATE_CHART_COLORS,
 } from "../../convex/charts/constants";
 
+export type ProgressionChartColors = typeof EVOLUTION_CHART_COLORS;
+
 /**
  * Chart type definitions
  * Uses TypeScript inference and discriminated unions for type safety
  */
 
 // Chart type identifier
-export type ChartType = "emotion" | "r-multiple" | "r-multiple-evolution";
+export type ChartType = "emotion" | "r-multiple" | "r-multiple-evolution" | "progression";
 
 // Chart configuration types
 export type ChartConfigType = "bar" | "pie" | "line";
@@ -62,6 +64,17 @@ export interface EvolutionChartData {
   createdAt: number;
 }
 
+export interface ProgressionChartData {
+  x: number; // snapshot index
+  y: number; // R-Multiple value
+  referencePointId: string; // ID of the reference point this path came from
+  tpslEntryId?: Id<"tpsl_entries">; // ID of the TP/SL entry (if applicable)
+  type: "tp" | "sl" | "start"; // type of point
+  isHit: boolean; // whether this TP/SL was actually hit
+  isGhost: boolean; // true for ghost paths, false for actual hits
+  snapshotId?: Id<"snapshots">; // snapshot ID if applicable
+}
+
 // Chart response types (what comes from queries)
 export interface EmotionChartResponse {
   data: EmotionChartData[];
@@ -81,11 +94,18 @@ export interface EvolutionChartResponse {
   chartColors: EvolutionChartColors;
 }
 
+export interface ProgressionChartResponse {
+  data: ProgressionChartData[];
+  chartConfig: LineChartConfig;
+  chartColors: EvolutionChartColors;
+}
+
 // Discriminated union for chart responses
 export type ChartResponse =
   | EmotionChartResponse
   | TemplateChartResponse
-  | EvolutionChartResponse;
+  | EvolutionChartResponse
+  | ProgressionChartResponse;
 
 // Type guards for discriminated union
 export function isEmotionChartResponse(
@@ -103,9 +123,11 @@ export function isTemplateChartResponse(
 // Chart props type - defines what props each chart type needs
 export type ChartProps<T extends ChartType> = T extends "r-multiple-evolution"
   ? { tradeSetupId: Id<"trade_setups"> }
-  : T extends "r-multiple"
-    ? { templateId?: Id<"trade_templates">; filterType?: "all" | "closed" }
-    : Record<string, never>;
+  : T extends "progression"
+    ? { tradeSetupId: Id<"trade_setups">; snapshotId?: Id<"snapshots"> }
+    : T extends "r-multiple"
+      ? { templateId?: Id<"trade_templates">; filterType?: "all" | "closed" }
+      : Record<string, never>;
 
 // Chart context value types (what's stored in context)
 // Components can render either bar, pie, or line, so config can be any type
@@ -134,7 +156,15 @@ export type ChartContextValue<T extends ChartType = ChartType> =
             isLoading: boolean;
             error: unknown;
           }
-        : never;
+        : T extends "progression"
+          ? {
+              data: ProgressionChartData[] | null;
+              chartConfig: BaseChartConfig | null;
+              chartColors: EvolutionChartColors | null;
+              isLoading: boolean;
+              error: unknown;
+            }
+          : never;
 
 // Helper type to extract data type from chart type
 export type ChartDataType<T extends ChartType> = T extends "emotion"

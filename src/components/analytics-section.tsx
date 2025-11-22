@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetTradeSetup } from "@/hooks/trade-setup/use-get-trade-setup";
-import { Link } from "@tanstack/react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import type { Id } from "convex/_generated/dataModel";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -64,9 +64,10 @@ export function AnalyticsSection({
   const { data: tradeSetup } = useGetTradeSetup({
     id: tradeSetupId,
   });
-  const [selectedChart, setSelectedChart] = useState<"r-multiple" | "emotion">(
-    "r-multiple"
-  );
+  const { snapshotId } = useSearch({ from: "/(app)/dashboard/setup" });
+  const [selectedChart, setSelectedChart] = useState<
+    "r-multiple" | "emotion" | "progression"
+  >("r-multiple");
 
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -75,12 +76,17 @@ export function AnalyticsSection({
           <Tabs
             value={selectedChart}
             onValueChange={(value) =>
-              setSelectedChart(value as "r-multiple" | "emotion")
+              setSelectedChart(
+                value as "r-multiple" | "emotion" | "progression"
+              )
             }
           >
             <TabsList className="h-7">
               <TabsTrigger value="r-multiple" className="text-xs px-2.5">
                 R-Multiple
+              </TabsTrigger>
+              <TabsTrigger value="progression" className="text-xs px-2.5">
+                Progression
               </TabsTrigger>
               <TabsTrigger value="emotion" className="text-xs px-2.5">
                 Emotion
@@ -92,6 +98,14 @@ export function AnalyticsSection({
         <CardContent className="">
           {selectedChart === "r-multiple" ? (
             <Chart chartType="r-multiple-evolution" props={{ tradeSetupId }} />
+          ) : selectedChart === "progression" ? (
+            <Chart
+              chartType="progression"
+              props={{
+                tradeSetupId,
+                snapshotId: snapshotId as Id<"snapshots"> | undefined,
+              }}
+            />
           ) : (
             <Chart chartType="emotion" props={{}} />
           )}
