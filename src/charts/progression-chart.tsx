@@ -347,7 +347,7 @@ export const ProgressionChart = ({
   }
 
   return (
-    <div className="w-full h-[400px] relative">
+    <div className="w-full h-[400px] relative outline-none">
       {/* Position Size Indicator - Top Right */}
       <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
         {/* Battery Indicator */}
@@ -392,7 +392,7 @@ export const ProgressionChart = ({
           </span>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" className="outline-none">
         <ScatterChart margin={margin}>
           <XAxis
             type="number"

@@ -123,8 +123,8 @@ export const EvolutionLineChart = ({
     marginTop + (chartAreaHeight * (yDomainMax - 1)) / range;
 
   return (
-    <div className="w-full h-[400px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full h-[400px] outline-none">
+      <ResponsiveContainer width="100%" height="100%" className="outline-none">
         <LineChart
           data={chartData}
           margin={{ top: marginTop, right: 60, left: 60, bottom: marginBottom }}

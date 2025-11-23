@@ -64,8 +64,8 @@ export const EmotionChart = ({
   // Render bar chart
   if (chartConfig.type === "bar") {
     return (
-      <div className="w-full h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full h-[400px] outline-none">
+        <ResponsiveContainer width="100%" height="100%" className="outline-none">
           <BarChart
             data={data}
             margin={{ top: 50, right: 30, left: 20, bottom: 60 }}
@@ -125,6 +125,7 @@ export const EmotionChart = ({
               opacity={0.3}
             />
             <Tooltip
+              cursor={{ fill: "oklch(0.553 0.013 58.071 / 0.25)" }}
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload as EmotionChartData;
@@ -211,8 +212,8 @@ export const EmotionChart = ({
     }));
 
     return (
-      <div className="w-full h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full h-[400px] outline-none">
+        <ResponsiveContainer width="100%" height="100%" className="outline-none">
           <PieChart>
             <Pie
               data={pieData}

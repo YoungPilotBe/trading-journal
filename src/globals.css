@@ -121,6 +121,40 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Prevent focus outline on Recharts SVG elements and all chart data points */
+  svg.recharts-surface:focus,
+  svg.recharts-surface:focus-visible,
+  svg.recharts-surface *:focus,
+  svg.recharts-surface *:focus-visible {
+    outline: none !important;
+  }
+  /* Prevent focus outline on all SVG elements within chart containers */
+  .outline-none svg:focus,
+  .outline-none svg:focus-visible,
+  .outline-none svg *:focus,
+  .outline-none svg *:focus-visible {
+    outline: none !important;
+  }
+  /* Make SVG elements within chart containers non-focusable and remove outlines */
+  .outline-none svg,
+  .outline-none svg * {
+    outline: none;
+  }
+  .outline-none svg rect,
+  .outline-none svg circle,
+  .outline-none svg line,
+  .outline-none svg g,
+  .outline-none svg polygon,
+  .outline-none svg path,
+  .outline-none svg text {
+    outline: none !important;
+    focusable: false;
+  }
+  /* Prevent any element within chart containers from showing focus outline */
+  .outline-none *:focus,
+  .outline-none *:focus-visible {
+    outline: none !important;
+  }
 }
 
 @layer utilities {
