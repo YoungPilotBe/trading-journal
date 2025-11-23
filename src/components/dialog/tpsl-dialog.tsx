@@ -245,7 +245,9 @@ export function TPSLDialog({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {readonly ? "View Take Profit / Stop Loss" : "Configure Take Profit / Stop Loss"}
+            {readonly
+              ? "View Take Profit / Stop Loss"
+              : "Configure Take Profit / Stop Loss"}
           </DialogTitle>
         </DialogHeader>
 
