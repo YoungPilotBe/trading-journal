@@ -4,13 +4,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCurrentRMultiple } from "@/hooks/charts/use-current-r-multiple";
 import { cn } from "@/lib/utils";
+import { Id } from "convex/_generated/dataModel";
 import { Plus } from "lucide-react";
 import { useFormState } from "react-hook-form";
 import { TPSLFormData, TPSLFormInput } from "../schemas/tpsl-schema";
 import { calculateRMultiple } from "../utils";
-import { useCurrentRMultiple } from "@/hooks/charts/use-current-r-multiple";
-import type { Id } from "../../../convex/_generated/dataModel";
 
 interface TPSLOverviewProps {
   data?: TPSLFormInput | TPSLFormData;
