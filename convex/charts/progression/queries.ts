@@ -3,6 +3,7 @@ import { api } from "../../_generated/api";
 import { Doc, Id } from "../../_generated/dataModel";
 import { query } from "../../_generated/server";
 import { EVOLUTION_CHART_COLORS } from "../constants";
+import { getCurrentRMultiple } from "./services";
 
 /**
  * Type for a TP/SL entry in the progression chart response
@@ -122,6 +123,85 @@ export const getProgressionChart = query({
       chartColors: EVOLUTION_CHART_COLORS,
       direction,
       currentSnapshotId,
+    };
+  },
+});
+
+/**
+ * Get current R-multiple value for a specific trade setup and snapshot
+ * Returns the calculated R-multiple based on hit TP/SL entries
+ * The currentSnapshotId determines which snapshot to calculate up to (defaults to latest)
+ */
+export const getCurrentRMultipleQuery = query({
+  args: {
+    tradeSetupId: v.id("trade_setups"),
+    currentSnapshotId: v.optional(v.id("snapshots")),
+  },
+  handler: async (
+    ctx,
+    { tradeSetupId, currentSnapshotId }
+  ): Promise<{ currentRMultiple: number | null }> => {
+    // Fetch the trade setup to get the direction
+    const tradeSetup = await ctx.db.get(tradeSetupId);
+    if (!tradeSetup || !tradeSetup.direction) {
+      return {
+        currentRMultiple: null,
+      };
+    }
+
+    const direction = tradeSetup.direction;
+
+    // Fetch all snapshots for this trade setup, ordered by creation time
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_trade_setup_and_created_at", (q) =>
+        q.eq("tradeSetupId", tradeSetupId)
+      )
+      .order("asc") // Oldest first
+      .collect();
+
+    // If no snapshots, return null
+    if (snapshots.length === 0) {
+      return {
+        currentRMultiple: null,
+      };
+    }
+
+    // Fetch TP/SL entries for each snapshot and transform to SnapshotWithTpsl format
+    const snapshotsWithTpsl = await Promise.all(
+      snapshots.map(async (snapshot: Doc<"snapshots">, index: number) => {
+        const tpslEntries: Doc<"tpsl_entries">[] = await ctx.runQuery(
+          api.tpsl.queries.getTpslEntriesBySnapshot,
+          { snapshotId: snapshot._id }
+        );
+
+        return {
+          snapshotId: snapshot._id,
+          index,
+          entryPrice: snapshot.entryPrice,
+          tpslEntries: tpslEntries.map((entry: Doc<"tpsl_entries">) => ({
+            id: entry._id,
+            type: entry.type,
+            price: entry.price,
+            margin: entry.margin,
+            isHit: entry.isHit,
+            hitSnapshotId: entry.hitSnapshotId,
+            hitAt: entry.hitAt,
+          })),
+          createdAt: snapshot.createdAt,
+        };
+      })
+    );
+
+    // Calculate current R-multiple using the service function
+    const currentRMultiple = getCurrentRMultiple(
+      snapshotsWithTpsl,
+      direction,
+      currentSnapshotId
+    );
+
+    return {
+      currentRMultiple,
     };
   },
 });

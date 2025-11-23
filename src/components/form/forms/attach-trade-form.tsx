@@ -43,6 +43,7 @@ interface Props {
 
 const AttachTradeForm = ({
   imageId,
+  snapshotId,
   tradeSetupId,
   disabledFields,
   existingTradeSetup,
@@ -235,6 +236,8 @@ const AttachTradeForm = ({
               data={field.value}
               direction={direction}
               onEdit={handleOpenTspl}
+              tradeSetupId={tradeSetupId}
+              currentSnapshotId={snapshotId}
             />
           )}
         />

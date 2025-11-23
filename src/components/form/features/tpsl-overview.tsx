@@ -9,18 +9,32 @@ import { Plus } from "lucide-react";
 import { useFormState } from "react-hook-form";
 import { TPSLFormData, TPSLFormInput } from "../schemas/tpsl-schema";
 import { calculateRMultiple } from "../utils";
+import { useCurrentRMultiple } from "@/hooks/charts/use-current-r-multiple";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 interface TPSLOverviewProps {
   data?: TPSLFormInput | TPSLFormData;
   onEdit: () => void;
   direction?: "long" | "short";
+  tradeSetupId?: Id<"trade_setups"> | null;
+  currentSnapshotId?: Id<"snapshots"> | null | undefined;
 }
 
-export function TPSLOverview({ data, onEdit, direction }: TPSLOverviewProps) {
+export function TPSLOverview({
+  data,
+  onEdit,
+  direction,
+  tradeSetupId,
+  currentSnapshotId,
+}: TPSLOverviewProps) {
   // Get form errors for tpsl field
   const { errors } = useFormState();
   const tpslError = errors.tpsl;
   const hasError = !!tpslError;
+
+  // Fetch current R-multiple if tradeSetupId is provided
+  const { currentRMultiple, isLoading: isLoadingCurrentRMultiple } =
+    useCurrentRMultiple(tradeSetupId ?? null, currentSnapshotId ?? null);
 
   // Extract error message(s) from the error object
   const getErrorMessage = (): string => {
@@ -140,10 +154,25 @@ export function TPSLOverview({ data, onEdit, direction }: TPSLOverviewProps) {
             </div>
           )}
         </div>
-        {rMultiple !== undefined && (
+        {(rMultiple !== undefined || currentRMultiple !== null) && (
           <div className="text-xs text-muted-foreground text-right">
-            <div className="font-medium mb-1">R-Multiple</div>
-            <div className="font-mono">{rMultiple.toFixed(2)}R</div>
+            {rMultiple !== undefined && (
+              <>
+                <div className="font-medium mb-1">Planned R-Multiple</div>
+                <div className="font-mono">{rMultiple.toFixed(2)}R</div>
+              </>
+            )}
+            {currentRMultiple !== null && (
+              <>
+                {rMultiple !== undefined && <div className="mt-2" />}
+                <div className="font-medium mb-1">Current R-Multiple</div>
+                <div className="font-mono">
+                  {isLoadingCurrentRMultiple
+                    ? "..."
+                    : `${currentRMultiple.toFixed(2)}R`}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
