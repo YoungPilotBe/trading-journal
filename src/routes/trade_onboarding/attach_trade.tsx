@@ -50,7 +50,7 @@ function RouteComponent() {
     imageData,
     previousStatuses,
     tpslEntries,
-    previousEntry,
+    previousEntryPrice,
   } = Route.useLoaderData();
 
   console.log({ tpslEntries });
@@ -68,7 +68,7 @@ function RouteComponent() {
           imageData={imageData}
           previousStatuses={previousStatuses}
           tpslEntries={tpslEntries}
-          previousEntryPrice={previousEntry}
+          previousEntryPrice={previousEntryPrice}
         />
       </div>
     </div>

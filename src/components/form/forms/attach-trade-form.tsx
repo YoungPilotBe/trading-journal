@@ -78,7 +78,7 @@ const AttachTradeForm = ({
     mode: "onChange",
   });
 
-  const { register, control, handleSubmit, watch, setValue } = form;
+  const { control, handleSubmit, watch, setValue } = form;
 
   function handleNavigate(args: {
     tradeSetupId: Id<"trade_setups">;
