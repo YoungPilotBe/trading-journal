@@ -33,7 +33,6 @@ const baseTradeFormSchema = z.object({
   title: z.string().min(1).max(100),
   direction: z.enum(["long", "short"]),
   emotion: emotionSchema,
-  rMultiple: z.optional(z.number()),
   status: statusEnum,
   result: resultEnum.optional(),
   // TP/SL configuration (optional, validated against direction)
@@ -106,7 +105,6 @@ const snapshotSchemaWithoutImageId = baseTradeFormSchema.pick({
   timeframes: true,
   status: true,
   emotion: true,
-  rMultiple: true,
 });
 
 // Snapshot schema with imageId (for createSnapshot mutation)
@@ -134,7 +132,6 @@ export const updateSnapshotSchema = baseTradeFormSchema
   .pick({
     timeframes: true,
     status: true,
-    rMultiple: true,
     emotion: true,
   })
   .partial();

@@ -27,6 +27,7 @@ import type * as config_analytics from "../config/analytics.js";
 import type * as constants_unions from "../constants/unions.js";
 import type * as drawings from "../drawings.js";
 import type * as image_search_actions from "../image_search/actions.js";
+import type * as migrations_migrate_entry_price_to_tpsl from "../migrations/migrate_entry_price_to_tpsl.js";
 import type * as notes_internal from "../notes/internal.js";
 import type * as notes_mutation from "../notes/mutation.js";
 import type * as notes_queries from "../notes/queries.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   "constants/unions": typeof constants_unions;
   drawings: typeof drawings;
   "image_search/actions": typeof image_search_actions;
+  "migrations/migrate_entry_price_to_tpsl": typeof migrations_migrate_entry_price_to_tpsl;
   "notes/internal": typeof notes_internal;
   "notes/mutation": typeof notes_mutation;
   "notes/queries": typeof notes_queries;

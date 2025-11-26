@@ -199,7 +199,7 @@ export const preloadAttachTradeFormData = async (
     existingSnapshot,
     previousStatuses: previousStatuses || [],
     tpslEntries: latestTpsl.entries || [],
-    previousEntry: latestTpsl.entryPrice,
+    previousEntryPrice: latestTpsl.entryPrice, // entryPrice is now extracted from entry_price entries
   };
 };
 

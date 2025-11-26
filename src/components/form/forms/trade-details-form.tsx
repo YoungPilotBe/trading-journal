@@ -18,7 +18,6 @@ import {
   useFormState,
 } from "react-hook-form";
 import { toast } from "sonner";
-import NumberField from "../components/number-field";
 import TextField from "../components/text-field";
 import Direction from "../features/direction";
 import Result from "../features/result";
@@ -282,12 +281,12 @@ const TradeDetailsForm = ({ tradeSetup, snapshot }: Props) => {
             />
           )}
         />
-        <NumberField
-          {...register("rMultiple", { valueAsNumber: true })}
-          label={{
-            value: "R-Multiple",
-            className: "",
-          }}
+        {/* R-Multiple (Read-only display, automatically calculated by Convex) */}
+        <TextField
+          label="R-Multiple"
+          disabled
+          className="text-muted-foreground"
+          value={snapshot.rMultiple?.toFixed(2) || "—"}
         />
 
         {/* Submit Buttons */}

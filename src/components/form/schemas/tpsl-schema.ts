@@ -18,7 +18,7 @@ const tpslEntrySchema = z.object({
   // Optional database fields (present when editing existing entries)
   _id: z.custom<Id<"tpsl_entries">>().optional(),
   snapshotId: z.custom<Id<"snapshots">>().optional(),
-  type: z.enum(["take_profit", "stop_loss"]).optional(),
+  type: z.enum(["take_profit", "stop_loss", "entry_price"]).optional(),
   isHit: z.boolean().optional(),
   hitSnapshotId: z.custom<Id<"snapshots">>().optional(),
   hitAt: z.number().optional(),

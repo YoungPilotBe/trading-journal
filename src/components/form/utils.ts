@@ -43,11 +43,15 @@ export function addTimeframeToTimeframes(
 
 export const transformTpslEntriesToFormInput = (
   entries: Doc<"tpsl_entries">[],
-  entryPrice?: number
+  entryPrice?: number // Keep for backward compatibility, but prefer extracting from entries
 ): TPSLFormInput | undefined => {
   if (!entries || entries.length === 0) {
     return undefined;
   }
+
+  // Extract entry price from entry_price entry
+  const entryPriceEntry = entries.find((e) => e.type === "entry_price");
+  const extractedEntryPrice = entryPriceEntry?.price ?? entryPrice;
 
   // Preserve ALL fields from database documents
   const takeProfits = entries
@@ -87,7 +91,7 @@ export const transformTpslEntriesToFormInput = (
 
   // Always return a structure with arrays, even if empty (with default placeholder)
   return {
-    entryPrice: entryPrice,
+    entryPrice: extractedEntryPrice,
     takeProfits:
       takeProfits.length > 0
         ? takeProfits

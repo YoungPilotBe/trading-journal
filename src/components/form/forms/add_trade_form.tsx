@@ -9,7 +9,6 @@ import { Doc, Id } from "convex/_generated/dataModel";
 import { format } from "date-fns";
 import { Loader } from "lucide-react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import NumberField from "../components/number-field";
 import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
 import Direction from "../features/direction";
@@ -57,7 +56,6 @@ const AddTradeForm = ({
       direction: "long",
       status: "idea",
       emotion: "calm",
-      rMultiple: undefined,
     },
     mode: "onChange",
     shouldUnregister: true,
@@ -192,12 +190,6 @@ const AddTradeForm = ({
           render={({ field }) => (
             <EmotionOptions field={field} label="Emotion" />
           )}
-        />
-
-        <NumberField
-          {...register("rMultiple", { valueAsNumber: true })}
-          label="R-Multiple"
-          placeholder="5.4"
         />
 
         {/* Display TP/SL summary if configured */}

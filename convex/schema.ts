@@ -138,8 +138,12 @@ export default defineSchema({
     // Reference to the snapshot this TP/SL entry belongs to
     snapshotId: v.id("snapshots"),
 
-    // Type of entry: take_profit or stop_loss
-    type: v.union(v.literal("take_profit"), v.literal("stop_loss")),
+    // Type of entry: take_profit, stop_loss, or entry_price
+    type: v.union(
+      v.literal("take_profit"),
+      v.literal("stop_loss"),
+      v.literal("entry_price")
+    ),
 
     // Price and margin for this entry
     price: v.number(),

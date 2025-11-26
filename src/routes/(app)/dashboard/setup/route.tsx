@@ -169,9 +169,9 @@ function RouteComponent() {
                       }
 
                       // Transform TPSL entries to form input
+                      // entryPrice is now extracted from entry_price entries
                       const transformedTpsl = transformTpslEntriesToFormInput(
-                        tpslEntries,
-                        snapshot.entryPrice
+                        tpslEntries
                       );
 
                       openDialog("TPSL", {

@@ -67,9 +67,13 @@ export const getLatestTpslEntriesByTradeSetup = query({
       .withIndex("by_snapshot", (q) => q.eq("snapshotId", targetSnapshot._id))
       .collect();
 
+    // Get entry price from entry_price entry
+    const entryPriceEntry = entries.find((e) => e.type === "entry_price");
+    const entryPrice = entryPriceEntry?.price;
+
     return {
       entries,
-      entryPrice: targetSnapshot.entryPrice,
+      entryPrice,
     };
   },
 });
@@ -107,9 +111,32 @@ export const getPreviousTpslEntriesBySnapshot = query({
       .withIndex("by_snapshot", (q) => q.eq("snapshotId", targetSnapshot._id))
       .collect();
 
+    // Get entry price from entry_price entry
+    const entryPriceEntry = entries.find((e) => e.type === "entry_price");
+    const entryPrice = entryPriceEntry?.price;
+
     return {
       entries,
-      entryPrice: targetSnapshot.entryPrice,
+      entryPrice,
     };
+  },
+});
+
+/**
+ * Get entry price from tpsl_entries for a specific snapshot
+ */
+export const getEntryPriceBySnapshot = query({
+  args: {
+    snapshotId: v.id("snapshots"),
+  },
+  handler: async (ctx, { snapshotId }) => {
+    const entries = await ctx.db
+      .query("tpsl_entries")
+      .withIndex("by_snapshot", (q) => q.eq("snapshotId", snapshotId))
+      .filter((q) => q.eq(q.field("type"), "entry_price"))
+      .collect();
+
+    // Return the entry price from the entry_price entry (should be only one)
+    return entries.length > 0 ? entries[0].price : undefined;
   },
 });

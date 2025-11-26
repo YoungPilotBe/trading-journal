@@ -93,14 +93,25 @@ export const getProgressionChart = query({
           { snapshotId: snapshot._id }
         );
 
+        // Extract entry price from entry_price entry
+        const entryPriceEntry = tpslEntries.find(
+          (e) => e.type === "entry_price"
+        );
+        const entryPrice = entryPriceEntry?.price;
+
+        // Filter out entry_price entries from tpslEntries (only include TP/SL)
+        const tpSlEntries = tpslEntries.filter(
+          (e) => e.type !== "entry_price"
+        );
+
         return {
           snapshotId: snapshot._id,
           index,
-          entryPrice: snapshot.entryPrice,
-          tpslEntries: tpslEntries.map(
+          entryPrice,
+          tpslEntries: tpSlEntries.map(
             (entry: Doc<"tpsl_entries">): ProgressionTpslEntry => ({
               id: entry._id,
-              type: entry.type,
+              type: entry.type as "take_profit" | "stop_loss",
               price: entry.price,
               margin: entry.margin,
               isHit: entry.isHit,
@@ -175,13 +186,24 @@ export const getCurrentRMultipleQuery = query({
           { snapshotId: snapshot._id }
         );
 
+        // Extract entry price from entry_price entry
+        const entryPriceEntry = tpslEntries.find(
+          (e) => e.type === "entry_price"
+        );
+        const entryPrice = entryPriceEntry?.price;
+
+        // Filter out entry_price entries from tpslEntries (only include TP/SL)
+        const tpSlEntries = tpslEntries.filter(
+          (e) => e.type !== "entry_price"
+        );
+
         return {
           snapshotId: snapshot._id,
           index,
-          entryPrice: snapshot.entryPrice,
-          tpslEntries: tpslEntries.map((entry: Doc<"tpsl_entries">) => ({
+          entryPrice,
+          tpslEntries: tpSlEntries.map((entry: Doc<"tpsl_entries">) => ({
             id: entry._id,
-            type: entry.type,
+            type: entry.type as "take_profit" | "stop_loss",
             price: entry.price,
             margin: entry.margin,
             isHit: entry.isHit,

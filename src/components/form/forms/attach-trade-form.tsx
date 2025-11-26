@@ -11,7 +11,6 @@ import { Loader } from "lucide-react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import NumberField from "../components/number-field";
 import SubmitButton from "../components/submit-button";
 import TextField from "../components/text-field";
 import EmotionOptions from "../features/emotion-selector";
@@ -71,7 +70,6 @@ const AttachTradeForm = ({
         : ([] as Timeframe[]),
       status: existingSnapshot?.status || "idea",
       emotion: existingSnapshot?.emotion || "calm",
-      rMultiple: existingSnapshot?.rMultiple,
       trade_template: existingTradeSetup?.trade_template,
       direction: existingTradeSetup?.direction,
       tpsl: transformedTpsl,
@@ -219,12 +217,6 @@ const AttachTradeForm = ({
           render={({ field }) => (
             <EmotionOptions field={field} label="Emotion" />
           )}
-        />
-
-        <NumberField
-          {...register("rMultiple", { valueAsNumber: true })}
-          label="R-Multiple"
-          placeholder="5.3"
         />
 
         {/* Display TP/SL summary if configured - wrapped in Controller to keep field registered */}

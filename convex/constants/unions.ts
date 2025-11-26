@@ -41,7 +41,11 @@ export const tpslSchema = v.optional(
         _id: v.optional(v.id("tpsl_entries")),
         snapshotId: v.optional(v.id("snapshots")),
         type: v.optional(
-          v.union(v.literal("take_profit"), v.literal("stop_loss"))
+          v.union(
+            v.literal("take_profit"),
+            v.literal("stop_loss"),
+            v.literal("entry_price")
+          )
         ),
         isHit: v.optional(v.boolean()),
         hitSnapshotId: v.optional(v.id("snapshots")),
@@ -58,7 +62,11 @@ export const tpslSchema = v.optional(
         _id: v.optional(v.id("tpsl_entries")),
         snapshotId: v.optional(v.id("snapshots")),
         type: v.optional(
-          v.union(v.literal("take_profit"), v.literal("stop_loss"))
+          v.union(
+            v.literal("take_profit"),
+            v.literal("stop_loss"),
+            v.literal("entry_price")
+          )
         ),
         isHit: v.optional(v.boolean()),
         hitSnapshotId: v.optional(v.id("snapshots")),
