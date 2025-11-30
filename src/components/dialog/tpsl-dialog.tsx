@@ -55,6 +55,8 @@ interface TpslEntryRowProps {
   onRemove: () => void;
   array: TPSLFormInput["takeProfits"] | TPSLFormInput["stopLosses"];
   readonly?: boolean;
+  entryPrice?: number;
+  direction: "long" | "short";
 }
 
 // Component for a single TP/SL entry row
@@ -69,6 +71,8 @@ function TpslEntryRow({
   onRemove,
   array,
   readonly = false,
+  entryPrice,
+  direction,
 }: TpslEntryRowProps) {
   // Check if entry was already hit in a previous submission (has hitSnapshotId)
   const wasAlreadyHit = !!entry?.hitSnapshotId;
@@ -77,6 +81,14 @@ function TpslEntryRow({
   const entryIsHit = wasAlreadyHit || isHit;
   // Disable if entry was already hit (cannot unhit or modify) or if readonly
   const isDisabled = wasAlreadyHit || readonly;
+
+  // Warning detection: Stop loss at or above entry price in long, or at or below entry price in short
+  const showWarning =
+    arrayName === "stopLosses" &&
+    entryPrice !== undefined &&
+    entry?.price !== undefined &&
+    ((direction === "long" && entry.price >= entryPrice) ||
+      (direction === "short" && entry.price <= entryPrice));
 
   return (
     <div className="grid grid-cols-[2.5rem_1fr_2.5rem] gap-2 items-start p-3 border rounded-none">
@@ -117,6 +129,12 @@ function TpslEntryRow({
           }}
           placeholder="86.000"
         />
+        {showWarning && (
+          <div className="text-xs text-muted-foreground">
+            Warning: Stop loss is{" "}
+            {direction === "long" ? "at or above" : "at or below"} entry price
+          </div>
+        )}
         <Controller
           name={`${arrayName}.${index}.margin`}
           control={control}
@@ -355,6 +373,8 @@ export function TPSLDialog({
                     onRemove={() => removeTP(index)}
                     array={formData.takeProfits || []}
                     readonly={readonly}
+                    entryPrice={formData.entryPrice}
+                    direction={direction}
                   />
                 );
               })}
@@ -405,6 +425,8 @@ export function TPSLDialog({
                     onRemove={() => removeSL(index)}
                     array={formData.stopLosses || []}
                     readonly={readonly}
+                    entryPrice={formData.entryPrice}
+                    direction={direction}
                   />
                 );
               })}

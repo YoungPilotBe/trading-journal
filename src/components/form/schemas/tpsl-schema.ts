@@ -139,16 +139,9 @@ export function createTpslFormSchema(direction: "long" | "short") {
           });
         }
 
-        // Entry price validation for long: entryPrice > max SL && entryPrice < min TP
+        // Entry price validation for long: entryPrice < min TP
+        // Note: Stop loss can be at or above entry price (exception allowed with warning)
         if (data.entryPrice !== undefined) {
-          if (data.entryPrice <= maxSL) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message:
-                "Entry price must be greater than the highest stop loss price",
-              path: ["entryPrice"],
-            });
-          }
           if (data.entryPrice >= minTP) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
@@ -170,16 +163,9 @@ export function createTpslFormSchema(direction: "long" | "short") {
           });
         }
 
-        // Entry price validation for short: entryPrice < min SL && entryPrice > max TP
+        // Entry price validation for short: entryPrice > max TP
+        // Note: Stop loss can be at or below entry price (exception allowed with warning)
         if (data.entryPrice !== undefined) {
-          if (data.entryPrice >= minSL) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message:
-                "Entry price must be less than the lowest stop loss price",
-              path: ["entryPrice"],
-            });
-          }
           if (data.entryPrice <= maxTP) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,

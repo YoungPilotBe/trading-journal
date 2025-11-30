@@ -13,6 +13,7 @@ import type {
   BaseChartConfig,
   EvolutionChartColors,
   ProgressionChartData,
+  ProgressionSnapshotResult,
 } from "./chart.types";
 
 type ProgressionChartProps = {
@@ -21,6 +22,8 @@ type ProgressionChartProps = {
   chartColors: EvolutionChartColors | null;
   isLoading?: boolean;
   tradeSetupId?: Id<"trade_setups">;
+  snapshots: ProgressionSnapshotResult[] | null;
+  currentSnapshotId: Id<"snapshots"> | null | undefined;
 };
 
 export const ProgressionChart = ({
@@ -28,6 +31,8 @@ export const ProgressionChart = ({
   chartConfig,
   chartColors,
   isLoading = false,
+  snapshots,
+  currentSnapshotId,
 }: ProgressionChartProps) => {
   if (isLoading) {
     return (
@@ -64,53 +69,21 @@ export const ProgressionChart = ({
     return value.toFixed(2);
   };
 
-  const parseMarginValue = (
-    margin: number | string | undefined | null
-  ): number | null => {
-    if (margin === undefined || margin === null) return null;
-    if (typeof margin === "number") return margin;
-    if (typeof margin === "string") {
-      const parsed = parseFloat(margin);
-      return !isNaN(parsed) ? parsed : null;
-    }
-    return null;
-  };
-
-  // Calculate remaining position size percentage
-  const calculateRemainingPosition = (): number => {
-    if (!data || data.length === 0) return 100;
-
-    // Sum all margins from hit TP/SL entries (excluding ghost paths)
-    let totalHitMargin = 0;
-    const processedEntryIds = new Set<string>();
-
-    for (const point of data) {
-      // Only count actual hits, not ghost paths or start points
-      if (
-        point.isHit &&
-        !point.isGhost &&
-        point.margin !== undefined &&
-        point.type !== "start" &&
-        point.tpslEntryId
-      ) {
-        // Avoid double-counting if same entry appears multiple times
-        const entryId = point.tpslEntryId;
-        if (!processedEntryIds.has(entryId)) {
-          processedEntryIds.add(entryId);
-          const marginValue = parseMarginValue(point.margin);
-          if (marginValue !== null && !isNaN(marginValue) && marginValue >= 0) {
-            totalHitMargin += marginValue;
-          }
-        }
-      }
+  // Get remaining weight from current snapshot (server-calculated)
+  const getRemainingWeight = (): number => {
+    if (!snapshots || !currentSnapshotId) {
+      // Fallback: find the last snapshot if currentSnapshotId is not provided
+      const lastSnapshot = snapshots?.[snapshots.length - 1];
+      return lastSnapshot?.remainingWeight ?? 100;
     }
 
-    // Remaining position = 100% - total hit margin
-    const remaining = Math.max(0, Math.min(100, 100 - totalHitMargin));
-    return remaining;
+    const currentSnapshot = snapshots.find(
+      (s) => s.snapshotId === currentSnapshotId
+    );
+    return currentSnapshot?.remainingWeight ?? 100;
   };
 
-  const remainingPosition = calculateRemainingPosition();
+  const remainingPosition = getRemainingWeight();
 
   const getPointColor = (point: ProgressionChartData | undefined) => {
     if (!point) return "#8884d8";
@@ -126,17 +99,26 @@ export const ProgressionChart = ({
     return 4;
   };
 
-  const generateBadgeLabel = (
+  const generateBadgeEntries = (
     point: ProgressionChartData | undefined
-  ): string => {
-    if (!point || point.type === "start") return "";
-    const typeLabel = point.type === "tp" ? "TP" : "SL";
-    const index = point.entryIndex ?? 1;
-    const marginValue = parseMarginValue(point.margin);
-    if (marginValue !== null && !isNaN(marginValue) && marginValue >= 0) {
-      return `${typeLabel}${index} @ ${marginValue}%`;
+  ): Array<{ typeLabel: string; index: number; margin: number }> => {
+    if (!point || point.type === "start") return [];
+
+    // Backend always provides arrays for hit entries - just render them
+    const margins = point.margins ?? [];
+    const entryIndices = point.entryIndices ?? [];
+    const entryTypes = point.entryTypes ?? [];
+
+    const entries: Array<{ typeLabel: string; index: number; margin: number }> =
+      [];
+    for (let i = 0; i < margins.length; i++) {
+      const typeLabel = entryTypes[i] === "tp" ? "TP" : "SL";
+      const index = entryIndices[i] ?? i + 1;
+      const marginValue = margins[i] ?? 0;
+      entries.push({ typeLabel, index, margin: marginValue });
     }
-    return `${typeLabel}${index}`;
+
+    return entries;
   };
 
   const getTypeLabel = (type: "tp" | "sl" | "start") => {
@@ -178,8 +160,28 @@ export const ProgressionChart = ({
     return "oklch(0.553 0.013 58.071)"; // neutral
   };
 
+  // Helper function to find the next unhit point of a given type from a reference point
+  const findNextUnhitPoint = (
+    reference: ProgressionChartData,
+    points: ProgressionChartData[],
+    type: "tp" | "sl"
+  ): ProgressionChartData | null => {
+    // Filter to points of the correct type that come after the reference
+    const candidatePoints = points.filter(
+      (p) => p.type === type && p.x > reference.x && !p.isHit
+    );
+
+    if (candidatePoints.length === 0) return null;
+
+    // Return the one with the smallest x (next in sequence)
+    return candidatePoints.reduce((next, current) =>
+      current.x < next.x ? current : next
+    );
+  };
+
   // Helper function to create line segments based on reference point system
-  // When a point is hit, it becomes the new reference and connects to next TP and current SL
+  // Simple approach: connect only from the latest reference point to next possible TP and SL
+  // No ID matching - just connects to the next unhit TP/SL in sequence
   const createLineSegmentsWithReference = (
     startPoint: ProgressionChartData,
     tpPoints: ProgressionChartData[],
@@ -205,78 +207,57 @@ export const ProgressionChart = ({
 
     if (tpPoints.length === 0 && slPoints.length === 0) return segments;
 
-    // Helper to connect reference to a target point if consecutive
-    const connectIfConsecutive = (
+    // Helper to connect reference to a target point
+    const connectToPoint = (
       reference: ProgressionChartData,
       target: ProgressionChartData
     ) => {
-      if (target.x === reference.x + 1) {
-        segments.push({
-          x1: reference.x,
-          y1: reference.y,
-          x2: target.x,
-          y2: target.y,
-          color: getLineColor(target),
-          fromPoint: reference,
-          toPoint: target,
-        });
-      }
+      segments.push({
+        x1: reference.x,
+        y1: reference.y,
+        x2: target.x,
+        y2: target.y,
+        color: getLineColor(target),
+        fromPoint: reference,
+        toPoint: target,
+      });
     };
 
-    // Start with zero point as reference
-    let currentReference: ProgressionChartData = startPoint;
-    let nextTpIndex = 0;
-    let currentSlIndex = 0; // Current SL (the one that hasn't been hit yet)
+    // First, connect all consecutive hit points to show the path taken (solid lines)
+    const allHitPoints = [...tpPoints, ...slPoints]
+      .filter((p) => p.isHit)
+      .sort((a, b) => a.x - b.x); // Sort ascending to process chronologically
 
-    // From zero point, connect to first TP and first SL if consecutive
-    if (tpPoints.length > 0) {
-      connectIfConsecutive(currentReference, tpPoints[0]);
-    }
-    if (slPoints.length > 0) {
-      connectIfConsecutive(currentReference, slPoints[0]);
+    // Connect start point to first hit point
+    if (allHitPoints.length > 0) {
+      connectToPoint(startPoint, allHitPoints[0]);
     }
 
-    // Combine all points and sort by x-coordinate to process chronologically
-    const allPoints = [...tpPoints, ...slPoints].sort((a, b) => a.x - b.x);
+    // Connect consecutive hit points (regardless of x-coordinate gaps)
+    // This handles cases where a TP/SL was modified while being hit, creating gaps
+    for (let i = 0; i < allHitPoints.length - 1; i++) {
+      const currentHit = allHitPoints[i];
+      const nextHit = allHitPoints[i + 1];
+      // Connect consecutive hits in the sequence, even if x-coordinates aren't consecutive
+      connectToPoint(currentHit, nextHit);
+    }
 
-    // Process points chronologically
-    for (const point of allPoints) {
-      // Check if this point is consecutive from current reference
-      if (point.x === currentReference.x + 1) {
-        // Connect reference to this point
-        connectIfConsecutive(currentReference, point);
+    // Find the latest reference point (the most recent hit point, or start if no hits)
+    const latestReference =
+      allHitPoints.length > 0
+        ? allHitPoints[allHitPoints.length - 1]
+        : startPoint;
 
-        // If this point is hit, it becomes the new reference
-        if (point.isHit) {
-          currentReference = point;
+    // Connect only from the latest reference point to next unhit TP and SL (ghost paths)
+    const nextTP = findNextUnhitPoint(latestReference, tpPoints, "tp");
+    const nextSL = findNextUnhitPoint(latestReference, slPoints, "sl");
 
-          // Update indices based on what was hit
-          if (point.type === "tp") {
-            // Find which TP index this was and move to next TP
-            const tpIdx = tpPoints.findIndex((tp) => tp.x === point.x);
-            if (tpIdx !== -1) {
-              nextTpIndex = tpIdx + 1;
-            }
-          } else if (point.type === "sl") {
-            // Find which SL index this was and move to next SL
-            const slIdx = slPoints.findIndex((sl) => sl.x === point.x);
-            if (slIdx !== -1) {
-              currentSlIndex = slIdx + 1;
-            }
-          }
+    if (nextTP) {
+      connectToPoint(latestReference, nextTP);
+    }
 
-          // From new reference, connect to next TP and current SL if consecutive
-          // Connect to next TP
-          if (nextTpIndex < tpPoints.length) {
-            connectIfConsecutive(currentReference, tpPoints[nextTpIndex]);
-          }
-
-          // Connect to current SL (the one that hasn't been hit yet)
-          if (currentSlIndex < slPoints.length) {
-            connectIfConsecutive(currentReference, slPoints[currentSlIndex]);
-          }
-        }
-      }
+    if (nextSL) {
+      connectToPoint(latestReference, nextSL);
     }
 
     return segments;
@@ -589,7 +570,7 @@ export const ProgressionChart = ({
               const point = payload?.originalPoint;
               const color = getPointColor(point);
               const radius = getPointRadius(point);
-              const badgeLabel = generateBadgeLabel(point);
+              const badgeEntries = generateBadgeEntries(point);
               const isLastPoint = point?.isLastPoint ?? false;
               const triangleSize = 6;
 
@@ -611,17 +592,23 @@ export const ProgressionChart = ({
                       strokeWidth={1}
                     />
                   )}
-                  {badgeLabel && (
+                  {badgeEntries.length > 0 && (
                     <foreignObject
-                      x={cx - 40}
-                      y={cy - radius - 25}
-                      width={80}
-                      height={20}
+                      x={cx - 50}
+                      y={cy - radius - badgeEntries.length * 22 - 20}
+                      width={100}
+                      height={badgeEntries.length * 22 + 10}
                     >
-                      <div className="flex justify-center">
-                        <span className="text-xs font-mono text-muted-foreground bg-background/80 px-1.5 py-0.5 rounded border border-border">
-                          {badgeLabel}
-                        </span>
+                      <div className="flex flex-col justify-center items-center gap-1">
+                        {badgeEntries.map((entry, idx) => (
+                          <span
+                            key={idx}
+                            className="text-xs font-mono text-muted-foreground bg-background/80 px-2 py-0.5 rounded border border-border whitespace-nowrap"
+                          >
+                            {entry.typeLabel}
+                            {entry.index} @ {entry.margin}%
+                          </span>
+                        ))}
                       </div>
                     </foreignObject>
                   )}
@@ -738,13 +725,34 @@ export const ProgressionChart = ({
                 const point = pointData.originalPoint;
                 if (!point) return null;
 
-                const typeLabel = getTypeLabel(point.type);
-                const badgeText = generateBadgeLabel(point) || null;
+                // Always use arrays (default approach)
+                const hasArrays =
+                  point.tpslEntryIds &&
+                  point.tpslEntryIds.length > 0 &&
+                  point.margins &&
+                  point.margins.length > 0 &&
+                  point.entryIndices &&
+                  point.entryIndices.length > 0 &&
+                  point.entryTypes &&
+                  point.entryTypes.length > 0;
+
+                const typeLabel = hasArrays
+                  ? (point.entryTypes?.map((t) => getTypeLabel(t)).join(", ") ??
+                    getTypeLabel(point.type))
+                  : getTypeLabel(point.type);
+                const badgeEntries = generateBadgeEntries(point);
 
                 return (
                   <div className="bg-background border border-border rounded-lg p-3 shadow-lg font-mono">
-                    {badgeText && (
-                      <p className="text-xs font-semibold mb-2">{badgeText}</p>
+                    {badgeEntries.length > 0 && (
+                      <div className="flex flex-col gap-1 mb-2">
+                        {badgeEntries.map((entry, idx) => (
+                          <p key={idx} className="text-xs font-semibold">
+                            {entry.typeLabel}
+                            {entry.index} @ {entry.margin}%
+                          </p>
+                        ))}
+                      </div>
                     )}
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">
@@ -766,11 +774,18 @@ export const ProgressionChart = ({
                             ? "Ghost Path"
                             : "Not Hit"}
                       </p>
-                      {point.margin !== undefined && (
+                      {hasArrays && point.margins ? (
                         <p className="text-xs text-muted-foreground">
-                          <span className="font-semibold">Margin:</span>{" "}
-                          {point.margin}%
+                          <span className="font-semibold">Margins:</span>{" "}
+                          {point.margins.join("%, ")}%
                         </p>
+                      ) : (
+                        point.margin !== undefined && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-semibold">Margin:</span>{" "}
+                            {point.margin}%
+                          </p>
+                        )
                       )}
                     </div>
                   </div>

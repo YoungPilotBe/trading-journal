@@ -1,5 +1,4 @@
 import type { ProgressionChartData } from "@/charts/chart.types";
-import { calculateProgressionPaths } from "@/charts/progression-calculator";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../convex/_generated/api";
@@ -25,23 +24,17 @@ export const useProgressionChart = (
     enabled: enabled && tradeSetupId !== null,
   });
 
-  // Calculate progression paths on the client side
-  const calculatedData: ProgressionChartData[] | null =
-    queryResult.data && queryResult.data.direction
-      ? calculateProgressionPaths(
-          queryResult.data.data,
-          queryResult.data.direction,
-          queryResult.data.currentSnapshotId
-        )
-      : null;
+  // Use server-calculated chart paths directly
+  const chartPaths: ProgressionChartData[] | null =
+    queryResult.data?.chartPaths ?? null;
 
   return {
-    data: calculatedData,
+    data: chartPaths,
     chartConfig: queryResult.data?.chartConfig ?? null,
     chartColors: queryResult.data?.chartColors ?? null,
     isLoading: queryResult.isLoading,
     error: queryResult.error,
-    rawData: queryResult.data?.data ?? null,
+    snapshots: queryResult.data?.snapshots ?? null,
     direction: queryResult.data?.direction ?? null,
     currentSnapshotId: queryResult.data?.currentSnapshotId ?? null,
   };

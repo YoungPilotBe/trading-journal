@@ -1,4 +1,5 @@
 import { useChart } from "@/hooks/use-chart";
+import type { Id } from "../../convex/_generated/dataModel";
 import {
   ChartProps,
   ChartProvider,
@@ -11,6 +12,7 @@ import {
   type TemplateChartColors,
   type TemplateChartData,
 } from "./chart-context";
+import { ProgressionSnapshotResult } from "./chart.types";
 import { EmotionChart } from "./emotion-chart";
 import { EvolutionLineChart } from "./evolution-line-chart";
 import { ProgressionChart } from "./progression-chart";
@@ -37,7 +39,8 @@ const ChartContent = <T extends ChartType>({
   chartType: ChartType;
   props?: ChartProps<T>;
 }) => {
-  const { data, chartConfig, chartColors, isLoading, error } = useChart();
+  const chartContext = useChart();
+  const { data, chartConfig, chartColors, isLoading, error } = chartContext;
 
   // Handle error state
   if (error) {
@@ -95,6 +98,10 @@ const ChartContent = <T extends ChartType>({
   }
 
   if (chartType === "progression") {
+    const progressionContext = chartContext as {
+      snapshots: ProgressionSnapshotResult[] | null;
+      currentSnapshotId: Id<"snapshots"> | null | undefined;
+    };
     const tradeSetupId =
       (props as ChartProps<"progression">)?.tradeSetupId ?? undefined;
     return (
@@ -104,6 +111,8 @@ const ChartContent = <T extends ChartType>({
         chartColors={chartColors as EvolutionChartColors | null}
         isLoading={isLoading}
         tradeSetupId={tradeSetupId}
+        snapshots={progressionContext.snapshots}
+        currentSnapshotId={progressionContext.currentSnapshotId}
       />
     );
   }

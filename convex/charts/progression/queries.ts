@@ -3,37 +3,20 @@ import { api } from "../../_generated/api";
 import { Doc, Id } from "../../_generated/dataModel";
 import { query } from "../../_generated/server";
 import { EVOLUTION_CHART_COLORS } from "../constants";
-import { getCurrentRMultiple } from "./services";
+import {
+  calculateAllSnapshotsProgression,
+  calculateProgressionPaths,
+  getCurrentRMultiple,
+  type ProgressionSnapshotResult,
+  type ProgressionChartData,
+} from "./services";
 
 /**
- * Type for a TP/SL entry in the progression chart response
+ * Comprehensive progression chart response
  */
-type ProgressionTpslEntry = {
-  id: Id<"tpsl_entries">;
-  type: "take_profit" | "stop_loss";
-  price: number;
-  margin: number;
-  isHit: boolean;
-  hitSnapshotId: Id<"snapshots"> | undefined;
-  hitAt: number | undefined;
-};
-
-/**
- * Type for a snapshot with TP/SL entries in the progression chart response
- */
-type ProgressionSnapshotData = {
-  snapshotId: Id<"snapshots">;
-  index: number;
-  entryPrice: number | undefined;
-  tpslEntries: ProgressionTpslEntry[];
-  createdAt: number;
-};
-
-/**
- * Return type for getProgressionChart query
- */
-type ProgressionChartResponse = {
-  data: ProgressionSnapshotData[];
+export type ProgressionChartResponse = {
+  snapshots: ProgressionSnapshotResult[];
+  chartPaths: ProgressionChartData[];
   chartConfig: {
     type: "line";
     xAxis: "x";
@@ -45,9 +28,27 @@ type ProgressionChartResponse = {
 };
 
 /**
+ * Type for a snapshot with TP/SL entries (internal, for data fetching)
+ */
+type SnapshotWithTpsl = {
+  snapshotId: Id<"snapshots">;
+  index: number;
+  entryPrice: number | undefined;
+  tpslEntries: Array<{
+    id: Id<"tpsl_entries">;
+    type: "take_profit" | "stop_loss";
+    price: number;
+    margin: number;
+    isHit: boolean;
+    hitSnapshotId: Id<"snapshots"> | undefined;
+    hitAt: number | undefined;
+  }>;
+  createdAt: number;
+};
+
+/**
  * Get progression chart data for a specific trade setup and snapshot
- * Returns snapshots with their TP/SL entries for client-side calculation
- * The currentSnapshotId determines which snapshot's TP/SL entries are the "possibilities"
+ * Returns comprehensive progression data including R-multiples, hit markers, blocked markers, and chart paths
  */
 export const getProgressionChart = query({
   args: {
@@ -62,7 +63,8 @@ export const getProgressionChart = query({
     const tradeSetup = await ctx.db.get(tradeSetupId);
     if (!tradeSetup || !tradeSetup.direction) {
       return {
-        data: [],
+        snapshots: [],
+        chartPaths: [],
         chartConfig: {
           type: "line",
           xAxis: "x",
@@ -86,7 +88,7 @@ export const getProgressionChart = query({
       .collect();
 
     // Fetch TP/SL entries for each snapshot
-    const snapshotsWithTpsl: ProgressionSnapshotData[] = await Promise.all(
+    const snapshotsWithTpsl: SnapshotWithTpsl[] = await Promise.all(
       snapshots.map(async (snapshot: Doc<"snapshots">, index: number) => {
         const tpslEntries: Doc<"tpsl_entries">[] = await ctx.runQuery(
           api.tpsl.queries.getTpslEntriesBySnapshot,
@@ -108,24 +110,37 @@ export const getProgressionChart = query({
           snapshotId: snapshot._id,
           index,
           entryPrice,
-          tpslEntries: tpSlEntries.map(
-            (entry: Doc<"tpsl_entries">): ProgressionTpslEntry => ({
-              id: entry._id,
-              type: entry.type as "take_profit" | "stop_loss",
-              price: entry.price,
-              margin: entry.margin,
-              isHit: entry.isHit,
-              hitSnapshotId: entry.hitSnapshotId,
-              hitAt: entry.hitAt,
-            })
-          ),
+          tpslEntries: tpSlEntries.map((entry: Doc<"tpsl_entries">) => ({
+            id: entry._id,
+            type: entry.type as "take_profit" | "stop_loss",
+            price: entry.price,
+            margin: entry.margin,
+            isHit: entry.isHit,
+            hitSnapshotId: entry.hitSnapshotId,
+            hitAt: entry.hitAt,
+          })),
           createdAt: snapshot.createdAt,
         };
       })
     );
 
+    // Calculate comprehensive progression data for all snapshots
+    const snapshotsProgression = calculateAllSnapshotsProgression(
+      snapshotsWithTpsl,
+      direction,
+      currentSnapshotId
+    );
+
+    // Calculate chart paths for visualization
+    const chartPaths = calculateProgressionPaths(
+      snapshotsWithTpsl,
+      direction,
+      currentSnapshotId
+    );
+
     return {
-      data: snapshotsWithTpsl,
+      snapshots: snapshotsProgression,
+      chartPaths,
       chartConfig: {
         type: "line",
         xAxis: "x",
@@ -179,7 +194,7 @@ export const getCurrentRMultipleQuery = query({
     }
 
     // Fetch TP/SL entries for each snapshot and transform to SnapshotWithTpsl format
-    const snapshotsWithTpsl = await Promise.all(
+    const snapshotsWithTpsl: SnapshotWithTpsl[] = await Promise.all(
       snapshots.map(async (snapshot: Doc<"snapshots">, index: number) => {
         const tpslEntries: Doc<"tpsl_entries">[] = await ctx.runQuery(
           api.tpsl.queries.getTpslEntriesBySnapshot,

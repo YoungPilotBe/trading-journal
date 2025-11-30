@@ -14,9 +14,11 @@ import type {
   EvolutionChartColors,
   EvolutionChartData,
   ProgressionChartData,
+  ProgressionSnapshotResult,
   TemplateChartColors,
   TemplateChartData,
 } from "./chart.types";
+import type { Id } from "../../convex/_generated/dataModel";
 
 // Create context with union type for all possible chart types
 const ChartContext = createContext<ChartContextValue<ChartType> | undefined>(
@@ -104,6 +106,8 @@ export function ChartProvider<T extends ChartType>({
         chartColors: progressionData.chartColors as EvolutionChartColors | null,
         isLoading: progressionData.isLoading,
         error: progressionData.error ?? null,
+        snapshots: progressionData.snapshots as ProgressionSnapshotResult[] | null,
+        currentSnapshotId: progressionData.currentSnapshotId as Id<"snapshots"> | null | undefined,
       } as ChartContextValue<"progression">;
       break;
     }

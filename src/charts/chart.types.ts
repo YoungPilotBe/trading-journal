@@ -13,7 +13,11 @@ export type ProgressionChartColors = typeof EVOLUTION_CHART_COLORS;
  */
 
 // Chart type identifier
-export type ChartType = "emotion" | "r-multiple" | "r-multiple-evolution" | "progression";
+export type ChartType =
+  | "emotion"
+  | "r-multiple"
+  | "r-multiple-evolution"
+  | "progression";
 
 // Chart configuration types
 export type ChartConfigType = "bar" | "pie" | "line";
@@ -68,14 +72,19 @@ export interface ProgressionChartData {
   x: number; // snapshot index
   y: number; // R-Multiple value
   referencePointId: string; // ID of the reference point this path came from
-  tpslEntryId?: Id<"tpsl_entries">; // ID of the TP/SL entry (if applicable)
+  tpslEntryId?: Id<"tpsl_entries">; // ID of the TP/SL entry (if applicable) - single entry case
   type: "tp" | "sl" | "start"; // type of point
   isHit: boolean; // whether this TP/SL was actually hit
   isGhost: boolean; // true for ghost paths, false for actual hits
   snapshotId?: Id<"snapshots">; // snapshot ID if applicable
   isLastPoint?: boolean; // true if this is the last point (position fully closed)
-  margin?: number; // margin percentage for TP/SL entries
-  entryIndex?: number; // index of TP/SL entry (1-based) for labeling (TP1, TP2, etc.)
+  margin?: number; // margin percentage for TP/SL entries (not present for start points) - single entry case
+  entryIndex?: number; // index of TP/SL entry (1-based) for labeling (TP1, TP2, etc.) - single entry case
+  // Multiple entries support (when multiple entries are hit in the same snapshot)
+  tpslEntryIds?: Id<"tpsl_entries">[]; // array of entry IDs when multiple entries are combined
+  margins?: number[]; // array of margins corresponding to each entry
+  entryIndices?: number[]; // array of entry indices for labeling (TP1, TP2, etc.)
+  entryTypes?: ("tp" | "sl")[]; // array of types for each entry
 }
 
 // Chart response types (what comes from queries)
@@ -97,10 +106,59 @@ export interface EvolutionChartResponse {
   chartColors: EvolutionChartColors;
 }
 
+// Types for progression snapshot results
+export interface RMultipleCalculation {
+  combination: Id<"tpsl_entries">[];
+  rMultiple: number;
+  weightedProfit: number;
+  weightedRisk: number;
+  totalWeight: number;
+}
+
+export interface HitMarker {
+  entryId: Id<"tpsl_entries">;
+  hitSnapshotId: Id<"snapshots">;
+  hitAt: number;
+  rMultiple: number;
+}
+
+export interface BlockedMarker {
+  entryId: Id<"tpsl_entries">;
+  reason: "hit_in_previous_snapshot";
+  hitSnapshotId: Id<"snapshots">;
+  hitAt: number;
+  blockedAtSnapshotId: Id<"snapshots">;
+}
+
+export interface ProgressionSnapshotResult {
+  snapshotId: Id<"snapshots">;
+  index: number;
+  entryPrice: number | undefined;
+  createdAt: number;
+  tpslEntries: Array<{
+    id: Id<"tpsl_entries">;
+    type: "take_profit" | "stop_loss";
+    price: number;
+    margin: number;
+    isHit: boolean;
+    hitSnapshotId: Id<"snapshots"> | undefined;
+    hitAt: number | undefined;
+    isBlocked: boolean;
+    blockedReason?: BlockedMarker["reason"];
+  }>;
+  rMultiples: RMultipleCalculation[];
+  hitMarkers: HitMarker[];
+  blockedMarkers: BlockedMarker[];
+  remainingWeight: number;
+}
+
 export interface ProgressionChartResponse {
-  data: ProgressionChartData[];
+  snapshots: ProgressionSnapshotResult[];
+  chartPaths: ProgressionChartData[];
   chartConfig: LineChartConfig;
   chartColors: EvolutionChartColors;
+  direction: "long" | "short";
+  currentSnapshotId: Id<"snapshots"> | undefined;
 }
 
 // Discriminated union for chart responses
@@ -170,6 +228,8 @@ export type ChartContextValue<T extends ChartType = ChartType> =
               chartColors: EvolutionChartColors | null;
               isLoading: boolean;
               error: unknown;
+              snapshots: ProgressionSnapshotResult[] | null;
+              currentSnapshotId: Id<"snapshots"> | null | undefined;
             }
           : never;
 
